@@ -27,31 +27,60 @@ let timerInterval = null;
 /* ---------- APP ROOT ---------- */
 const app = document.getElementById("app");
 
+/* ---------- QUOTE ---------- */
+function getQuote(score, total) {
+  const percent = (score / total) * 100;
+  if (percent >= 80) return "Excellent performance! Keep it up 💪";
+  if (percent >= 60) return "Good job! Keep practicing 👍";
+  if (percent >= 40) return "Fair attempt. Revise more 📚";
+  return "Don’t give up. Practice makes perfect 💙";
+}
+
 /* ---------- LOAD COURSE & QUESTIONS ---------- */
 async function loadQuiz() {
-  // Get course
-  const courseRef = doc(db, "courses", courseId);
-  const courseSnap = await getDoc(courseRef);
-  const course = courseSnap.data();
+  try {
+    // Get course
+    const courseRef = doc(db, "courses", courseId);
+    const courseSnap = await getDoc(courseRef);
 
-  timeLeft = course.duration; // seconds
+    if (!courseSnap.exists()) {
+      alert("Course not found.");
+      window.location.href = "index.html";
+      return;
+    }
 
-  // Get questions
-  const qSnap = await getDocs(collection(db, "courses", courseId, "questions"));
+    const course = courseSnap.data();
 
-  qSnap.forEach((q) => {
-    questions.push({ id: q.id, ...q.data() });
-  });
+    // ⏱️ duration is stored in MINUTES
+    timeLeft = Number(course.duration) * 60;
 
-  if (questions.length === 0) {
-    alert("No questions available for this course.");
-    window.location.href = "index.html";
-    return;
+    // Safety fallback
+    if (isNaN(timeLeft) || timeLeft <= 0) {
+      timeLeft = 15 * 60; // default 15 minutes
+    }
+
+    // Get questions
+    const qSnap = await getDocs(
+      collection(db, "courses", courseId, "questions")
+    );
+
+    qSnap.forEach((q) => {
+      questions.push({ id: q.id, ...q.data() });
+    });
+
+    if (questions.length === 0) {
+      alert("No questions available for this course.");
+      window.location.href = "index.html";
+      return;
+    }
+
+    buildUI(course.title);
+    startTimer();
+    renderQuestion();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load quiz.");
   }
-
-  buildUI(course.title);
-  startTimer();
-  renderQuestion();
 }
 
 /* ---------- BUILD UI ---------- */
@@ -102,12 +131,11 @@ function buildUI(courseTitle) {
       currentIndex++;
       renderQuestion();
     } else {
-      submitQuiz();
+      confirmSubmit();
     }
   };
 
   nav.append(prevBtn, nextBtn);
-
   container.append(header, box, nav);
   app.append(container);
 }
@@ -117,10 +145,13 @@ function renderQuestion() {
   const q = questions[currentIndex];
   const box = document.getElementById("questionBox");
 
+  const letters = ["A", "B", "C", "D"];
+
   box.innerHTML = `
     <p class="font-semibold mb-4">
-      ${currentIndex + 1}. ${q.question}
+      Question ${currentIndex + 1} of ${questions.length}
     </p>
+    <p class="mb-4">${q.question}</p>
   `;
 
   q.options.forEach((opt, i) => {
@@ -137,7 +168,7 @@ function renderQuestion() {
       answers[currentIndex] = i;
     };
 
-    label.append(radio, ` ${opt}`);
+    label.append(radio, ` ${letters[i]}. ${opt}`);
     box.append(label);
   });
 }
@@ -148,20 +179,33 @@ function startTimer() {
 
   timerInterval = setInterval(() => {
     timeLeft--;
-    updateTimerUI();
 
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
+      updateTimerUI();
+      alert("Time is up! Quiz will be submitted.");
       submitQuiz();
+      return;
     }
+
+    updateTimerUI();
   }, 1000);
 }
 
 function updateTimerUI() {
   const timer = document.getElementById("timer");
+  if (!timer) return;
+
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
   timer.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+/* ---------- CONFIRM SUBMIT ---------- */
+function confirmSubmit() {
+  if (confirm("Are you sure you want to submit your quiz?")) {
+    submitQuiz();
+  }
 }
 
 /* ---------- SUBMIT ---------- */
@@ -169,24 +213,29 @@ async function submitQuiz() {
   clearInterval(timerInterval);
 
   let score = 0;
+  const correctAnswers = [];
 
   questions.forEach((q, i) => {
-    if (answers[i] === q.correct) {
-      score++;
-    }
+    correctAnswers.push(q.correct);
+    if (answers[i] === q.correct) score++;
   });
 
-  await addDoc(collection(db, "results"), {
+  const quote = getQuote(score, questions.length);
+
+  const ref = await addDoc(collection(db, "results"), {
     name: studentName,
     matric,
     courseId,
     score,
     total: questions.length,
+    answers,
+    correctAnswers,
+    quote,
     submittedAt: serverTimestamp(),
   });
 
   sessionStorage.clear();
-  window.location.href = "submitted.html";
+  window.location.href = `review.html?id=${ref.id}`;
 }
 
 /* ---------- START ---------- */

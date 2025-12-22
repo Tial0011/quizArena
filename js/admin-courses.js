@@ -49,7 +49,7 @@ form.onsubmit = async (e) => {
 
   await addDoc(collection(db, "courses"), {
     title: courseInput.value,
-    duration: Number(durationInput.value) * 60,
+    duration: Number(durationInput.value),
     active: true,
   });
 
