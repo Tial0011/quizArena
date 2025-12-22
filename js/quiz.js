@@ -36,10 +36,9 @@ function getQuote(score, total) {
   return "Don’t give up. Practice makes perfect 💙";
 }
 
-/* ---------- LOAD COURSE & QUESTIONS ---------- */
+/* ---------- LOAD QUIZ ---------- */
 async function loadQuiz() {
   try {
-    // Get course
     const courseRef = doc(db, "courses", courseId);
     const courseSnap = await getDoc(courseRef);
 
@@ -51,15 +50,10 @@ async function loadQuiz() {
 
     const course = courseSnap.data();
 
-    // ⏱️ duration is stored in MINUTES
+    // duration stored in MINUTES
     timeLeft = Number(course.duration) * 60;
+    if (isNaN(timeLeft) || timeLeft <= 0) timeLeft = 15 * 60;
 
-    // Safety fallback
-    if (isNaN(timeLeft) || timeLeft <= 0) {
-      timeLeft = 15 * 60; // default 15 minutes
-    }
-
-    // Get questions
     const qSnap = await getDocs(
       collection(db, "courses", courseId, "questions")
     );
@@ -69,7 +63,7 @@ async function loadQuiz() {
     });
 
     if (questions.length === 0) {
-      alert("No questions available for this course.");
+      alert("No questions available.");
       window.location.href = "index.html";
       return;
     }
@@ -88,9 +82,9 @@ function buildUI(courseTitle) {
   app.innerHTML = "";
 
   const container = document.createElement("div");
-  container.className = "max-w-3xl mx-auto p-6";
+  container.className = "max-w-5xl mx-auto p-6";
 
-  // Header
+  /* Header */
   const header = document.createElement("div");
   header.className = "flex justify-between items-center mb-4";
 
@@ -104,12 +98,18 @@ function buildUI(courseTitle) {
 
   header.append(title, timer);
 
-  // Question box
+  /* Layout */
+  const layout = document.createElement("div");
+  layout.className = "flex gap-6";
+
+  /* Question Area (Question + Buttons) */
+  const questionArea = document.createElement("div");
+  questionArea.className = "flex-1";
+
   const box = document.createElement("div");
   box.id = "questionBox";
   box.className = "bg-white p-6 rounded-xl shadow";
 
-  // Navigation
   const nav = document.createElement("div");
   nav.className = "flex justify-between mt-4";
 
@@ -124,6 +124,7 @@ function buildUI(courseTitle) {
   };
 
   const nextBtn = document.createElement("button");
+  nextBtn.id = "nextBtn";
   nextBtn.textContent = "Next";
   nextBtn.className = "px-4 py-2 bg-blue-600 text-white rounded";
   nextBtn.onclick = () => {
@@ -136,7 +137,15 @@ function buildUI(courseTitle) {
   };
 
   nav.append(prevBtn, nextBtn);
-  container.append(header, box, nav);
+  questionArea.append(box, nav);
+
+  /* Status Panel */
+  const sidePanel = document.createElement("div");
+  sidePanel.id = "statusPanel";
+  sidePanel.className = "w-32 bg-white p-3 rounded-xl shadow text-center";
+
+  layout.append(questionArea, sidePanel);
+  container.append(header, layout);
   app.append(container);
 }
 
@@ -144,11 +153,10 @@ function buildUI(courseTitle) {
 function renderQuestion() {
   const q = questions[currentIndex];
   const box = document.getElementById("questionBox");
-
   const letters = ["A", "B", "C", "D"];
 
   box.innerHTML = `
-    <p class="font-semibold mb-4">
+    <p class="font-semibold mb-2">
       Question ${currentIndex + 1} of ${questions.length}
     </p>
     <p class="mb-4">${q.question}</p>
@@ -166,10 +174,49 @@ function renderQuestion() {
 
     radio.onchange = () => {
       answers[currentIndex] = i;
+      renderStatusPanel();
     };
 
     label.append(radio, ` ${letters[i]}. ${opt}`);
     box.append(label);
+  });
+
+  updateNextButton();
+  renderStatusPanel();
+}
+
+/* ---------- NEXT / SUBMIT BUTTON ---------- */
+function updateNextButton() {
+  const nextBtn = document.getElementById("nextBtn");
+
+  if (currentIndex === questions.length - 1) {
+    nextBtn.textContent = "Submit";
+    nextBtn.className = "px-4 py-2 bg-green-600 text-white rounded";
+  } else {
+    nextBtn.textContent = "Next";
+    nextBtn.className = "px-4 py-2 bg-blue-600 text-white rounded";
+  }
+}
+
+/* ---------- STATUS PANEL ---------- */
+function renderStatusPanel() {
+  const panel = document.getElementById("statusPanel");
+  panel.innerHTML = "<h3 class='font-semibold mb-2'>Status</h3>";
+
+  questions.forEach((_, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = i + 1;
+
+    btn.className =
+      "w-8 h-8 m-1 rounded text-sm " +
+      (answers[i] !== undefined ? "bg-green-500 text-white" : "bg-gray-300");
+
+    btn.onclick = () => {
+      currentIndex = i;
+      renderQuestion();
+    };
+
+    panel.append(btn);
   });
 }
 
@@ -182,7 +229,6 @@ function startTimer() {
 
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
-      updateTimerUI();
       alert("Time is up! Quiz will be submitted.");
       submitQuiz();
       return;

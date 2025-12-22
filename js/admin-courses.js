@@ -82,7 +82,7 @@ async function loadCourses() {
     info.innerHTML = `
       <p class="font-semibold">${data.title}</p>
       <p class="text-sm text-gray-500">
-        ${data.duration / 60} mins • ${data.active ? "Active" : "Inactive"}
+        ${data.duration} mins • ${data.active ? "Active" : "Inactive"}
       </p>
     `;
 
