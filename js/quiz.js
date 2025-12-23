@@ -23,6 +23,7 @@ let currentIndex = 0;
 let answers = {};
 let timeLeft = 0;
 let timerInterval = null;
+let hasSubmitted = false; // 🔒 prevent double submission
 
 /* ---------- APP ROOT ---------- */
 const app = document.getElementById("app");
@@ -39,12 +40,10 @@ function getQuote(score, total) {
 /* ---------- LOAD QUIZ ---------- */
 async function loadQuiz() {
   try {
-    const courseRef = doc(db, "courses", courseId);
-    const courseSnap = await getDoc(courseRef);
+    const courseSnap = await getDoc(doc(db, "courses", courseId));
 
     if (!courseSnap.exists()) {
       alert("Course not found.");
-      window.location.href = "index.html";
       return;
     }
 
@@ -58,13 +57,10 @@ async function loadQuiz() {
       collection(db, "courses", courseId, "questions")
     );
 
-    qSnap.forEach((q) => {
-      questions.push({ id: q.id, ...q.data() });
-    });
+    qSnap.forEach((q) => questions.push({ id: q.id, ...q.data() }));
 
-    if (questions.length === 0) {
+    if (!questions.length) {
       alert("No questions available.");
-      window.location.href = "index.html";
       return;
     }
 
@@ -81,15 +77,21 @@ async function loadQuiz() {
 function buildUI(courseTitle) {
   app.innerHTML = "";
 
-  const container = document.createElement("div");
-  container.className = "max-w-5xl mx-auto p-6";
+  const bgWrapper = document.createElement("div");
+  bgWrapper.className =
+    "min-h-screen bg-cover bg-center flex justify-center items-start p-4";
+  bgWrapper.style.backgroundImage = "url('./assets/quiz-bg.jpg')";
 
-  /* Header */
+  const container = document.createElement("div");
+  container.className = "w-full max-w-3xl";
+
   const header = document.createElement("div");
-  header.className = "flex justify-between items-center mb-4";
+  header.className =
+    "flex justify-between items-center mb-4 p-4 rounded-xl shadow";
+  header.style.backgroundColor = "#ffffff";
 
   const title = document.createElement("h1");
-  title.className = "text-xl font-bold";
+  title.className = "text-lg font-bold";
   title.textContent = courseTitle;
 
   const timer = document.createElement("span");
@@ -97,14 +99,6 @@ function buildUI(courseTitle) {
   timer.className = "font-semibold text-red-600";
 
   header.append(title, timer);
-
-  /* Layout */
-  const layout = document.createElement("div");
-  layout.className = "flex gap-6";
-
-  /* Question Area (Question + Buttons) */
-  const questionArea = document.createElement("div");
-  questionArea.className = "flex-1";
 
   const box = document.createElement("div");
   box.id = "questionBox";
@@ -137,16 +131,15 @@ function buildUI(courseTitle) {
   };
 
   nav.append(prevBtn, nextBtn);
-  questionArea.append(box, nav);
 
-  /* Status Panel */
-  const sidePanel = document.createElement("div");
-  sidePanel.id = "statusPanel";
-  sidePanel.className = "w-32 bg-white p-3 rounded-xl shadow text-center";
+  const statusPanel = document.createElement("div");
+  statusPanel.id = "statusPanel";
+  statusPanel.className =
+    "mt-4 bg-white p-4 rounded-xl shadow flex flex-wrap justify-center";
 
-  layout.append(questionArea, sidePanel);
-  container.append(header, layout);
-  app.append(container);
+  container.append(header, box, nav, statusPanel);
+  bgWrapper.append(container);
+  app.append(bgWrapper);
 }
 
 /* ---------- RENDER QUESTION ---------- */
@@ -169,7 +162,6 @@ function renderQuestion() {
     const radio = document.createElement("input");
     radio.type = "radio";
     radio.name = "option";
-    radio.value = i;
     radio.checked = answers[currentIndex] === i;
 
     radio.onchange = () => {
@@ -185,28 +177,26 @@ function renderQuestion() {
   renderStatusPanel();
 }
 
-/* ---------- NEXT / SUBMIT BUTTON ---------- */
+/* ---------- NEXT / SUBMIT ---------- */
 function updateNextButton() {
-  const nextBtn = document.getElementById("nextBtn");
-
+  const btn = document.getElementById("nextBtn");
   if (currentIndex === questions.length - 1) {
-    nextBtn.textContent = "Submit";
-    nextBtn.className = "px-4 py-2 bg-green-600 text-white rounded";
+    btn.textContent = "Submit";
+    btn.className = "px-4 py-2 bg-green-600 text-white rounded";
   } else {
-    nextBtn.textContent = "Next";
-    nextBtn.className = "px-4 py-2 bg-blue-600 text-white rounded";
+    btn.textContent = "Next";
+    btn.className = "px-4 py-2 bg-blue-600 text-white rounded";
   }
 }
 
 /* ---------- STATUS PANEL ---------- */
 function renderStatusPanel() {
   const panel = document.getElementById("statusPanel");
-  panel.innerHTML = "<h3 class='font-semibold mb-2'>Status</h3>";
+  panel.innerHTML = ""; // ✅ clear first
 
   questions.forEach((_, i) => {
     const btn = document.createElement("button");
     btn.textContent = i + 1;
-
     btn.className =
       "w-8 h-8 m-1 rounded text-sm " +
       (answers[i] !== undefined ? "bg-green-500 text-white" : "bg-gray-300");
@@ -223,17 +213,12 @@ function renderStatusPanel() {
 /* ---------- TIMER ---------- */
 function startTimer() {
   updateTimerUI();
-
   timerInterval = setInterval(() => {
     timeLeft--;
-
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
-      alert("Time is up! Quiz will be submitted.");
       submitQuiz();
-      return;
     }
-
     updateTimerUI();
   }, 1000);
 }
@@ -256,6 +241,9 @@ function confirmSubmit() {
 
 /* ---------- SUBMIT ---------- */
 async function submitQuiz() {
+  if (hasSubmitted) return;
+  hasSubmitted = true;
+
   clearInterval(timerInterval);
 
   let score = 0;
@@ -266,23 +254,35 @@ async function submitQuiz() {
     if (answers[i] === q.correct) score++;
   });
 
-  const quote = getQuote(score, questions.length);
+  try {
+    const ref = await addDoc(collection(db, "results"), {
+      name: studentName,
+      matric,
+      courseId,
+      score,
+      total: questions.length,
+      answers,
+      correctAnswers,
+      quote: getQuote(score, questions.length),
+      submittedAt: serverTimestamp(),
+    });
 
-  const ref = await addDoc(collection(db, "results"), {
-    name: studentName,
-    matric,
-    courseId,
-    score,
-    total: questions.length,
-    answers,
-    correctAnswers,
-    quote,
-    submittedAt: serverTimestamp(),
-  });
-
-  sessionStorage.clear();
-  window.location.href = `review.html?id=${ref.id}`;
+    sessionStorage.clear();
+    window.location.href = `review.html?id=${ref.id}`;
+  } catch (err) {
+    console.error(err);
+    alert("Submission failed. Please contact the admin.");
+  }
 }
+
+/* ---------- AUTO SUBMIT ON TAB CLOSE ---------- */
+window.addEventListener("beforeunload", (e) => {
+  if (!hasSubmitted) {
+    submitQuiz();
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
 
 /* ---------- START ---------- */
 loadQuiz();

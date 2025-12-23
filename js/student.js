@@ -16,7 +16,7 @@ container.className =
 // Title
 const title = document.createElement("h1");
 title.className = "text-xl font-bold text-center";
-title.textContent = "Start Quiz";
+title.textContent = "QUIZ ARENA";
 
 // Inputs
 const nameInput = document.createElement("input");
