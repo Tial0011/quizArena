@@ -25,7 +25,7 @@ nameInput.required = true;
 nameInput.className = "w-full px-4 py-2 border rounded-lg";
 
 const matricInput = document.createElement("input");
-matricInput.placeholder = "Matric Number";
+matricInput.placeholder = "Watsapp Number";
 matricInput.required = true;
 matricInput.className = "w-full px-4 py-2 border rounded-lg";
 
