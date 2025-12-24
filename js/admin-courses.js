@@ -53,9 +53,7 @@ form.onsubmit = async (e) => {
     active: true,
   });
 
-  courseInput.value = "";
-  durationInput.value = "";
-
+  form.reset();
   loadCourses();
 };
 
@@ -128,7 +126,6 @@ questionsView.className = "hidden";
 const backBtn = document.createElement("button");
 backBtn.textContent = "⬅ Back to Courses";
 backBtn.className = "mb-4 text-blue-600";
-
 backBtn.onclick = () => {
   questionsView.className = "hidden";
   coursesView.className = "block";
@@ -181,14 +178,50 @@ qForm.onsubmit = async (e) => {
 
 qForm.append(qInput, ...options, correctInput, qAddBtn);
 
+/* ---------- BULK JSON UPLOAD ---------- */
+const bulkBox = document.createElement("div");
+bulkBox.className = "bg-white p-6 rounded-xl shadow mb-6";
+
+const bulkTitle = document.createElement("h3");
+bulkTitle.className = "font-semibold mb-3";
+bulkTitle.textContent = "Bulk Upload Questions (JSON)";
+
+const fileInput = document.createElement("input");
+fileInput.type = "file";
+fileInput.accept = ".json";
+fileInput.className = "mb-3";
+
+const uploadBtn = document.createElement("button");
+uploadBtn.textContent = "Upload JSON";
+uploadBtn.className = "bg-green-600 text-white px-6 py-2 rounded-lg block";
+
+uploadBtn.onclick = async () => {
+  const file = fileInput.files[0];
+  if (!file) return alert("Select a JSON file");
+
+  try {
+    const data = JSON.parse(await file.text());
+
+    for (const q of data) {
+      await addDoc(collection(db, "courses", currentCourseId, "questions"), q);
+    }
+
+    alert("Questions uploaded successfully 🎉");
+    fileInput.value = "";
+    loadQuestions();
+  } catch {
+    alert("Invalid JSON file");
+  }
+};
+
+bulkBox.append(bulkTitle, fileInput, uploadBtn);
+
 /* Question list */
 const qList = document.createElement("div");
 qList.className = "space-y-4";
 
-/* Load questions */
 async function loadQuestions() {
   qList.innerHTML = "";
-
   const snapshot = await getDocs(
     collection(db, "courses", currentCourseId, "questions")
   );
@@ -198,18 +231,11 @@ async function loadQuestions() {
 
     const item = document.createElement("div");
     item.className = "bg-white p-4 rounded-xl shadow";
-
-    item.innerHTML = `
-      <p class="font-semibold">${q.question}</p>
-      <p class="text-sm text-gray-600">
-        Correct: Option ${q.correct + 1}
-      </p>
-    `;
+    item.innerHTML = `<p class="font-semibold">${q.question}</p>`;
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "Delete";
     delBtn.className = "mt-2 bg-red-500 text-white px-3 py-1 rounded";
-
     delBtn.onclick = async () => {
       await deleteDoc(
         doc(db, "courses", currentCourseId, "questions", snap.id)
@@ -222,7 +248,6 @@ async function loadQuestions() {
   });
 }
 
-/* Show questions view */
 function showQuestionsView() {
   coursesView.className = "hidden";
   questionsView.className = "block";
@@ -230,11 +255,10 @@ function showQuestionsView() {
   loadQuestions();
 }
 
-questionsView.append(backBtn, qTitle, qForm, qList);
+questionsView.append(backBtn, qTitle, qForm, bulkBox, qList);
 
-/* ---------- BUILD APP ---------- */
+/* ---------- BUILD ---------- */
 container.append(coursesView, questionsView);
 app.append(container);
 
-/* Initial load */
 loadCourses();
