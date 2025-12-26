@@ -83,11 +83,13 @@ async function loadResults(courseId) {
     row.className = "border-t hover:bg-gray-50 cursor-pointer";
 
     row.innerHTML = `
-      <td class="p-3 font-semibold">${position}</td>
-      <td class="p-3 text-blue-600 underline">${r.name}</td>
-      <td class="p-3">${r.matric}</td>
-      <td class="p-3">${r.score} / ${r.total}</td>
-    `;
+  <td class="p-3 font-semibold">${position}</td>
+  <td class="p-3 font-medium text-gray-800 cursor-pointer">
+    ${r.name}
+  </td>
+  <td class="p-3">${r.matric}</td>
+  <td class="p-3">${r.score} / ${r.total}</td>
+`;
 
     /* ---------- DROPDOWN ROW ---------- */
     const detailRow = document.createElement("tr");
