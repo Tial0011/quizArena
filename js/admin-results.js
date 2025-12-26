@@ -32,7 +32,7 @@ table.innerHTML = `
     <tr class="bg-gray-200 text-left">
       <th class="p-3">Pos</th>
       <th class="p-3">Name</th>
-      <th class="p-3">Matric</th>
+      <th class="p-3">Matric Number</th>
       <th class="p-3">Score</th>
     </tr>
   </thead>
