@@ -35,7 +35,7 @@ table.innerHTML = `
       <th class="p-3">Matric Number</th>
       <th class="p-3">Score</th>
     </tr>
-  </thead>
+  </>
   <tbody></tbody>
 `;
 
