@@ -8,44 +8,48 @@ import {
 
 const app = document.getElementById("app");
 
-// Container
+/* ---------- CONTAINER ---------- */
 const container = document.createElement("div");
 container.className =
-  "bg-white p-6 rounded-xl shadow w-full max-w-md space-y-4";
+  "bg-white p-6 rounded-xl shadow border border-teal-200 w-full max-w-md space-y-4";
 
-// Title
+/* ---------- TITLE ---------- */
 const title = document.createElement("h1");
-title.className = "text-xl font-bold text-center";
+title.className = "text-xl font-bold text-center text-teal-700";
 title.textContent = "QUIZ ARENA";
 
-// Inputs
+/* ---------- INPUTS ---------- */
 const nameInput = document.createElement("input");
 nameInput.placeholder = "Full Name";
 nameInput.required = true;
-nameInput.className = "w-full px-4 py-2 border rounded-lg";
+nameInput.className =
+  "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400";
 
 const matricInput = document.createElement("input");
 matricInput.placeholder = "Matric Number";
 matricInput.required = true;
-matricInput.className = "w-full px-4 py-2 border rounded-lg";
+matricInput.className =
+  "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400";
 
-// Course select
+/* ---------- COURSE SELECT ---------- */
 const courseSelect = document.createElement("select");
 courseSelect.required = true;
-courseSelect.className = "w-full px-4 py-2 border rounded-lg";
+courseSelect.className =
+  "w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-400";
 
 const defaultOption = document.createElement("option");
 defaultOption.textContent = "Select Course";
 defaultOption.value = "";
 courseSelect.append(defaultOption);
 
-// Start button
+/* ---------- START BUTTON ---------- */
 const startBtn = document.createElement("button");
 startBtn.textContent = "Start Quiz";
 startBtn.className =
-  "w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700";
+  "w-full bg-teal-600 text-white py-2 rounded-lg font-semibold " +
+  "hover:bg-teal-700 transition-colors duration-200 shadow-sm";
 
-// Load active courses
+/* ---------- LOAD ACTIVE COURSES ---------- */
 async function loadCourses() {
   const q = query(collection(db, "courses"), where("active", "==", true));
   const snapshot = await getDocs(q);
@@ -58,7 +62,7 @@ async function loadCourses() {
   });
 }
 
-// Start quiz
+/* ---------- START QUIZ ---------- */
 startBtn.onclick = () => {
   if (!nameInput.value || !matricInput.value || !courseSelect.value) {
     alert("Please fill all fields");
@@ -72,8 +76,9 @@ startBtn.onclick = () => {
   window.location.href = "quiz.html";
 };
 
-// Build UI
+/* ---------- BUILD UI ---------- */
 container.append(title, nameInput, matricInput, courseSelect, startBtn);
 app.append(container);
 
+/* ---------- INIT ---------- */
 loadCourses();
