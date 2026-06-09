@@ -1,0 +1,172 @@
+import { renderStudentDashboard } from "../student/dashboard.js";
+import { loginUser, registerUser, getUserData } from "../auth.js";
+import { renderAdminDashboard } from "../admin/dashboard.js";
+const app = document.getElementById("app");
+
+let mode = "login";
+
+export function renderLanding() {
+  app.innerHTML = `
+    <div class="page">
+
+      <section class="hero">
+
+        <div class="logo">
+          Quiz Arena
+        </div>
+
+        <h1>
+          Master Your Subjects.<br>
+          One Quiz at a Time.
+        </h1>
+
+        <p>
+          Practice Physics, Biology,
+          Chemistry and Statistics with
+          weekly quizzes designed for
+          serious students.
+        </p>
+
+        <div class="stats">
+          <div>
+            <h3>4</h3>
+            <span>Subjects</span>
+          </div>
+
+          <div>
+            <h3>∞</h3>
+            <span>Practice</span>
+          </div>
+
+          <div>
+            <h3>24/7</h3>
+            <span>Access</span>
+          </div>
+        </div>
+
+      </section>
+
+      <section class="auth-card">
+
+        ${mode === "login" ? loginMarkup() : registerMarkup()}
+
+      </section>
+
+    </div>
+  `;
+
+  attachEvents();
+}
+
+function loginMarkup() {
+  return `
+    <h2>Welcome Back</h2>
+
+    <input
+      id="email"
+      type="email"
+      placeholder="Email"
+    >
+
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+    >
+
+    <button id="submitBtn">
+      Sign In
+    </button>
+
+    <p class="switch">
+      Don't have an account?
+
+      <span id="switchMode">
+        Register
+      </span>
+    </p>
+  `;
+}
+
+function registerMarkup() {
+  return `
+    <h2>Create Account</h2>
+
+    <input
+      id="name"
+      placeholder="Full Name"
+    >
+
+    <input
+      id="email"
+      type="email"
+      placeholder="Email"
+    >
+
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+    >
+
+    <button id="submitBtn">
+      Register
+    </button>
+
+    <p class="switch">
+      Already have an account?
+
+      <span id="switchMode">
+        Login
+      </span>
+    </p>
+  `;
+}
+
+function attachEvents() {
+  document.getElementById("switchMode")?.addEventListener("click", () => {
+    mode = mode === "login" ? "register" : "login";
+
+    renderLanding();
+  });
+
+  document.getElementById("submitBtn")?.addEventListener("click", submitForm);
+}
+
+async function submitForm() {
+  const submitBtn = document.getElementById("submitBtn");
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Loading...";
+  const email = document.getElementById("email").value;
+
+  const password = document.getElementById("password").value;
+
+  let result;
+
+  if (mode === "register") {
+    const name = document.getElementById("name").value;
+
+    result = await registerUser(name, email, password);
+  } else {
+    result = await loginUser(email, password);
+  }
+
+  if (!result.success) {
+    alert(result.message);
+    submitBtn.disabled = false;
+
+    submitBtn.textContent = mode === "login" ? "Sign In" : "Register";
+    return;
+  }
+
+  const ADMIN_EMAIL = "admin@test.com";
+
+  if (result.user.email === ADMIN_EMAIL) {
+    renderAdminDashboard();
+  } else {
+    const userData = await getUserData(result.user.uid);
+
+    renderStudentDashboard(userData);
+  }
+}
