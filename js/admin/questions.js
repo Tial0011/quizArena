@@ -138,8 +138,20 @@ async function addQuestion() {
     return;
   }
 
+  const quizSnapshot = await getDocs(
+    query(collection(db, "quizzes"), where("__name__", "==", quizId)),
+  );
+
+  let subjectName = "";
+
+  quizSnapshot.forEach((docSnap) => {
+    subjectName = docSnap.data().subjectName;
+  });
+
   await addDoc(collection(db, "questions"), {
     quizId,
+
+    subjectName,
 
     question,
 
@@ -149,6 +161,8 @@ async function addQuestion() {
 
     createdAt: serverTimestamp(),
   });
+
+  alert("Question Added Successfully!");
 
   clearForm();
 

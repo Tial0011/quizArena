@@ -1,4 +1,5 @@
 import { logoutUser } from "../auth.js";
+import { renderPracticeArena } from "./practice.js";
 const app = document.getElementById("app");
 export function renderStudentDashboard(userData = {}) {
   app.innerHTML = `
@@ -84,7 +85,7 @@ export function renderStudentDashboard(userData = {}) {
 }
 function setupDashboardEvents() {
   document.getElementById("practiceBtn")?.addEventListener("click", () => {
-    console.log("Open Practice Arena");
+    renderPracticeArena();
   });
 
   document.getElementById("quizzesBtn")?.addEventListener("click", () => {
