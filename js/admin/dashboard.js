@@ -1,4 +1,7 @@
 import { renderSubjects } from "./subjects.js";
+import { renderQuizzes } from "./quizzes.js";
+import { renderQuestions } from "./questions.js";
+
 const app = document.getElementById("app");
 
 let activeTab = "dashboard";
@@ -71,6 +74,7 @@ function renderTabContent() {
     case "dashboard":
       content.innerHTML = `
         <div class="admin-card">
+
           <h2>Overview</h2>
 
           <p>
@@ -81,20 +85,21 @@ function renderTabContent() {
 
             <div class="overview-item">
               <h3>Subjects</h3>
-              <span>0</span>
+              <span>📚</span>
             </div>
 
             <div class="overview-item">
               <h3>Quizzes</h3>
-              <span>0</span>
+              <span>📝</span>
             </div>
 
             <div class="overview-item">
               <h3>Questions</h3>
-              <span>0</span>
+              <span>❓</span>
             </div>
 
           </div>
+
         </div>
       `;
       break;
@@ -104,27 +109,11 @@ function renderTabContent() {
       break;
 
     case "quizzes":
-      content.innerHTML = `
-        <div class="admin-card">
-          <h2>Quizzes</h2>
-
-          <p>
-            Quiz management coming next.
-          </p>
-        </div>
-      `;
+      renderQuizzes(content);
       break;
 
     case "questions":
-      content.innerHTML = `
-        <div class="admin-card">
-          <h2>Questions</h2>
-
-          <p>
-            Question management coming next.
-          </p>
-        </div>
-      `;
+      renderQuestions(content);
       break;
   }
 }
