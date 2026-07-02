@@ -11,6 +11,12 @@ import { startQuiz } from "./quiz.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
 
+/* =========================================================
+   DEFAULTS
+========================================================= */
+const DEFAULT_QUESTION_COUNT = 20;
+const DEFAULT_TIME_MINUTES = 20;
+
 let currentUserData = {};
 
 export async function renderPracticeArena(userData = {}) {
@@ -42,7 +48,7 @@ export async function renderPracticeArena(userData = {}) {
 
         <div class="form-group">
 
-          <label>Subject</label>
+          <label for="subjectSelect">Subject</label>
 
           <select id="subjectSelect">
             <option value="">
@@ -54,33 +60,27 @@ export async function renderPracticeArena(userData = {}) {
 
         <div class="form-group">
 
-          <label>Questions</label>
+          <label for="questionCount">Number of Questions</label>
 
-          <select id="questionCount">
-
-            <option value="10">10 Questions</option>
-
-            <option value="20">20 Questions</option>
-
-            <option value="30">30 Questions</option>
-
-          </select>
+          <input
+            id="questionCount"
+            type="number"
+            min="1"
+            value="${DEFAULT_QUESTION_COUNT}"
+          >
 
         </div>
 
         <div class="form-group">
 
-          <label>Time Limit</label>
+          <label for="timeLimit">Time (Minutes)</label>
 
-          <select id="timeLimit">
-
-            <option value="10">10 Minutes</option>
-
-            <option value="15">15 Minutes</option>
-
-            <option value="20">20 Minutes</option>
-
-          </select>
+          <input
+            id="timeLimit"
+            type="number"
+            min="1"
+            value="${DEFAULT_TIME_MINUTES}"
+          >
 
         </div>
 
@@ -153,5 +153,19 @@ function beginPractice() {
     return;
   }
 
+  if (!(count > 0)) {
+    alert("Please enter a valid number of questions.");
+    return;
+  }
+
+  if (!(time > 0)) {
+    alert("Please enter a valid time limit.");
+    return;
+  }
+
+  // Note: if `count` exceeds the number of questions actually
+  // available for this subject, startQuiz() in quiz.js already
+  // clamps it down to whatever is available — no extra handling
+  // needed here.
   startQuiz(subject, count, time, currentUserData);
 }

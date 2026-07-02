@@ -8,6 +8,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
+import { renderReviewAnswers } from "./reviewAnswers.js";
+
+/* =========================================================
+   CBT CONFIG
+   Fixed rules for purchased quiz attempts, kept separate from
+   Practice Arena (which is untouched by this file).
+========================================================= */
+const CBT_QUESTION_LIMIT = 25;
+const CBT_TIME_LIMIT_SECONDS = 10 * 60; // fixed 10-minute timer
 
 let questions = [];
 let answers = [];
@@ -28,31 +37,51 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
 
   const snapshot = await getDocs(q);
 
-  questions = [];
+  const allQuestions = [];
 
   snapshot.forEach((docSnap) => {
-    questions.push({
+    allQuestions.push({
       id: docSnap.id,
       ...docSnap.data(),
     });
   });
 
-  if (!questions.length) {
+  if (!allQuestions.length) {
     alert("No questions found.");
     return;
   }
+
+  // Shuffle the full question bank, then take up to CBT_QUESTION_LIMIT.
+  // If the quiz has fewer questions than the limit, this naturally
+  // just uses all of them (slice clamps to array length).
+  questions = shuffleArray(allQuestions).slice(0, CBT_QUESTION_LIMIT);
 
   answers = new Array(questions.length).fill(null);
 
   currentQuestion = 0;
 
-  timeRemaining = 30 * 60;
+  timeRemaining = CBT_TIME_LIMIT_SECONDS;
   registerBackHandler(() => {
     renderMyQuizzes(userData);
   });
   renderQuestion(quizTitle);
 
   startTimer(quizTitle);
+}
+
+/**
+ * Fisher-Yates shuffle. Returns a new array — does not mutate
+ * the array passed in.
+ */
+function shuffleArray(array) {
+  const shuffled = [...array];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled;
 }
 
 function renderQuestion(quizTitle) {
@@ -229,14 +258,28 @@ function finishQuiz(quizTitle) {
         Quiz Completed 🎉
       </p>
 
-      <button
-        onclick="location.reload()"
-      >
-        Back To Dashboard
-      </button>
+      <div class="result-actions">
+
+        <button id="reviewAnswersBtn" class="review-answers-btn">
+          Review Answers
+        </button>
+
+        <button id="restartBtn" class="result-back-btn">
+          Back To Dashboard
+        </button>
+
+      </div>
 
     </div>
   `;
+
+  document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
+    renderReviewAnswers(questions, answers, () => location.reload());
+  });
+
+  document.getElementById("restartBtn").addEventListener("click", () => {
+    location.reload();
+  });
 }
 
 function formatTime(seconds) {

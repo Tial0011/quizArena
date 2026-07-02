@@ -9,6 +9,8 @@ import {
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+import { renderReviewAnswers } from "./reviewAnswers.js";
+
 let questions = [];
 let answers = [];
 let currentQuestion = 0;
@@ -245,12 +247,24 @@ function finishQuiz() {
         ${message}
       </p>
 
-      <button id="restartBtn">
-        Back To Dashboard
-      </button>
+      <div class="result-actions">
+
+        <button id="reviewAnswersBtn" class="review-answers-btn">
+          Review Answers
+        </button>
+
+        <button id="restartBtn" class="result-back-btn">
+          Back To Dashboard
+        </button>
+
+      </div>
 
     </div>
   `;
+
+  document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
+    renderReviewAnswers(questions, answers, () => location.reload());
+  });
 
   document.getElementById("restartBtn").addEventListener("click", () => {
     location.reload();

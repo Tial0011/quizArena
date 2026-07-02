@@ -1,0 +1,205 @@
+/* =========================================================
+   REVIEW ANSWERS
+   Shared by both Practice (quiz.js) and Purchased Quiz
+   (purchasedQuiz.js) review screens.
+========================================================= */
+
+.review-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 30px 20px 60px;
+}
+
+.review-title {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #111827;
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 30px;
+}
+
+/* =========================
+   QUESTION CARD
+========================= */
+
+.review-card {
+  background: white;
+  border-radius: 20px;
+  padding: 22px;
+  border: 1px solid #ececec;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.review-question-number {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #7c3aed;
+  margin-bottom: 6px;
+}
+
+.review-question-text {
+  color: #111827;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.review-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* =========================
+   OPTIONS
+========================= */
+
+.review-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.option-letter {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.option-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+.option-label {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Neutral: unselected, incorrect options */
+.normal-option {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Correct answer, whether or not the student picked it */
+.correct-option {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+/* Student's selected answer, when it's wrong */
+.wrong-option {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+/* =========================
+   BACK BUTTON
+========================= */
+
+.review-back-btn {
+  width: 100%;
+  border: none;
+  padding: 16px;
+  border-radius: 14px;
+  background: #7c3aed;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.review-back-btn:hover {
+  background: #6d28d9;
+}
+
+.review-back-btn:active {
+  transform: scale(0.98);
+}
+
+/* =========================
+   RESULT SCREEN — two-button layout
+========================= */
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.review-answers-btn {
+  width: 100%;
+  border: 1px solid #7c3aed;
+  padding: 16px;
+  border-radius: 14px;
+  background: white;
+  color: #7c3aed;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.review-answers-btn:hover {
+  background: #f5f3ff;
+}
+
+.result-back-btn {
+  width: 100%;
+  border: none;
+  padding: 16px;
+  border-radius: 14px;
+  background: #7c3aed;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.result-back-btn:hover {
+  background: #6d28d9;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+  .review-container {
+    padding: 20px 16px 50px;
+  }
+
+  .review-card {
+    padding: 18px;
+  }
+
+  .review-option {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .option-label {
+    font-size: 0.72rem;
+  }
+}

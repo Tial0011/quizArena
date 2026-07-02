@@ -32,7 +32,8 @@
   color: #374151;
 }
 
-.practice-card select {
+.practice-card select,
+.practice-card input[type="number"] {
   width: 100%;
 
   padding: 15px;
@@ -48,7 +49,8 @@
   transition: 0.2s;
 }
 
-.practice-card select:focus {
+.practice-card select:focus,
+.practice-card input[type="number"]:focus {
   outline: none;
 
   border-color: #7c3aed;
