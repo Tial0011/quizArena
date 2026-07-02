@@ -6,8 +6,17 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { startPurchasedQuiz } from "./purchasedQuiz.js";
+import { registerBackHandler } from "./navigation.js";
+import { renderStudentDashboard } from "./dashboard.js";
 
 export async function renderMyQuizzes(userData = {}) {
+  history.pushState(
+    {
+      page: "myQuizzes",
+    },
+    "",
+    "",
+  );
   const app = document.getElementById("app");
 
   app.innerHTML = `
@@ -122,7 +131,10 @@ export async function renderMyQuizzes(userData = {}) {
 
   document.querySelectorAll(".attempt-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      startPurchasedQuiz(btn.dataset.id, btn.dataset.title);
+      startPurchasedQuiz(userData, btn.dataset.id, btn.dataset.title);
     });
+  });
+  registerBackHandler(() => {
+    renderStudentDashboard(userData);
   });
 }

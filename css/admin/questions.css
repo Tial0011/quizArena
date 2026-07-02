@@ -1,11 +1,82 @@
 /* =========================
-   QUESTION FORM
+   QUESTIONS — ADMIN DASHBOARD STYLE
 ========================= */
 
+.questions-header {
+  margin-bottom: 20px;
+}
+
+.questions-header h2 {
+  margin: 0 0 4px 0;
+}
+
+.questions-subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* =========================
+   SHARED FORM FIELD STYLES
+========================= */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+select,
+input,
+textarea {
+  font-family: inherit;
+}
+
+/* =========================
+   CONTEXT CARD (Subject / Quiz)
+========================= */
+.context-card {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 18px;
+  margin: 20px 0;
+}
+
+.context-card select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.context-card select:disabled {
+  background: #f3f3f3;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* =========================
+   QUESTION FORM
+========================= */
 .question-form {
   display: grid;
   gap: 15px;
   margin-top: 20px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 20px;
 }
 
 .question-form textarea,
@@ -17,6 +88,17 @@
   border-radius: 12px;
   font-size: 15px;
   background: white;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.question-form textarea:focus,
+.question-form input:focus,
+.question-form select:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
 .question-form textarea {
@@ -24,29 +106,374 @@
   resize: vertical;
 }
 
-.question-form button {
-  width: 100%;
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.question-form-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary {
   border: none;
   background: #7c3aed;
   color: white;
-  padding: 15px;
+  padding: 14px 20px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 15px;
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+
+.btn-primary:hover {
+  background: #6d28d9;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #444;
+  padding: 14px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: #f3f3f3;
 }
 
 /* =========================
-   QUESTION LIST
+   IMPORT CARD
 ========================= */
-
-#questionList {
-  margin-top: 25px;
+.import-card {
+  margin-top: 24px;
+  background: #fafafa;
+  border: 1px dashed #ddd;
+  border-radius: 16px;
+  padding: 20px;
 }
 
-.question-item {
+.import-card h3 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+}
+
+.import-hint {
+  margin: 0 0 14px 0;
+  color: #777;
+  font-size: 13px;
+}
+
+.import-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.import-controls input[type="file"] {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.import-controls .btn-secondary {
+  padding: 12px 18px;
+}
+
+.import-result {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #444;
+  min-height: 18px;
+}
+
+/* =========================
+   LIST TOOLBAR (search + counter + export)
+========================= */
+.list-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 220px;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.list-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.question-counter {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+/* =========================
+   QUESTION LIST + CARDS
+========================= */
+.question-list-wrapper {
+  margin-top: 16px;
+}
+
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.question-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 16px;
   background: #fafafa;
   border: 1px solid #eee;
-  border-radius: 14px;
-  padding: 15px;
-  margin-bottom: 15px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 20px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.question-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.06),
+    0 12px 24px rgba(0, 0, 0, 0.06);
+}
+
+.question-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.question-card-text {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.question-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.question-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #eee;
+  font-size: 13px;
+}
+
+.option-correct {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.option-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  font-size: 11px;
+  font-weight: 700;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.option-correct .option-letter {
+  background: #10b981;
+  color: white;
+}
+
+.option-text {
+  flex: 1;
+  color: #333;
+}
+
+.question-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* =========================
+   BADGES
+========================= */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-subject {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.badge-quiz {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.badge-correct {
+  background: #10b981;
+  color: white;
+  margin-left: auto;
+}
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+.btn-edit {
+  border: none;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: background 0.15s ease;
+}
+
+.btn-edit:hover {
+  background: #e0e7ff;
+}
+
+.btn-delete {
+  border: none;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: background 0.15s ease;
+}
+
+.btn-delete:hover {
+  background: #fecaca;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+.question-empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  border: 1px dashed #ddd;
+  border-radius: 16px;
+  background: #fafafa;
+  color: #888;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 720px) {
+  .context-card {
+    grid-template-columns: 1fr;
+  }
+
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .question-form-actions {
+    flex-direction: column;
+  }
+
+  .question-form-actions button {
+    width: 100%;
+  }
+
+  .import-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .import-controls .btn-secondary {
+    width: 100%;
+  }
+
+  .list-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .list-toolbar-right {
+    justify-content: space-between;
+  }
+
+  .question-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .question-card-actions {
+    flex-direction: column;
+  }
+
+  .question-card-actions button {
+    width: 100%;
+  }
 }

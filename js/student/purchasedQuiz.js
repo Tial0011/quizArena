@@ -6,6 +6,8 @@ import {
   query,
   where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { registerBackHandler } from "./navigation.js";
+import { renderStudentDashboard } from "./dashboard.js";
 
 let questions = [];
 let answers = [];
@@ -14,7 +16,14 @@ let currentQuestion = 0;
 let timer;
 let timeRemaining;
 
-export async function startPurchasedQuiz(quizId, quizTitle = "Quiz") {
+export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
+  history.pushState(
+    {
+      page: "purchasedQuiz",
+    },
+    "",
+    "",
+  );
   const q = query(collection(db, "questions"), where("quizId", "==", quizId));
 
   const snapshot = await getDocs(q);
@@ -38,7 +47,9 @@ export async function startPurchasedQuiz(quizId, quizTitle = "Quiz") {
   currentQuestion = 0;
 
   timeRemaining = 30 * 60;
-
+  registerBackHandler(() => {
+    renderMyQuizzes(userData);
+  });
   renderQuestion(quizTitle);
 
   startTimer(quizTitle);

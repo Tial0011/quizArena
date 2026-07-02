@@ -1,57 +1,73 @@
 import { db } from "../firebase/config.js";
-
 import {
   collection,
   getDocs,
   addDoc,
+  updateDoc,
   deleteDoc,
   doc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+/* =========================================================
+   MODULE STATE
+   - quizzesCache avoids refetching a single quiz just to
+     populate the edit form.
+   - editingQuizId tracks whether the form is in
+     "create" mode (null) or "edit" mode (quiz id).
+========================================================= */
+let quizzesCache = [];
+let editingQuizId = null;
+
+/* =========================================================
+   PUBLIC ENTRY POINT
+========================================================= */
 export async function renderQuizzes(container) {
   container.innerHTML = `
     <div class="admin-card">
-
-      <h2>Quizzes</h2>
-
-      <div class="quiz-form">
-
-        <select id="subjectSelect">
-          <option value="">
-            Select Subject
-          </option>
-        </select>
-
-        <input
-          id="weekInput"
-          type="number"
-          min="1"
-          placeholder="Week Number"
-        >
-
-        <input
-          id="titleInput"
-          placeholder="Quiz Topic (e.g Magnetic Force)"
-        >
-
-        <input
-          id="priceInput"
-          type="number"
-          min="0"
-          placeholder="Price"
-        >
-
-        <button id="createQuizBtn">
-          Create Quiz
-        </button>
-
+      <div class="quizzes-header">
+        <h2>Quizzes</h2>
+        <p class="quizzes-subtitle">Create, edit and manage your quizzes</p>
       </div>
 
-      <div id="quizList">
-        Loading...
-      </div>
+      <form id="quizForm" class="quiz-form">
+        <div class="quiz-form-grid">
+          <div class="form-field">
+            <label for="subjectSelect">Subject</label>
+            <select id="subjectSelect">
+              <option value="">Select Subject</option>
+            </select>
+          </div>
 
+          <div class="form-field">
+            <label for="weekInput">Week</label>
+            <input id="weekInput" type="number" min="1" placeholder="e.g. 3" />
+          </div>
+
+          <div class="form-field form-field-wide">
+            <label for="titleInput">Quiz Topic</label>
+            <input id="titleInput" placeholder="e.g. Magnetic Force" />
+          </div>
+
+          <div class="form-field">
+            <label for="priceInput">Price (₦)</label>
+            <input id="priceInput" type="number" min="0" placeholder="e.g. 500" />
+          </div>
+        </div>
+
+        <div class="quiz-form-actions">
+          <button type="submit" id="submitQuizBtn" class="btn-primary">
+            Create Quiz
+          </button>
+          <button type="button" id="cancelEditBtn" class="btn-secondary" hidden>
+            Cancel Edit
+          </button>
+        </div>
+      </form>
+
+      <div id="quizList" class="quiz-list-wrapper">
+        <p>Loading...</p>
+      </div>
     </div>
   `;
 
@@ -59,129 +75,246 @@ export async function renderQuizzes(container) {
   await loadQuizzes();
 
   document
-    .getElementById("createQuizBtn")
-    .addEventListener("click", createQuiz);
+    .getElementById("quizForm")
+    .addEventListener("submit", handleFormSubmit);
+  document
+    .getElementById("cancelEditBtn")
+    .addEventListener("click", exitEditMode);
 }
 
+/* =========================================================
+   SUBJECTS
+========================================================= */
 async function loadSubjects() {
   const select = document.getElementById("subjectSelect");
-
   const snapshot = await getDocs(collection(db, "subjects"));
 
   snapshot.forEach((docSnap) => {
     const subject = docSnap.data();
-
-    select.innerHTML += `
-      <option value="${docSnap.id}">
-        ${subject.name}
-      </option>
-    `;
+    const option = document.createElement("option");
+    option.value = docSnap.id;
+    option.textContent = subject.name;
+    select.appendChild(option);
   });
 }
 
-async function createQuiz() {
+/* =========================================================
+   FORM HELPERS
+========================================================= */
+function getFormValues() {
   const subjectSelect = document.getElementById("subjectSelect");
+  return {
+    subjectId: subjectSelect.value,
+    subjectName: subjectSelect.options[subjectSelect.selectedIndex]?.text || "",
+    week: document.getElementById("weekInput").value,
+    title: document.getElementById("titleInput").value.trim(),
+    price: document.getElementById("priceInput").value,
+  };
+}
 
-  const subjectId = subjectSelect.value;
+function validateForm(values) {
+  if (!values.subjectId) {
+    alert("Please select a subject.");
+    return false;
+  }
+  if (!values.week) {
+    alert("Please enter the week number.");
+    return false;
+  }
+  if (!values.title) {
+    alert("Please enter a quiz title.");
+    return false;
+  }
+  if (values.price === "" || values.price === null) {
+    alert("Please enter a price.");
+    return false;
+  }
+  return true;
+}
 
-  const subjectName = subjectSelect.options[subjectSelect.selectedIndex]?.text;
+function resetForm() {
+  document.getElementById("quizForm").reset();
+}
 
-  const week = document.getElementById("weekInput").value;
+function enterEditMode(quiz, id) {
+  editingQuizId = id;
 
-  const title = document.getElementById("titleInput").value.trim();
+  document.getElementById("subjectSelect").value = quiz.subjectId;
+  document.getElementById("weekInput").value = quiz.week;
+  document.getElementById("titleInput").value = quiz.title;
+  document.getElementById("priceInput").value = quiz.price;
 
-  const price = document.getElementById("priceInput").value;
+  const submitBtn = document.getElementById("submitQuizBtn");
+  submitBtn.textContent = "Save Changes";
 
-  if (!subjectId || !week || !title || !price) {
-    alert("Complete all fields");
-    return;
+  document.getElementById("cancelEditBtn").hidden = false;
+
+  document
+    .getElementById("quizForm")
+    .scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function exitEditMode() {
+  editingQuizId = null;
+  resetForm();
+
+  document.getElementById("submitQuizBtn").textContent = "Create Quiz";
+  document.getElementById("cancelEditBtn").hidden = true;
+}
+
+/* =========================================================
+   CREATE / UPDATE (single form, two modes)
+========================================================= */
+async function handleFormSubmit(e) {
+  e.preventDefault();
+
+  const values = getFormValues();
+  if (!validateForm(values)) return;
+
+  if (editingQuizId) {
+    await updateQuiz(editingQuizId, values);
+  } else {
+    await createQuiz(values);
   }
 
+  exitEditMode();
+  await loadQuizzes();
+}
+
+async function createQuiz(values) {
   await addDoc(collection(db, "quizzes"), {
-    subjectId,
-    subjectName,
-
-    week: Number(week),
-
-    title,
-
-    price: Number(price),
-
+    subjectId: values.subjectId,
+    subjectName: values.subjectName,
+    week: Number(values.week),
+    title: values.title,
+    price: Number(values.price),
     active: true,
-
     createdAt: serverTimestamp(),
   });
-
-  document.getElementById("weekInput").value = "";
-  document.getElementById("titleInput").value = "";
-  document.getElementById("priceInput").value = "";
-
-  loadQuizzes();
 }
 
+async function updateQuiz(id, values) {
+  await updateDoc(doc(db, "quizzes", id), {
+    subjectId: values.subjectId,
+    subjectName: values.subjectName,
+    week: Number(values.week),
+    title: values.title,
+    price: Number(values.price),
+  });
+}
+
+/* =========================================================
+   LOAD + RENDER QUIZ LIST
+========================================================= */
 async function loadQuizzes() {
   const list = document.getElementById("quizList");
-
   const snapshot = await getDocs(collection(db, "quizzes"));
 
-  if (snapshot.empty) {
-    list.innerHTML = "<p>No quizzes yet.</p>";
+  quizzesCache = [];
+  snapshot.forEach((docSnap) => {
+    quizzesCache.push({ id: docSnap.id, ...docSnap.data() });
+  });
+
+  if (quizzesCache.length === 0) {
+    list.innerHTML = renderEmptyState();
     return;
   }
 
-  let html = '<div class="quiz-grid">';
+  list.innerHTML = `
+    <div class="quiz-grid">
+      ${quizzesCache.map(renderQuizCard).join("")}
+    </div>
+  `;
 
-  snapshot.forEach((docSnap) => {
-    const quiz = docSnap.data();
+  attachQuizListEvents(list);
+}
 
-    html += `
-      <div class="quiz-item">
+function renderEmptyState() {
+  return `
+    <div class="quiz-empty-state">
+      <p>No quizzes created yet</p>
+    </div>
+  `;
+}
 
-        <div>
+function renderQuizCard(quiz) {
+  const statusClass = quiz.active ? "badge-active" : "badge-inactive";
+  const statusLabel = quiz.active ? "Active" : "Inactive";
 
-          <h4>
-            ${quiz.subjectName}
-            Week ${quiz.week}
-          </h4>
-
-          <p>
-            ${quiz.title}
-          </p>
-
-          <small>
-            ₦${quiz.price}
-          </small>
-
-        </div>
-
-        <button
-          class="deleteQuiz"
-          data-id="${docSnap.id}"
-        >
-          Delete
-        </button>
-
+  return `
+    <div class="quiz-card" data-id="${quiz.id}">
+      <div class="quiz-card-top">
+        <span class="badge badge-subject">${quiz.subjectName}</span>
+        <span class="badge ${statusClass}">${statusLabel}</span>
       </div>
-    `;
-  });
 
-  html += "</div>";
+      <h3 class="quiz-card-title">${quiz.title}</h3>
+      <p class="quiz-card-week">Week ${quiz.week}</p>
 
-  list.innerHTML = html;
+      <div class="quiz-card-footer">
+        <span class="badge badge-price">₦${quiz.price}</span>
 
-  document.querySelectorAll(".deleteQuiz").forEach((btn) => {
-    btn.addEventListener("click", deleteQuiz);
+        <div class="quiz-card-actions">
+          <button class="btn-edit" data-action="edit" data-id="${quiz.id}">
+            Edit
+          </button>
+          <button class="btn-delete" data-action="delete" data-id="${quiz.id}">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   EVENT DELEGATION
+   Centralized here so future actions (publish, duplicate,
+   manage questions, analytics) only need a new "case" below
+   plus a new button in renderQuizCard — no rewiring needed.
+========================================================= */
+function attachQuizListEvents(list) {
+  list.querySelectorAll("[data-action]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      handleQuizAction(action, id);
+    });
   });
 }
 
-async function deleteQuiz(e) {
-  const id = e.target.dataset.id;
-
-  if (!confirm("Delete this quiz?")) {
-    return;
+function handleQuizAction(action, id) {
+  switch (action) {
+    case "edit":
+      handleEditClick(id);
+      break;
+    case "delete":
+      handleDeleteClick(id);
+      break;
+    // Future actions plug in here, e.g.:
+    // case "publish": handlePublishClick(id); break;
+    // case "duplicate": handleDuplicateClick(id); break;
+    // case "manage-questions": handleManageQuestionsClick(id); break;
+    // case "analytics": handleAnalyticsClick(id); break;
+    default:
+      console.warn(`Unhandled quiz action: ${action}`);
   }
+}
+
+function handleEditClick(id) {
+  const quiz = quizzesCache.find((q) => q.id === id);
+  if (!quiz) return;
+  enterEditMode(quiz, id);
+}
+
+async function handleDeleteClick(id) {
+  if (!confirm("Delete this quiz?")) return;
 
   await deleteDoc(doc(db, "quizzes", id));
 
-  loadQuizzes();
+  if (editingQuizId === id) {
+    exitEditMode();
+  }
+
+  await loadQuizzes();
 }

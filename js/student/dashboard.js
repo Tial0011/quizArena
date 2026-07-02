@@ -1,10 +1,18 @@
 import { logoutUser } from "../auth.js";
 import { renderPracticeArena } from "./practice.js";
+import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
 
 const app = document.getElementById("app");
 
 export function renderStudentDashboard(userData = {}) {
+  history.replaceState(
+    {
+      page: "dashboard",
+    },
+    "",
+    "",
+  );
   const purchasedCount = userData.purchasedQuizzes?.length || 0;
 
   app.innerHTML = `
@@ -47,6 +55,29 @@ export function renderStudentDashboard(userData = {}) {
 
           <span class="action-link">
             Open →
+          </span>
+
+        </div>
+
+        <div
+          class="action-card"
+          id="marketplaceBtn"
+        >
+
+          <div class="action-icon">
+            🛒
+          </div>
+
+          <h3>
+            Marketplace
+          </h3>
+
+          <p>
+            Browse available weekly quizzes and purchase new ones to expand your library.
+          </p>
+
+          <span class="action-link">
+            Browse →
           </span>
 
         </div>
@@ -148,6 +179,10 @@ export function renderStudentDashboard(userData = {}) {
 function setupDashboardEvents(userData) {
   document.getElementById("practiceBtn")?.addEventListener("click", () => {
     renderPracticeArena(userData);
+  });
+
+  document.getElementById("marketplaceBtn")?.addEventListener("click", () => {
+    renderMarketplace(userData);
   });
 
   document.getElementById("quizzesBtn")?.addEventListener("click", () => {

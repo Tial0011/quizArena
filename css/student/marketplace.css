@@ -1,0 +1,305 @@
+/* =========================
+   MARKETPLACE
+========================= */
+
+.marketplace-header {
+  margin-bottom: 20px;
+}
+
+.marketplace-header h2 {
+  margin: 0 0 4px 0;
+}
+
+.marketplace-subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.marketplace-list-wrapper {
+  margin-top: 8px;
+}
+
+/* =========================
+   QUIZ GRID + CARDS
+========================= */
+.marketplace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.marketplace-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #eee;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 20px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.marketplace-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.06),
+    0 12px 24px rgba(0, 0, 0, 0.06);
+}
+
+.marketplace-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.marketplace-card-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.marketplace-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.owned-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* =========================
+   BADGES
+========================= */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-subject {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.badge-week {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.badge-price {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.badge-owned {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.btn-buy {
+  border: none;
+  background: #7c3aed;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+
+.btn-buy:hover {
+  background: #6d28d9;
+}
+
+.btn-buy:active {
+  transform: scale(0.98);
+}
+
+.btn-open {
+  border: none;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.btn-open:hover {
+  background: #e0e7ff;
+}
+
+.btn-primary {
+  border: none;
+  background: #7c3aed;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: #6d28d9;
+}
+
+.btn-primary:disabled {
+  background: #c4b5fd;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #444;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: #f3f3f3;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+.marketplace-empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  border: 1px dashed #ddd;
+  border-radius: 16px;
+  background: #fafafa;
+  color: #888;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* =========================
+   MOCK PURCHASE DIALOG
+========================= */
+.purchase-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.purchase-dialog-overlay[hidden] {
+  display: none;
+}
+
+.purchase-dialog {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.purchase-dialog h3 {
+  margin: 0 0 16px 0;
+}
+
+.purchase-dialog-details {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.purchase-dialog-title {
+  margin: 0 0 6px 0;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+
+.purchase-dialog-price {
+  margin: 0;
+  font-weight: 600;
+  color: #047857;
+}
+
+.purchase-dialog-notice {
+  font-size: 12px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0 0 18px 0;
+}
+
+.purchase-dialog-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.purchase-dialog-actions button {
+  flex: 1;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 720px) {
+  .marketplace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .owned-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-buy,
+  .btn-open {
+    width: 100%;
+  }
+
+  .purchase-dialog-actions {
+    flex-direction: column;
+  }
+}

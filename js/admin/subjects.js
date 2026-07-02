@@ -13,8 +13,17 @@ export async function renderSubjects(container) {
   container.innerHTML = `
     <div class="admin-card">
 
-      <div class="section-top">
-        <h2>Subjects</h2>
+      <div class="page-header">
+
+        <div>
+          <h2>📚 Subjects</h2>
+          <p>Create and manage all available subjects.</p>
+        </div>
+
+        <div class="count-badge" id="subjectCount">
+          0 Subjects
+        </div>
+
       </div>
 
       <div class="subject-form">
@@ -26,7 +35,7 @@ export async function renderSubjects(container) {
         />
 
         <button id="addSubjectBtn">
-          Add Subject
+          + Add Subject
         </button>
 
       </div>
@@ -51,7 +60,7 @@ async function addSubject() {
   const name = input.value.trim();
 
   if (!name) {
-    alert("Enter a subject name");
+    alert("Enter a subject name.");
     return;
   }
 
@@ -64,9 +73,9 @@ async function addSubject() {
     input.value = "";
 
     loadSubjects();
-  } catch (error) {
-    console.error(error);
-    alert(error.message);
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
   }
 }
 
@@ -75,9 +84,14 @@ async function loadSubjects() {
 
   const snapshot = await getDocs(collection(db, "subjects"));
 
+  document.getElementById("subjectCount").textContent =
+    `${snapshot.size} Subject${snapshot.size === 1 ? "" : "s"}`;
+
   if (snapshot.empty) {
     list.innerHTML = `
-      <p>No subjects yet.</p>
+      <div class="empty-state">
+        No subjects created yet.
+      </div>
     `;
     return;
   }
@@ -90,11 +104,17 @@ async function loadSubjects() {
     const subject = docSnap.data();
 
     html += `
-      <div class="subject-item">
+      <div class="subject-card">
 
-        <span>
-          ${subject.name}
-        </span>
+        <div>
+
+          <h3>${subject.name}</h3>
+
+          <small>
+            Available for quizzes
+          </small>
+
+        </div>
 
         <button
           class="delete-subject"
@@ -117,13 +137,9 @@ async function loadSubjects() {
 }
 
 async function deleteSubject(e) {
-  const id = e.target.dataset.id;
+  if (!confirm("Delete this subject?")) return;
 
-  const confirmed = confirm("Delete this subject?");
-
-  if (!confirmed) return;
-
-  await deleteDoc(doc(db, "subjects", id));
+  await deleteDoc(doc(db, "subjects", e.target.dataset.id));
 
   loadSubjects();
 }

@@ -8,10 +8,19 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { startQuiz } from "./quiz.js";
+import { registerBackHandler } from "./navigation.js";
+import { renderStudentDashboard } from "./dashboard.js";
 
 let currentUserData = {};
 
 export async function renderPracticeArena(userData = {}) {
+  history.pushState(
+    {
+      page: "practice",
+    },
+    "",
+    "",
+  );
   currentUserData = userData;
 
   const app = document.getElementById("app");
@@ -91,6 +100,9 @@ export async function renderPracticeArena(userData = {}) {
   document
     .getElementById("startPracticeBtn")
     .addEventListener("click", beginPractice);
+  registerBackHandler(() => {
+    renderStudentDashboard(userData);
+  });
 }
 
 async function loadPurchasedSubjects() {
