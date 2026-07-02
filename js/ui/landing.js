@@ -11,6 +11,10 @@ export function renderLanding() {
 
       <section class="hero">
 
+        <div class="live-badge">
+          Live Platform
+        </div>
+
         <div class="logo">
           Quiz Arena
         </div>
@@ -28,17 +32,17 @@ export function renderLanding() {
         </p>
 
         <div class="stats">
-          <div>
+          <div class="stat">
             <h3>4</h3>
             <span>Subjects</span>
           </div>
 
-          <div>
+          <div class="stat">
             <h3>∞</h3>
             <span>Practice</span>
           </div>
 
-          <div>
+          <div class="stat">
             <h3>24/7</h3>
             <span>Access</span>
           </div>
@@ -61,20 +65,33 @@ export function renderLanding() {
 function loginMarkup() {
   return `
     <h2>Welcome Back</h2>
+    <p class="auth-subtitle">Enter your email and password to continue</p>
 
-    <input
-      id="email"
-      type="email"
-      placeholder="Email"
-    >
+    <div class="form-group">
+      <label for="email">Email</label>
+      <div class="input-with-icon">
+        <span class="input-icon">✉️</span>
+        <input
+          id="email"
+          type="email"
+          placeholder="e.g. arjun@email.com"
+        >
+      </div>
+    </div>
 
-    <input
-      id="password"
-      type="password"
-      placeholder="Password"
-    >
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="input-with-icon">
+        <span class="input-icon">🔒</span>
+        <input
+          id="password"
+          type="password"
+          placeholder="Enter your password"
+        >
+      </div>
+    </div>
 
-    <button id="submitBtn">
+    <button id="submitBtn" class="submit-btn">
       Sign In
     </button>
 
@@ -91,25 +108,44 @@ function loginMarkup() {
 function registerMarkup() {
   return `
     <h2>Create Account</h2>
+    <p class="auth-subtitle">Set up your details to get started</p>
 
-    <input
-      id="name"
-      placeholder="Full Name"
-    >
+    <div class="form-group">
+      <label for="name">Full Name</label>
+      <div class="input-with-icon">
+        <span class="input-icon">👤</span>
+        <input
+          id="name"
+          placeholder="e.g. Arjun Sharma"
+        >
+      </div>
+    </div>
 
-    <input
-      id="email"
-      type="email"
-      placeholder="Email"
-    >
+    <div class="form-group">
+      <label for="email">Email</label>
+      <div class="input-with-icon">
+        <span class="input-icon">✉️</span>
+        <input
+          id="email"
+          type="email"
+          placeholder="e.g. arjun@email.com"
+        >
+      </div>
+    </div>
 
-    <input
-      id="password"
-      type="password"
-      placeholder="Password"
-    >
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="input-with-icon">
+        <span class="input-icon">🔒</span>
+        <input
+          id="password"
+          type="password"
+          placeholder="Create a password"
+        >
+      </div>
+    </div>
 
-    <button id="submitBtn">
+    <button id="submitBtn" class="submit-btn">
       Register
     </button>
 

@@ -190,6 +190,16 @@
   margin-bottom: 1.5rem;
 }
 
+/* Subtitle directly under the h2 ("Enter your email and
+   password to continue"). Slightly tighter margin than the
+   default .auth-card p so it sits close to the heading. */
+.auth-subtitle {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-top: -0.15rem;
+  margin-bottom: 1.75rem;
+}
+
 /* =========================
    FORM
 ========================= */
@@ -230,6 +240,29 @@
   box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
 }
 
+/* Icon-adorned inputs (Name / Email / Password fields).
+   Wraps the input so an icon can sit inside its left edge
+   without changing the input's own base styles above. */
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+
+  font-size: 0.95rem;
+  opacity: 0.55;
+
+  pointer-events: none;
+}
+
+.input-with-icon input {
+  padding-left: 2.75rem;
+}
+
 .submit-btn {
   width: 100%;
 
@@ -248,6 +281,17 @@
   cursor: pointer;
 
   margin-top: 0.5rem;
+
+  transition: 0.2s;
+}
+
+.submit-btn:hover {
+  background: #6d28d9;
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .switch {
