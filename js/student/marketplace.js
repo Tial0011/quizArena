@@ -6,8 +6,9 @@ import {
   where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { purchaseQuiz, getUserOwnedQuizIds } from "./purchaseService.js";
-import { renderStudentDashboard } from "./dashboard.js";
+import { getUserData } from "../auth.js";
 import { registerBackHandler } from "./navigation.js";
+import { renderStudentDashboard } from "./dashboard.js";
 
 /* =========================================================
    MODULE STATE
@@ -15,6 +16,7 @@ import { registerBackHandler } from "./navigation.js";
 let quizzesCache = [];
 let ownedQuizIds = new Set();
 let currentUserId = null;
+let currentUserData = null;
 let selectedQuizForPurchase = null;
 let isPurchasing = false;
 
@@ -23,20 +25,15 @@ let isPurchasing = false;
    Matches the same call pattern as renderPracticeArena(userData)
    and renderMyQuizzes(userData): takes the signed-in user's data
    object and renders itself into the #app container.
-
-   NOTE: adjust `userData.uid` below if your app stores the
-   signed-in user's id under a different field.
 ========================================================= */
 export async function renderMarketplace(userData = {}) {
-  history.pushState(
-    {
-      page: "marketplace",
-    },
-    "",
-    "",
-  );
   const app = document.getElementById("app");
+  currentUserData = userData;
   currentUserId = userData.id;
+
+  registerBackHandler(() => {
+    renderStudentDashboard(currentUserData);
+  });
 
   app.innerHTML = `
     <div class="admin-card">
@@ -56,9 +53,6 @@ export async function renderMarketplace(userData = {}) {
   attachDialogEventListeners();
   await loadMarketplaceData();
   renderMarketplaceList();
-  registerBackHandler(() => {
-    renderStudentDashboard(userData);
-  });
 }
 
 /* =========================================================
@@ -283,7 +277,7 @@ function closePurchaseDialog() {
  *   1. Launch Paystack Checkout for selectedQuizForPurchase.price
  *   2. In Paystack's onSuccess callback, call:
  *        const result = await purchaseQuiz(currentUserId, selectedQuizForPurchase.id);
- *   3. Keep everything below (UI update / dialog close) unchanged.
+ *   3. Keep everything below (refresh + re-render) unchanged.
  *
  * No other file needs to change — purchaseService.js and the rest
  * of the Marketplace UI stay exactly as they are.
@@ -308,7 +302,18 @@ async function handleConfirmPurchase() {
     return;
   }
 
-  ownedQuizIds.add(quizId);
+  // Pull the freshly-written user document (purchasedQuizzes now
+  // includes the new purchase) instead of trusting local state.
+  const freshUserData = await getUserData(currentUserId);
+  if (freshUserData) {
+    currentUserData = freshUserData;
+  }
+
   closePurchaseDialog();
-  renderMarketplaceList();
+
+  // Full re-render, sourced from Firestore: rebuilds the quiz grid
+  // (so this card flips to "Owned"), re-registers the back handler
+  // with the updated currentUserData, and keeps everything as an
+  // SPA update — no location.reload() anywhere.
+  await renderMarketplace(currentUserData);
 }
