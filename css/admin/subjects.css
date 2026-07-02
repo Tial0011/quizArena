@@ -1,0 +1,48 @@
+/* =========================
+   SUBJECTS
+========================= */
+
+.subject-form {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.subject-form input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+.subject-form button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #7c3aed;
+  color: white;
+  cursor: pointer;
+}
+
+.subjects-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.subject-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: #f8f8f8;
+  border-radius: 12px;
+}
+
+.delete-subject {
+  border: none;
+  background: crimson;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}

@@ -1,0 +1,52 @@
+/* =========================
+   QUESTION FORM
+========================= */
+
+.question-form {
+  display: grid;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.question-form textarea,
+.question-form input,
+.question-form select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  font-size: 15px;
+  background: white;
+}
+
+.question-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.question-form button {
+  width: 100%;
+  border: none;
+  background: #7c3aed;
+  color: white;
+  padding: 15px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* =========================
+   QUESTION LIST
+========================= */
+
+#questionList {
+  margin-top: 25px;
+}
+
+.question-item {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 15px;
+  margin-bottom: 15px;
+}

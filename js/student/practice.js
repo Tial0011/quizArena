@@ -3,62 +3,82 @@ import { db } from "../firebase/config.js";
 import {
   collection,
   getDocs,
+  doc,
+  getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { startQuiz } from "./quiz.js";
 
-export async function renderPracticeArena() {
+let currentUserData = {};
+
+export async function renderPracticeArena(userData = {}) {
+  currentUserData = userData;
+
   const app = document.getElementById("app");
 
   app.innerHTML = `
     <div class="dashboard">
 
-      <div class="admin-card">
+      <header class="dashboard-header">
 
-        <h2>
-          Practice Arena
-        </h2>
+        <h1>🎯 Practice Arena</h1>
 
-        <select id="subjectSelect">
-          <option value="">
-            Select Subject
-          </option>
-        </select>
+        <p>
+          Practice questions from your purchased quizzes.
+        </p>
 
-        <select id="questionCount">
+      </header>
 
-          <option value="10">
-            10 Questions
-          </option>
+      <div class="practice-card">
 
-          <option value="20">
-            20 Questions
-          </option>
+        <div class="form-group">
 
-          <option value="30">
-            30 Questions
-          </option>
+          <label>Subject</label>
 
-        </select>
+          <select id="subjectSelect">
+            <option value="">
+              Select Subject
+            </option>
+          </select>
 
-        <select id="timeLimit">
+        </div>
 
-          <option value="10">
-            10 Minutes
-          </option>
+        <div class="form-group">
 
-          <option value="15">
-            15 Minutes
-          </option>
+          <label>Questions</label>
 
-          <option value="20">
-            20 Minutes
-          </option>
+          <select id="questionCount">
 
-        </select>
+            <option value="10">10 Questions</option>
+
+            <option value="20">20 Questions</option>
+
+            <option value="30">30 Questions</option>
+
+          </select>
+
+        </div>
+
+        <div class="form-group">
+
+          <label>Time Limit</label>
+
+          <select id="timeLimit">
+
+            <option value="10">10 Minutes</option>
+
+            <option value="15">15 Minutes</option>
+
+            <option value="20">20 Minutes</option>
+
+          </select>
+
+        </div>
 
         <button id="startPracticeBtn">
-          Start Practice
+
+          🚀 Start Practice
+
         </button>
 
       </div>
@@ -66,28 +86,50 @@ export async function renderPracticeArena() {
     </div>
   `;
 
-  await loadSubjects();
+  await loadPurchasedSubjects();
 
   document
     .getElementById("startPracticeBtn")
     .addEventListener("click", beginPractice);
 }
-async function loadSubjects() {
+
+async function loadPurchasedSubjects() {
   const select = document.getElementById("subjectSelect");
 
-  const snapshot = await getDocs(collection(db, "subjects"));
+  const purchases = currentUserData.purchasedQuizzes || [];
 
-  snapshot.forEach((docSnap) => {
-    const subject = docSnap.data();
+  const subjects = new Set();
 
+  for (const purchaseId of purchases) {
+    try {
+      const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+
+      if (!purchaseDoc.exists()) continue;
+
+      const purchase = purchaseDoc.data();
+
+      const quizDoc = await getDoc(doc(db, "quizzes", purchase.quizId));
+
+      if (!quizDoc.exists()) continue;
+
+      const quiz = quizDoc.data();
+
+      subjects.add(quiz.subjectName);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  subjects.forEach((subject) => {
     select.innerHTML += `
-      <option value="${subject.name}">
-        ${subject.name}
+      <option value="${subject}">
+        ${subject}
       </option>
     `;
   });
 }
-async function beginPractice() {
+
+function beginPractice() {
   const subject = document.getElementById("subjectSelect").value;
 
   const count = Number(document.getElementById("questionCount").value);
@@ -95,9 +137,9 @@ async function beginPractice() {
   const time = Number(document.getElementById("timeLimit").value);
 
   if (!subject) {
-    alert("Select subject");
+    alert("Please select a subject.");
     return;
   }
 
-  startQuiz(subject, count, time);
+  startQuiz(subject, count, time, currentUserData);
 }

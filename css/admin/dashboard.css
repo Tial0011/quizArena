@@ -1,0 +1,73 @@
+/* =========================
+   ADMIN DASHBOARD
+========================= */
+
+.admin-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: auto;
+  padding: 1rem;
+}
+
+.admin-header {
+  margin-bottom: 1.5rem;
+}
+
+.admin-header h1 {
+  margin-bottom: 0.4rem;
+}
+
+.admin-header p {
+  color: #666;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  border: none;
+  padding: 0.9rem 1.2rem;
+  border-radius: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab-btn.active {
+  background: #7c3aed;
+  color: white;
+}
+
+.admin-card {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 16px;
+}
+
+.overview-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.overview-item {
+  background: #f7f7f7;
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.overview-item span {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .overview-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

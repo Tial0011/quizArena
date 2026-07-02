@@ -11,10 +11,14 @@ import { renderStudentDashboard } from "./student/dashboard.js";
 import { logoutUser } from "./auth.js";
 
 onAuthStateChanged(auth, async (user) => {
+  console.log("Firebase User:", user);
+
   if (!user) {
     renderLanding();
     return;
   }
+
+  console.log("UID:", user.uid);
 
   const userData = await getUserData(user.uid);
 

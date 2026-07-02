@@ -1,0 +1,93 @@
+/* =========================
+   PRACTICE ARENA
+========================= */
+
+.practice-card {
+  max-width: 600px;
+
+  margin: 25px auto;
+
+  background: white;
+
+  padding: 30px;
+
+  border-radius: 22px;
+
+  border: 1px solid #ececec;
+
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.practice-card .form-group {
+  margin-bottom: 22px;
+}
+
+.practice-card label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-weight: 600;
+
+  color: #374151;
+}
+
+.practice-card select {
+  width: 100%;
+
+  padding: 15px;
+
+  border: 1px solid #d1d5db;
+
+  border-radius: 14px;
+
+  font-size: 15px;
+
+  background: white;
+
+  transition: 0.2s;
+}
+
+.practice-card select:focus {
+  outline: none;
+
+  border-color: #7c3aed;
+
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+#startPracticeBtn {
+  width: 100%;
+
+  padding: 16px;
+
+  border: none;
+
+  border-radius: 14px;
+
+  background: #7c3aed;
+
+  color: white;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.25s;
+}
+
+#startPracticeBtn:hover {
+  background: #6d28d9;
+}
+
+#startPracticeBtn:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+  .practice-card {
+    padding: 22px;
+  }
+}

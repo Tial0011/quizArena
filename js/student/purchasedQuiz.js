@@ -5,73 +5,46 @@ import {
   getDocs,
   query,
   where,
-  doc,
-  getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 let questions = [];
 let answers = [];
 let currentQuestion = 0;
 
-let timer = null;
-let timeRemaining = 0;
+let timer;
+let timeRemaining;
 
-export async function startQuiz(subject, count, minutes, userData) {
-  const allQuestions = [];
+export async function startPurchasedQuiz(quizId, quizTitle = "Quiz") {
+  const q = query(collection(db, "questions"), where("quizId", "==", quizId));
 
-  const purchases = userData?.purchasedQuizzes || [];
+  const snapshot = await getDocs(q);
 
-  for (const purchaseId of purchases) {
-    const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+  questions = [];
 
-    if (!purchaseDoc.exists()) continue;
-
-    const purchase = purchaseDoc.data();
-
-    const q = query(
-      collection(db, "questions"),
-      where("quizId", "==", purchase.quizId),
-    );
-
-    const snapshot = await getDocs(q);
-
-    snapshot.forEach((docSnap) => {
-      const question = {
-        id: docSnap.id,
-        ...docSnap.data(),
-      };
-
-      if (question.subjectName === subject) {
-        allQuestions.push(question);
-      }
+  snapshot.forEach((docSnap) => {
+    questions.push({
+      id: docSnap.id,
+      ...docSnap.data(),
     });
-  }
+  });
 
-  if (allQuestions.length === 0) {
-    alert("No questions found for this subject.");
+  if (!questions.length) {
+    alert("No questions found.");
     return;
   }
-
-  questions = shuffle(allQuestions);
-
-  if (count > questions.length) {
-    count = questions.length;
-  }
-
-  questions = questions.slice(0, count);
 
   answers = new Array(questions.length).fill(null);
 
   currentQuestion = 0;
 
-  timeRemaining = minutes * 60;
+  timeRemaining = 30 * 60;
 
-  renderQuestion();
+  renderQuestion(quizTitle);
 
-  startTimer();
+  startTimer(quizTitle);
 }
 
-function renderQuestion() {
+function renderQuestion(quizTitle) {
   const app = document.getElementById("app");
 
   const question = questions[currentQuestion];
@@ -81,23 +54,31 @@ function renderQuestion() {
 
       <div class="quiz-header">
 
-        <div class="quiz-progress">
-          Question ${currentQuestion + 1}
-          of
-          ${questions.length}
-        </div>
+        <h2>
+          ${quizTitle}
+        </h2>
 
-        <div id="quizTimer" class="quiz-timer">
+        <div
+          id="quizTimer"
+          class="quiz-timer"
+        >
           ${formatTime(timeRemaining)}
         </div>
 
       </div>
 
+      <div class="quiz-progress">
+        Question
+        ${currentQuestion + 1}
+        of
+        ${questions.length}
+      </div>
+
       <div class="quiz-card">
 
-        <h2 class="quiz-question">
+        <h3 class="quiz-question">
           ${question.question}
-        </h2>
+        </h3>
 
         <div class="quiz-options">
 
@@ -150,38 +131,40 @@ function renderQuestion() {
     </div>
   `;
 
-  attachEvents();
+  attachEvents(quizTitle);
 }
 
-function attachEvents() {
+function attachEvents(quizTitle) {
   document.querySelectorAll(".option-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const index = Number(btn.dataset.index);
+      answers[currentQuestion] = Number(btn.dataset.index);
 
-      answers[currentQuestion] = index;
-
-      renderQuestion();
+      renderQuestion(quizTitle);
     });
   });
 
   document.getElementById("prevBtn")?.addEventListener("click", () => {
     if (currentQuestion > 0) {
       currentQuestion--;
-      renderQuestion();
+
+      renderQuestion(quizTitle);
     }
   });
 
   document.getElementById("nextBtn")?.addEventListener("click", () => {
     if (currentQuestion < questions.length - 1) {
       currentQuestion++;
-      renderQuestion();
+
+      renderQuestion(quizTitle);
     }
   });
 
-  document.getElementById("finishBtn")?.addEventListener("click", finishQuiz);
+  document
+    .getElementById("finishBtn")
+    ?.addEventListener("click", () => finishQuiz(quizTitle));
 }
 
-function startTimer() {
+function startTimer(quizTitle) {
   clearInterval(timer);
 
   timer = setInterval(() => {
@@ -196,14 +179,12 @@ function startTimer() {
     if (timeRemaining <= 0) {
       clearInterval(timer);
 
-      alert("Time Up!");
-
-      finishQuiz();
+      finishQuiz(quizTitle);
     }
   }, 1000);
 }
 
-function finishQuiz() {
+function finishQuiz(quizTitle) {
   clearInterval(timer);
 
   let score = 0;
@@ -216,19 +197,11 @@ function finishQuiz() {
 
   const percentage = Math.round((score / questions.length) * 100);
 
-  let message = "Keep Practicing 💪";
-
-  if (percentage >= 80) {
-    message = "Excellent Work 🎉";
-  } else if (percentage >= 60) {
-    message = "Good Job 👍";
-  }
-
   document.getElementById("app").innerHTML = `
     <div class="quiz-result">
 
       <h1>
-        Quiz Completed
+        ${quizTitle}
       </h1>
 
       <div class="score-circle">
@@ -242,19 +215,17 @@ function finishQuiz() {
       </h2>
 
       <p>
-        ${message}
+        Quiz Completed 🎉
       </p>
 
-      <button id="restartBtn">
+      <button
+        onclick="location.reload()"
+      >
         Back To Dashboard
       </button>
 
     </div>
   `;
-
-  document.getElementById("restartBtn").addEventListener("click", () => {
-    location.reload();
-  });
 }
 
 function formatTime(seconds) {
@@ -263,8 +234,4 @@ function formatTime(seconds) {
   const secs = seconds % 60;
 
   return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-function shuffle(array) {
-  return [...array].sort(() => Math.random() - 0.5);
 }
