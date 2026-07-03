@@ -9,6 +9,10 @@ import {
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
 import { renderReviewAnswers } from "./reviewAnswers.js";
+import {
+  renderQuestionNavigatorMarkup,
+  attachNavigatorEvents,
+} from "./questionNavigator.js";
 
 /* =========================================================
    CBT CONFIG
@@ -88,30 +92,51 @@ function renderQuestion(quizTitle) {
   const app = document.getElementById("app");
 
   const question = questions[currentQuestion];
+  const progressPercent = Math.round(
+    ((currentQuestion + 1) / questions.length) * 100,
+  );
+
+  const navigatorHtml = renderQuestionNavigatorMarkup(
+    questions,
+    answers,
+    currentQuestion,
+  );
 
   app.innerHTML = `
-    <div class="quiz-container">
+    <div class="quiz-layout">
 
-      <div class="quiz-header">
+      <aside class="question-navigator-sidebar">
+        ${navigatorHtml}
+      </aside>
 
-        <h2>
-          ${quizTitle}
-        </h2>
+      <div class="quiz-container">
 
-        <div
-          id="quizTimer"
-          class="quiz-timer"
-        >
-          ${formatTime(timeRemaining)}
+      <button id="openNavigatorBtn" class="nav-toggle-btn" type="button">
+        📋 Questions
+      </button>
+
+      <div class="quiz-topbar">
+
+        <div class="quiz-header">
+          <h2 class="quiz-title">
+            ${quizTitle}
+          </h2>
+
+          <div id="quizTimer" class="quiz-timer">
+            ${formatTime(timeRemaining)}
+          </div>
         </div>
 
-      </div>
+        <div class="quiz-progress-row">
+          <span class="quiz-progress">
+            Question ${currentQuestion + 1} of ${questions.length}
+          </span>
+        </div>
 
-      <div class="quiz-progress">
-        Question
-        ${currentQuestion + 1}
-        of
-        ${questions.length}
+        <div class="quiz-progress-track">
+          <div class="quiz-progress-fill" style="width: ${progressPercent}%"></div>
+        </div>
+
       </div>
 
       <div class="quiz-card">
@@ -119,6 +144,12 @@ function renderQuestion(quizTitle) {
         <h3 class="quiz-question">
           ${question.question}
         </h3>
+
+        ${
+          question.image
+            ? `<img class="quiz-question-image" src="${question.image}" alt="Question image" />`
+            : ""
+        }
 
         <div class="quiz-options">
 
@@ -132,8 +163,8 @@ function renderQuestion(quizTitle) {
                   "
                   data-index="${index}"
                 >
-                  ${["A", "B", "C", "D"][index]}.
-                  ${option}
+                  <span class="option-letter">${["A", "B", "C", "D"][index]}</span>
+                  <span class="option-text">${option}</span>
                 </button>
               `,
             )
@@ -168,10 +199,70 @@ function renderQuestion(quizTitle) {
 
       </div>
 
+      </div>
+
+    </div>
+
+    <div id="navigatorOverlay" class="navigator-overlay" hidden>
+      <div class="navigator-drawer">
+        <div class="navigator-drawer-header">
+          <h3>Questions</h3>
+          <button id="closeNavigatorBtn" class="navigator-close-btn" type="button">
+            ✕
+          </button>
+        </div>
+        ${navigatorHtml}
+      </div>
     </div>
   `;
 
   attachEvents(quizTitle);
+  attachNavigatorEvents(
+    document.querySelector(".question-navigator-sidebar"),
+    (index) => goToQuestion(index, quizTitle),
+  );
+  attachNavigatorEvents(
+    document.getElementById("navigatorOverlay"),
+    (index) => {
+      goToQuestion(index, quizTitle);
+      closeNavigatorDrawer();
+    },
+  );
+  attachNavigatorToggleEvents();
+}
+
+function goToQuestion(index, quizTitle) {
+  if (index < 0 || index >= questions.length) return;
+  currentQuestion = index;
+  renderQuestion(quizTitle);
+}
+
+function attachNavigatorToggleEvents() {
+  document
+    .getElementById("openNavigatorBtn")
+    ?.addEventListener("click", openNavigatorDrawer);
+
+  document
+    .getElementById("closeNavigatorBtn")
+    ?.addEventListener("click", closeNavigatorDrawer);
+
+  document
+    .getElementById("navigatorOverlay")
+    ?.addEventListener("click", (e) => {
+      if (e.target.id === "navigatorOverlay") {
+        closeNavigatorDrawer();
+      }
+    });
+}
+
+function openNavigatorDrawer() {
+  const overlay = document.getElementById("navigatorOverlay");
+  if (overlay) overlay.hidden = false;
+}
+
+function closeNavigatorDrawer() {
+  const overlay = document.getElementById("navigatorOverlay");
+  if (overlay) overlay.hidden = true;
 }
 
 function attachEvents(quizTitle) {

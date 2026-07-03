@@ -206,6 +206,88 @@ textarea {
 }
 
 /* =========================
+   FORM STATUS MESSAGE
+========================= */
+.form-status {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: -4px;
+}
+
+.status-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.status-success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.status-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* =========================
+   IMAGE UPLOAD (question form)
+========================= */
+.question-form input[type="file"] {
+  padding: 10px;
+  border: 1px dashed #ddd;
+  background: #fafafa;
+  cursor: pointer;
+}
+
+.image-preview-wrapper {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  background: #f9fafb;
+}
+
+.btn-remove-image {
+  border: none;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  transition: background 0.15s ease;
+}
+
+.btn-remove-image:hover {
+  background: #fecaca;
+}
+
+/* Thumbnail shown on question cards in the admin list */
+.question-card-image {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid #eee;
+}
+
+/* =========================
    LIST TOOLBAR (search + counter + export)
 ========================= */
 .list-toolbar {

@@ -1,0 +1,22 @@
+/* =========================================================
+   QUIZ QUESTION IMAGES
+   Used by both Practice (quiz.js) and Purchased Quiz
+   (purchasedQuiz.js) when question.image is non-empty.
+========================================================= */
+
+.quiz-question-image {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin: 16px 0;
+  background: #f9fafb;
+}
+
+@media (max-width: 768px) {
+  .quiz-question-image {
+    max-height: 220px;
+    margin: 12px 0;
+  }
+}

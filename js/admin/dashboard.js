@@ -234,11 +234,21 @@ async function loadDashboardStats() {
     query(collection(db, "users"), where("role", "==", "student")),
   );
 
-  document.getElementById("subjectCount").textContent = subjectSnap.size;
+  // If the admin switched to a different tab while these reads were
+  // in flight, #adminContent no longer contains the dashboard markup
+  // (it now holds Subjects/Quizzes/Questions instead). Bail out here
+  // instead of trying to write into elements that don't exist anymore.
+  if (activeTab !== "dashboard") return;
 
-  document.getElementById("quizCount").textContent = quizSnap.size;
+  setStatText("subjectCount", subjectSnap.size);
+  setStatText("quizCount", quizSnap.size);
+  setStatText("questionCount", questionSnap.size);
+  setStatText("studentCount", studentSnap.size);
+}
 
-  document.getElementById("questionCount").textContent = questionSnap.size;
-
-  document.getElementById("studentCount").textContent = studentSnap.size;
+function setStatText(elementId, value) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.textContent = value;
+  }
 }

@@ -66,6 +66,12 @@ function renderReviewCard(question, studentAnswer, index) {
         ${question.question}
       </h3>
 
+      ${
+        question.image
+          ? `<img class="quiz-question-image" src="${question.image}" alt="Question image" />`
+          : ""
+      }
+
       <div class="review-options">
         ${optionsHtml}
       </div>

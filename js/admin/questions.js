@@ -10,6 +10,10 @@ import {
   where,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  CLOUDINARY_UPLOAD_URL,
+  CLOUDINARY_UPLOAD_PRESET,
+} from "../cloudinary/config.js";
 
 /* =========================================================
    MODULE STATE
@@ -25,6 +29,14 @@ let currentSubjectId = "";
 let currentQuizId = "";
 let editingQuestionId = null;
 let searchTerm = "";
+
+// Image state for the create/edit form. Kept separate from
+// getFormValues() because resolving the final image URL is
+// async (may involve an upload) while the rest of the form
+// isn't.
+let selectedImageFile = null; // a File the user just picked, or null
+let existingImageUrl = ""; // the image already saved on the question being edited
+let removeImageFlag = false; // true if editing and the user chose to remove the image
 
 /* =========================================================
    PUBLIC ENTRY POINT
@@ -90,6 +102,20 @@ export async function renderQuestions(container) {
             <option value="3">Option D</option>
           </select>
         </div>
+
+        <div class="form-field">
+          <label for="questionImageInput">Question Image (optional)</label>
+          <input type="file" id="questionImageInput" accept="image/*" />
+
+          <div id="imagePreviewWrapper" class="image-preview-wrapper" hidden>
+            <img id="imagePreview" class="image-preview" alt="Question image preview" />
+            <button type="button" id="removeImageBtn" class="btn-remove-image">
+              Remove Image
+            </button>
+          </div>
+        </div>
+
+        <div id="formStatus" class="form-status" hidden></div>
 
         <div class="question-form-actions">
           <button type="submit" id="saveQuestionBtn" class="btn-primary">
@@ -194,6 +220,14 @@ function attachStaticEventListeners() {
     .addEventListener("click", exitEditMode);
 
   document
+    .getElementById("questionImageInput")
+    .addEventListener("change", handleImageFileSelected);
+
+  document
+    .getElementById("removeImageBtn")
+    .addEventListener("click", handleRemoveImageClick);
+
+  document
     .getElementById("importBtn")
     .addEventListener("click", handleImportClick);
 
@@ -256,7 +290,9 @@ async function handleQuizChange(e) {
 
 async function loadQuestionsForQuiz(quizId) {
   const list = document.getElementById("questionList");
-  list.innerHTML = "<p>Loading...</p>";
+  if (list) {
+    list.innerHTML = "<p>Loading...</p>";
+  }
 
   const q = query(collection(db, "questions"), where("quizId", "==", quizId));
   const snapshot = await getDocs(q);
@@ -305,6 +341,7 @@ function validateForm(values) {
 
 function resetForm() {
   document.getElementById("questionForm").reset();
+  resetImageState();
 }
 
 function enterEditMode(question) {
@@ -316,6 +353,12 @@ function enterEditMode(question) {
   document.getElementById("optionC").value = question.options[2];
   document.getElementById("optionD").value = question.options[3];
   document.getElementById("answerSelect").value = question.answer;
+
+  resetImageState();
+  existingImageUrl = question.image || "";
+  if (existingImageUrl) {
+    showImagePreview(existingImageUrl);
+  }
 
   document.getElementById("saveQuestionBtn").textContent = "Update Question";
   document.getElementById("cancelEditBtn").hidden = false;
@@ -334,6 +377,116 @@ function exitEditMode() {
 }
 
 /* =========================================================
+   IMAGE HANDLING (create + edit)
+========================================================= */
+function handleImageFileSelected(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  selectedImageFile = file;
+  removeImageFlag = false;
+
+  const previewUrl = URL.createObjectURL(file);
+  showImagePreview(previewUrl);
+}
+
+function handleRemoveImageClick() {
+  selectedImageFile = null;
+  removeImageFlag = true;
+  existingImageUrl = "";
+
+  document.getElementById("questionImageInput").value = "";
+  hideImagePreview();
+}
+
+function showImagePreview(url) {
+  const wrapper = document.getElementById("imagePreviewWrapper");
+  const img = document.getElementById("imagePreview");
+
+  img.src = url;
+  wrapper.hidden = false;
+}
+
+function hideImagePreview() {
+  const wrapper = document.getElementById("imagePreviewWrapper");
+  const img = document.getElementById("imagePreview");
+
+  img.src = "";
+  wrapper.hidden = true;
+}
+
+function resetImageState() {
+  selectedImageFile = null;
+  existingImageUrl = "";
+  removeImageFlag = false;
+  hideImagePreview();
+}
+
+/**
+ * Resolves what the question's `image` field should be saved as:
+ * - a newly picked file gets uploaded and returns its download URL
+ * - an explicit "Remove Image" click returns ""
+ * - editing with no change keeps the existing image URL
+ * - a brand new question with no image picked returns ""
+ */
+async function resolveImageUrl() {
+  if (selectedImageFile) {
+    return uploadQuestionImage(selectedImageFile);
+  }
+
+  if (removeImageFlag) {
+    return "";
+  }
+
+  if (editingQuestionId) {
+    return existingImageUrl;
+  }
+
+  return "";
+}
+
+/**
+ * Uploads a file to Cloudinary using an unsigned upload preset
+ * (see cloudinary/config.js). Throws on failure — resolveImageUrl()
+ * is always awaited before any Firestore write, so a thrown error
+ * here propagates up to handleFormSubmit()'s try/catch and the
+ * question document is never saved if the upload fails.
+ */
+async function uploadQuestionImage(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+  const response = await fetch(CLOUDINARY_UPLOAD_URL, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Image upload to Cloudinary failed.");
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+}
+
+/* =========================================================
+   FORM STATUS MESSAGE (upload/save progress + errors)
+========================================================= */
+function showFormStatus(message, type = "info") {
+  const statusEl = document.getElementById("formStatus");
+  statusEl.textContent = message;
+  statusEl.className = `form-status status-${type}`;
+  statusEl.hidden = false;
+}
+
+function clearFormStatus() {
+  const statusEl = document.getElementById("formStatus");
+  statusEl.textContent = "";
+  statusEl.hidden = true;
+}
+
+/* =========================================================
    CREATE / UPDATE
 ========================================================= */
 async function handleFormSubmit(e) {
@@ -342,15 +495,59 @@ async function handleFormSubmit(e) {
   const values = getFormValues();
   if (!validateForm(values)) return;
 
-  if (editingQuestionId) {
-    await updateQuestion(editingQuestionId, values);
-  } else {
-    await createQuestion(values);
+  const saveBtn = document.getElementById("saveQuestionBtn");
+  const originalLabel = saveBtn.textContent;
+  const isUploadingNewImage = Boolean(selectedImageFile);
+
+  saveBtn.disabled = true;
+  clearFormStatus();
+
+  // --- Step 1: resolve the image (may involve a Cloudinary upload) ---
+  let imageUrl;
+  try {
+    if (isUploadingNewImage) {
+      saveBtn.textContent = "Uploading image...";
+      showFormStatus("Uploading image...", "info");
+    }
+
+    imageUrl = await resolveImageUrl();
+  } catch (err) {
+    console.error("Image upload failed:", err);
+    showFormStatus(
+      "Image upload failed. Please check your connection and try again.",
+      "error",
+    );
+    saveBtn.disabled = false;
+    saveBtn.textContent = originalLabel;
+    return; // Firestore is never touched if the upload failed
   }
 
-  exitEditMode();
-  await loadQuestionsForQuiz(currentQuizId);
-  renderQuestionList();
+  // --- Step 2: save the question document ---
+  try {
+    saveBtn.textContent = "Saving...";
+    if (isUploadingNewImage) {
+      showFormStatus("Image uploaded. Saving question...", "info");
+    }
+
+    if (editingQuestionId) {
+      await updateQuestion(editingQuestionId, values, imageUrl);
+    } else {
+      await createQuestion(values, imageUrl);
+    }
+
+    showFormStatus("Question saved successfully!", "success");
+    setTimeout(clearFormStatus, 3000);
+
+    exitEditMode();
+    await loadQuestionsForQuiz(currentQuizId);
+    renderQuestionList();
+  } catch (err) {
+    console.error("Failed to save question:", err);
+    showFormStatus("Failed to save the question. Please try again.", "error");
+    saveBtn.textContent = originalLabel;
+  } finally {
+    saveBtn.disabled = false;
+  }
 }
 
 function getCurrentSubjectName() {
@@ -358,21 +555,23 @@ function getCurrentSubjectName() {
   return subject ? subject.name : "";
 }
 
-async function createQuestion(values) {
+async function createQuestion(values, imageUrl) {
   await addDoc(collection(db, "questions"), {
     quizId: currentQuizId,
     subjectId: currentSubjectId,
     subjectName: getCurrentSubjectName(),
     question: values.question,
+    image: imageUrl || "",
     options: values.options,
     answer: Number(values.answer),
     createdAt: serverTimestamp(),
   });
 }
 
-async function updateQuestion(id, values) {
+async function updateQuestion(id, values, imageUrl) {
   await updateDoc(doc(db, "questions", id), {
     question: values.question,
+    image: imageUrl || "",
     options: values.options,
     answer: Number(values.answer),
   });
@@ -403,6 +602,12 @@ function getQuizById(quizId) {
 function renderQuestionList() {
   const list = document.getElementById("questionList");
   const counter = document.getElementById("questionCounter");
+
+  // If the admin switched to a different tab (or a different quiz
+  // context) while a prior async load was still in flight, these
+  // elements may no longer exist in the current DOM. Bail out
+  // instead of writing into null.
+  if (!list || !counter) return;
 
   if (!currentQuizId) {
     list.innerHTML = renderEmptyState(
@@ -456,6 +661,10 @@ function renderQuestionCard(q) {
     })
     .join("");
 
+  const imageHtml = q.image
+    ? `<img class="question-card-image" src="${q.image}" alt="Question image" />`
+    : "";
+
   return `
     <div class="question-card" data-id="${q.id}">
       <div class="question-card-top">
@@ -464,6 +673,8 @@ function renderQuestionCard(q) {
       </div>
 
       <p class="question-card-text">${q.question}</p>
+
+      ${imageHtml}
 
       <div class="question-options-list">
         ${optionsHtml}
@@ -535,6 +746,10 @@ function handleSearchInput(e) {
 
 /* =========================================================
    JSON IMPORT
+   Note: bulk-imported questions are not expected to include
+   images (there's no per-item upload step in a JSON import).
+   The `image` field is still written as "" so every question
+   document has a consistent shape.
 ========================================================= */
 async function handleImportClick() {
   if (!currentQuizId) {
@@ -619,6 +834,7 @@ async function saveImportedQuestions(items) {
         subjectId: currentSubjectId,
         subjectName: getCurrentSubjectName(),
         question: item.question.trim(),
+        image: typeof item.image === "string" ? item.image : "",
         options: item.options.map((opt) => opt.trim()),
         answer: Number(item.answer),
         createdAt: serverTimestamp(),
@@ -649,6 +865,7 @@ function handleExportClick() {
 
   const exportData = questionsCache.map((q) => ({
     question: q.question,
+    image: q.image || "",
     options: q.options,
     answer: q.answer,
   }));

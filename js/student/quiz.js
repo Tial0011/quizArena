@@ -10,6 +10,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { renderReviewAnswers } from "./reviewAnswers.js";
+import {
+  renderQuestionNavigatorMarkup,
+  attachNavigatorEvents,
+} from "./questionNavigator.js";
 
 let questions = [];
 let answers = [];
@@ -77,20 +81,45 @@ function renderQuestion() {
   const app = document.getElementById("app");
 
   const question = questions[currentQuestion];
+  const progressPercent = Math.round(
+    ((currentQuestion + 1) / questions.length) * 100,
+  );
+
+  const navigatorHtml = renderQuestionNavigatorMarkup(
+    questions,
+    answers,
+    currentQuestion,
+  );
 
   app.innerHTML = `
-    <div class="quiz-container">
+    <div class="quiz-layout">
 
-      <div class="quiz-header">
+      <aside class="question-navigator-sidebar">
+        ${navigatorHtml}
+      </aside>
 
-        <div class="quiz-progress">
-          Question ${currentQuestion + 1}
-          of
-          ${questions.length}
+      <div class="quiz-container">
+
+      <button id="openNavigatorBtn" class="nav-toggle-btn" type="button">
+        📋 Questions
+      </button>
+
+      <div class="quiz-topbar">
+
+        <div class="quiz-header">
+          <div id="quizTimer" class="quiz-timer">
+            ${formatTime(timeRemaining)}
+          </div>
         </div>
 
-        <div id="quizTimer" class="quiz-timer">
-          ${formatTime(timeRemaining)}
+        <div class="quiz-progress-row">
+          <span class="quiz-progress">
+            Question ${currentQuestion + 1} of ${questions.length}
+          </span>
+        </div>
+
+        <div class="quiz-progress-track">
+          <div class="quiz-progress-fill" style="width: ${progressPercent}%"></div>
         </div>
 
       </div>
@@ -100,6 +129,12 @@ function renderQuestion() {
         <h2 class="quiz-question">
           ${question.question}
         </h2>
+
+        ${
+          question.image
+            ? `<img class="quiz-question-image" src="${question.image}" alt="Question image" />`
+            : ""
+        }
 
         <div class="quiz-options">
 
@@ -113,8 +148,8 @@ function renderQuestion() {
                   "
                   data-index="${index}"
                 >
-                  ${["A", "B", "C", "D"][index]}.
-                  ${option}
+                  <span class="option-letter">${["A", "B", "C", "D"][index]}</span>
+                  <span class="option-text">${option}</span>
                 </button>
               `,
             )
@@ -149,10 +184,70 @@ function renderQuestion() {
 
       </div>
 
+      </div>
+
+    </div>
+
+    <div id="navigatorOverlay" class="navigator-overlay" hidden>
+      <div class="navigator-drawer">
+        <div class="navigator-drawer-header">
+          <h3>Questions</h3>
+          <button id="closeNavigatorBtn" class="navigator-close-btn" type="button">
+            ✕
+          </button>
+        </div>
+        ${navigatorHtml}
+      </div>
     </div>
   `;
 
   attachEvents();
+  attachNavigatorEvents(
+    document.querySelector(".question-navigator-sidebar"),
+    goToQuestion,
+  );
+  attachNavigatorEvents(
+    document.getElementById("navigatorOverlay"),
+    (index) => {
+      goToQuestion(index);
+      closeNavigatorDrawer();
+    },
+  );
+  attachNavigatorToggleEvents();
+}
+
+function goToQuestion(index) {
+  if (index < 0 || index >= questions.length) return;
+  currentQuestion = index;
+  renderQuestion();
+}
+
+function attachNavigatorToggleEvents() {
+  document
+    .getElementById("openNavigatorBtn")
+    ?.addEventListener("click", openNavigatorDrawer);
+
+  document
+    .getElementById("closeNavigatorBtn")
+    ?.addEventListener("click", closeNavigatorDrawer);
+
+  document
+    .getElementById("navigatorOverlay")
+    ?.addEventListener("click", (e) => {
+      if (e.target.id === "navigatorOverlay") {
+        closeNavigatorDrawer();
+      }
+    });
+}
+
+function openNavigatorDrawer() {
+  const overlay = document.getElementById("navigatorOverlay");
+  if (overlay) overlay.hidden = false;
+}
+
+function closeNavigatorDrawer() {
+  const overlay = document.getElementById("navigatorOverlay");
+  if (overlay) overlay.hidden = true;
 }
 
 function attachEvents() {

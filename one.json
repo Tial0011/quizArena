@@ -1,0 +1,462 @@
+[
+  {
+    "question": "Which of the following is the most appropriate definition of classification?",
+    "options": [
+      "The study of naming living organisms based on Latin terms",
+      "The arrangement of living organisms into groups based on their similarities and differences",
+      "The identification of organisms using molecular and genetic tools only",
+      "The study of evolutionary relationships among organisms"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which of the following is NOT true about taxonomy?",
+    "options": [
+      "It involves identification, naming, and classification of organisms",
+      "It deals only with naming of organisms without grouping them",
+      "It helps in understanding relationships among organisms",
+      "It involves grouping organisms based on similarities and differences"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Classification of living organisms by scientists can be grouped into how many eras?",
+    "options": ["Three", "Two", "Four", "Five"],
+    "answer": 0
+  },
+  {
+    "question": "Which era is regarded as the earliest in the history of taxonomy?",
+    "options": [
+      "Pre-Linnaean era",
+      "Linnaean era",
+      "Three-linear era",
+      "Post-Linnaean era"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "In the Pre-Linnaean era, organisms were grouped based on which of the following?",
+    "options": [
+      "Genetic composition",
+      "Evolutionary relationships",
+      "Physical characteristics",
+      "Cellular structure"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Who is considered the father of biological classification?",
+    "options": ["Charles Darwin", "Carolus Linnaeus", "John Ray", "Aristotle"],
+    "answer": 1
+  },
+  {
+    "question": "Which of the following scientists based his classification on the growth form of living organisms?",
+    "options": ["John Ray", "Dioscorides", "Theophrastus", "Bauhin Brothers"],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following scientists wrote the book De Materia Medica?",
+    "options": [
+      "Theophrastus",
+      "Dioscorides",
+      "Carolus Linnaeus",
+      "Caesalpino"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Dioscorides classified organisms based on which of the following?",
+    "options": [
+      "Medicinal properties of plants",
+      "Morphological structures",
+      "Evolutionary relationships",
+      "Habitat differences"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "All of the following are early taxonomists EXCEPT",
+    "options": ["Aristotle", "Theophrastus", "Dioscorides", "Charles Darwin"],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following is NOT correctly matched with its classification system?",
+    "options": [
+      "Theophrastus — Classification based on growth form of organisms",
+      "John Ray — Classification based only on evolutionary DNA evidence",
+      "Caesalpino — Classification based on growth habit of plants and seeds",
+      "Dioscorides — Classification based on medicinal properties of plants"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which of the following scientists constructed botanical classification emphasizing the system later accepted by Linnaeus?",
+    "options": [
+      "John Ray",
+      "Caesalpino",
+      "Joseph Pitton de Tournefort",
+      "Bauhin Brothers"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following best describes the Linnaean era in taxonomy?",
+    "options": [
+      "It marked the beginning of modern classification and introduced binomial nomenclature",
+      "It focused mainly on evolutionary DNA analysis of organisms",
+      "It classified organisms solely based on medicinal properties",
+      "It was based on numerical scoring of characters"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following is NOT a feature of the Linnaean era?",
+    "options": [
+      "Introduction of binomial nomenclature",
+      "Classification of organisms into two kingdoms (Plantae and Animalia)",
+      "Foundation of modern taxonomy",
+      "Use of molecular genetics in classification"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Another name for the Post-Linnaean era is",
+    "options": [
+      "Artificial system of classification",
+      "Binomial system of classification",
+      "Evolutionary system of classification",
+      "Natural system of classification"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following scientists used number of characters in classification (numerical taxonomy)?",
+    "options": [
+      "Georges Cuvier",
+      "Jean Lamarck",
+      "Charles Darwin",
+      "Michael Adanson"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Jean Lamarck was best known in taxonomy for",
+    "options": [
+      "Introducing binomial nomenclature",
+      "Using numerical scoring of organisms",
+      "Classifying organisms based on evolutionary relationships rather than morphology",
+      "Discovering bacteria classification"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Charles Darwin was best known in taxonomy for",
+    "options": [
+      "Developing the two kingdom system",
+      "Using numerical taxonomy methods",
+      "Introducing evolutionary theory into classification",
+      "Classifying organisms based on habitat only"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following is NOT a method of classification?",
+    "options": [
+      "Genetic classification",
+      "Phenetics",
+      "Numerical taxonomy",
+      "Phylogenetic classification"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following best describes phenetics?",
+    "options": [
+      "Classification based on evolutionary history and DNA relationships",
+      "Classification based on observable similarities among organisms",
+      "Classification based only on habitat and nutrition",
+      "Classification based on fossil records only"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Numerical taxonomy is best described by which of the following statements?",
+    "options": [
+      "It is based on evolutionary relationships among organisms",
+      "It uses numerical methods to score and compare characteristics of organisms",
+      "It is based only on habitat and nutrition",
+      "It depends on fossil evidence only"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which method of classification is based on evolutionary relationships?",
+    "options": [
+      "Phenetic classification",
+      "Numerical taxonomy",
+      "Artificial classification",
+      "Phylogenetic classification"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Carolus Linnaeus based the two-kingdom classification system on what?",
+    "options": [
+      "Genetic and molecular structure",
+      "Numerical scoring of traits",
+      "Evolutionary relationships",
+      "Anatomical (structural) characteristics"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "The two-kingdom classification consists of ______ and ______",
+    "options": [
+      "Green plants and animals",
+      "Fungi and protists",
+      "Monera and Protista",
+      "Bacteria and archaea"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following was a limitation of the two-kingdom classification?",
+    "options": [
+      "It included too many kingdoms",
+      "It was based only on evolutionary DNA analysis",
+      "It failed to distinguish between prokaryotes and eukaryotes",
+      "It classified organisms based on genetic sequencing"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following is the most appropriate definition of classification?",
+    "options": [
+      "The study of naming living organisms based on Latin terms",
+      "The arrangement of living organisms into groups based on their similarities and differences",
+      "The identification of organisms using molecular and genetic tools only",
+      "The study of evolutionary relationships among organisms"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which of the following is NOT true about taxonomy?",
+    "options": [
+      "It involves identification, naming, and classification of organisms",
+      "It deals only with naming of organisms without grouping them",
+      "It helps in understanding relationships among organisms",
+      "It involves grouping organisms based on similarities and differences"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Classification of living organisms by scientists can be grouped into how many eras?",
+    "options": ["Three", "Two", "Four", "Five"],
+    "answer": 0
+  },
+  {
+    "question": "Which era is regarded as the earliest in the history of taxonomy?",
+    "options": [
+      "Pre-Linnaean era",
+      "Linnaean era",
+      "Three-linear era",
+      "Post-Linnaean era"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "In the Pre-Linnaean era, organisms were grouped based on which of the following?",
+    "options": [
+      "Genetic composition",
+      "Evolutionary relationships",
+      "Physical characteristics",
+      "Cellular structure"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Who is considered the father of biological classification?",
+    "options": ["Charles Darwin", "Carolus Linnaeus", "John Ray", "Aristotle"],
+    "answer": 1
+  },
+  {
+    "question": "Which of the following scientists based his classification on the growth form of living organisms?",
+    "options": ["John Ray", "Dioscorides", "Theophrastus", "Bauhin Brothers"],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following scientists wrote the book De Materia Medica?",
+    "options": [
+      "Theophrastus",
+      "Dioscorides",
+      "Carolus Linnaeus",
+      "Caesalpino"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Dioscorides classified organisms based on which of the following?",
+    "options": [
+      "Medicinal properties of plants",
+      "Morphological structures",
+      "Evolutionary relationships",
+      "Habitat differences"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "All of the following are early taxonomists EXCEPT",
+    "options": ["Aristotle", "Theophrastus", "Dioscorides", "Charles Darwin"],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following is NOT correctly matched with its classification system?",
+    "options": [
+      "Theophrastus — Classification based on growth form of organisms",
+      "John Ray — Classification based only on evolutionary DNA evidence",
+      "Caesalpino — Classification based on growth habit of plants and seeds",
+      "Dioscorides — Classification based on medicinal properties of plants"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which of the following scientists constructed botanical classification emphasizing the system later accepted by Linnaeus?",
+    "options": [
+      "John Ray",
+      "Caesalpino",
+      "Joseph Pitton de Tournefort",
+      "Bauhin Brothers"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following best describes the Linnaean era in taxonomy?",
+    "options": [
+      "It marked the beginning of modern classification and introduced binomial nomenclature",
+      "It focused mainly on evolutionary DNA analysis of organisms",
+      "It classified organisms solely based on medicinal properties",
+      "It was based on numerical scoring of characters"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following is NOT a feature of the Linnaean era?",
+    "options": [
+      "Introduction of binomial nomenclature",
+      "Classification of organisms into two kingdoms (Plantae and Animalia)",
+      "Foundation of modern taxonomy",
+      "Use of molecular genetics in classification"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Another name for the Post-Linnaean era is",
+    "options": [
+      "Artificial system of classification",
+      "Binomial system of classification",
+      "Evolutionary system of classification",
+      "Natural system of classification"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following scientists used number of characters in classification (numerical taxonomy)?",
+    "options": [
+      "Georges Cuvier",
+      "Jean Lamarck",
+      "Charles Darwin",
+      "Michael Adanson"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Jean Lamarck was best known in taxonomy for",
+    "options": [
+      "Introducing binomial nomenclature",
+      "Using numerical scoring of organisms",
+      "Classifying organisms based on evolutionary relationships rather than morphology",
+      "Discovering bacteria classification"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Charles Darwin was best known in taxonomy for",
+    "options": [
+      "Developing the two kingdom system",
+      "Using numerical taxonomy methods",
+      "Introducing evolutionary theory into classification",
+      "Classifying organisms based on habitat only"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following is NOT a method of classification?",
+    "options": [
+      "Genetic classification",
+      "Phenetics",
+      "Numerical taxonomy",
+      "Phylogenetic classification"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following best describes phenetics?",
+    "options": [
+      "Classification based on evolutionary history and DNA relationships",
+      "Classification based on observable similarities among organisms",
+      "Classification based only on habitat and nutrition",
+      "Classification based on fossil records only"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Numerical taxonomy is best described by which of the following statements?",
+    "options": [
+      "It is based on evolutionary relationships among organisms",
+      "It uses numerical methods to score and compare characteristics of organisms",
+      "It is based only on habitat and nutrition",
+      "It depends on fossil evidence only"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which method of classification is based on evolutionary relationships?",
+    "options": [
+      "Phenetic classification",
+      "Numerical taxonomy",
+      "Artificial classification",
+      "Phylogenetic classification"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Carolus Linnaeus based the two-kingdom classification system on what?",
+    "options": [
+      "Genetic and molecular structure",
+      "Numerical scoring of traits",
+      "Evolutionary relationships",
+      "Anatomical (structural) characteristics"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "The two-kingdom classification consists of ______ and ______",
+    "options": [
+      "Green plants and animals",
+      "Fungi and protists",
+      "Monera and Protista",
+      "Bacteria and archaea"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following was a limitation of the two-kingdom classification?",
+    "options": [
+      "It included too many kingdoms",
+      "It was based only on evolutionary DNA analysis",
+      "It failed to distinguish between prokaryotes and eukaryotes",
+      "It classified organisms based on genetic sequencing"
+    ],
+    "answer": 2
+  }
+]
