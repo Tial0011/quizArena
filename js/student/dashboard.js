@@ -46,11 +46,11 @@ export function renderStudentDashboard(userData = {}) {
           </div>
 
           <h3>
-            Practice Arena
+            Custom Exam Arena
           </h3>
 
           <p>
-            Practice questions from quizzes you've purchased with custom time and question limits.
+            Practice questions from quizzes you've purchased with custom time and custom question limits.
           </p>
 
           <span class="action-link">
@@ -92,7 +92,7 @@ export function renderStudentDashboard(userData = {}) {
           </div>
 
           <h3>
-            My Quizzes
+            My Purchased Quizzes
           </h3>
 
           <p>
