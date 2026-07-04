@@ -27,6 +27,11 @@ let isPurchasing = false;
    object and renders itself into the #app container.
 ========================================================= */
 export async function renderMarketplace(userData = {}) {
+  history.pushState({ page: "marketplace" }, "", "");
+  await renderMarketplacePage(userData);
+}
+
+async function renderMarketplacePage(userData) {
   const app = document.getElementById("app");
   currentUserData = userData;
   currentUserId = userData.id;
@@ -314,6 +319,10 @@ async function handleConfirmPurchase() {
   // Full re-render, sourced from Firestore: rebuilds the quiz grid
   // (so this card flips to "Owned"), re-registers the back handler
   // with the updated currentUserData, and keeps everything as an
-  // SPA update — no location.reload() anywhere.
-  await renderMarketplace(currentUserData);
+  // SPA update — no location.reload() anywhere. Calls the internal
+  // render function directly (not the exported renderMarketplace)
+  // so this refresh doesn't push a second, phantom history entry —
+  // the student hasn't navigated anywhere, they're still on
+  // Marketplace, just looking at updated data.
+  await renderMarketplacePage(currentUserData);
 }

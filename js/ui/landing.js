@@ -33,7 +33,7 @@ export function renderLanding() {
 
         <div class="stats">
           <div class="stat">
-            <h3>4</h3>
+            <h3>5</h3>
             <span>Subjects</span>
           </div>
 
