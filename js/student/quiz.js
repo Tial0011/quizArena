@@ -278,11 +278,22 @@ function attachEvents() {
   document.getElementById("finishBtn")?.addEventListener("click", finishQuiz);
 }
 
+let timerEndAt = 0; // wall-clock timestamp (ms) the timer should hit 0 at
+
 function startTimer() {
   clearInterval(timer);
 
+  // Anchor to a fixed end time instead of just decrementing a
+  // counter every tick. setInterval doesn't fire at exactly 1000ms
+  // — each tick can run a little late, and those small delays add
+  // up over a long quiz, making the countdown drift slower than
+  // real time. Recomputing from Date.now() every tick is
+  // self-correcting: it doesn't matter if a tick fires a bit late,
+  // the displayed time always matches real elapsed time.
+  timerEndAt = Date.now() + timeRemaining * 1000;
+
   timer = setInterval(() => {
-    timeRemaining--;
+    timeRemaining = Math.max(0, Math.round((timerEndAt - Date.now()) / 1000));
 
     const timerEl = document.getElementById("quizTimer");
 

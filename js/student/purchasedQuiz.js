@@ -295,11 +295,19 @@ function attachEvents(quizTitle) {
     ?.addEventListener("click", () => finishQuiz(quizTitle));
 }
 
+let timerEndAt = 0; // wall-clock timestamp (ms) the timer should hit 0 at
+
 function startTimer(quizTitle) {
   clearInterval(timer);
 
+  // Anchor to a fixed end time instead of just decrementing a
+  // counter every tick — see quiz.js for the full explanation of
+  // why the old approach drifts slower than real time on a long
+  // (10 minute) countdown.
+  timerEndAt = Date.now() + timeRemaining * 1000;
+
   timer = setInterval(() => {
-    timeRemaining--;
+    timeRemaining = Math.max(0, Math.round((timerEndAt - Date.now()) / 1000));
 
     const timerEl = document.getElementById("quizTimer");
 
