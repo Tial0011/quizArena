@@ -10,6 +10,14 @@ import {
 
 const app = document.getElementById("app");
 
+// Parallax uses a single persistent scroll listener — same
+// reasoning as landing.js: renderStudentDashboard() can be
+// called many times in a session (returning from Practice,
+// Marketplace, etc.), and re-attaching a window-level scroll
+// listener every time would stack up duplicates that never get
+// cleaned up.
+let parallaxInitialized = false;
+
 export function renderStudentDashboard(userData = {}) {
   const purchasedCount = userData.purchasedQuizzes?.length || 0;
 
@@ -17,6 +25,9 @@ export function renderStudentDashboard(userData = {}) {
     <div class="dashboard">
 
       <header class="dashboard-hero">
+
+        <div class="dashboard-hero-shape dashboard-hero-shape-1" data-parallax-speed="0.1"></div>
+        <div class="dashboard-hero-shape dashboard-hero-shape-2" data-parallax-speed="0.18"></div>
 
         <div class="hero-text">
 
@@ -35,7 +46,7 @@ export function renderStudentDashboard(userData = {}) {
       <section class="action-grid">
 
         <div
-          class="action-card"
+          class="action-card load-in"
           id="practiceBtn"
         >
 
@@ -58,7 +69,7 @@ export function renderStudentDashboard(userData = {}) {
         </div>
 
         <div
-          class="action-card"
+          class="action-card load-in"
           id="marketplaceBtn"
         >
 
@@ -81,7 +92,7 @@ export function renderStudentDashboard(userData = {}) {
         </div>
 
         <div
-          class="action-card"
+          class="action-card load-in"
           id="quizzesBtn"
         >
 
@@ -107,14 +118,14 @@ export function renderStudentDashboard(userData = {}) {
 
       <section class="stats-grid">
 
-        <div class="stat-card">
+        <div class="stat-card load-in">
 
           <span class="stat-icon">
             📦
           </span>
 
-          <h2>
-            ${purchasedCount}
+          <h2 id="purchasedCountValue" data-count-target="${purchasedCount}">
+            0
           </h2>
 
           <p>
@@ -123,7 +134,7 @@ export function renderStudentDashboard(userData = {}) {
 
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card load-in">
 
           <span class="stat-icon">
             🏆
@@ -141,7 +152,7 @@ export function renderStudentDashboard(userData = {}) {
 
       </section>
 
-      <section class="dashboard-section">
+      <section class="dashboard-section reveal" data-reveal>
 
         <div class="section-header">
 
@@ -157,7 +168,7 @@ export function renderStudentDashboard(userData = {}) {
 
       </section>
 
-      <section class="dashboard-section">
+      <section class="dashboard-section reveal" data-reveal>
 
         <div class="section-header">
 
@@ -184,6 +195,7 @@ export function renderStudentDashboard(userData = {}) {
   `;
 
   setupDashboardEvents(userData);
+  initDashboardEffects();
   loadAnalytics(userData);
 }
 
@@ -231,4 +243,153 @@ function setupDashboardEvents(userData) {
 
     await logoutUser();
   });
+}
+
+/* =========================================================
+   VISUAL EFFECTS
+   Pure CSS + vanilla JS, same principles as the landing page:
+   - Parallax is desktop-only work (skipped outright on mobile,
+     not just hidden by CSS, to save battery/CPU where most
+     visitors actually are).
+   - Card tilt is desktop-only (matches devices that actually
+     have a mouse to tilt with).
+   - Scroll-reveal and the count-up both work everywhere — they
+     don't cost much and read fine on any screen size.
+   - Everything respects prefers-reduced-motion.
+========================================================= */
+function initDashboardEffects() {
+  initParallax();
+  initScrollReveal();
+  initCardTilt();
+  initCountUp();
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function initParallax() {
+  if (parallaxInitialized) return;
+  parallaxInitialized = true;
+
+  if (prefersReducedMotion()) return;
+
+  let ticking = false;
+
+  function updateParallax() {
+    if (window.innerWidth < 768) {
+      ticking = false;
+      return;
+    }
+
+    const scrollY = window.scrollY;
+
+    document.querySelectorAll("[data-parallax-speed]").forEach((shape) => {
+      const speed = parseFloat(shape.dataset.parallaxSpeed) || 0.12;
+      shape.style.transform = `translateY(${scrollY * speed}px)`;
+    });
+
+    ticking = false;
+  }
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!ticking) {
+        requestAnimationFrame(updateParallax);
+        ticking = true;
+      }
+    },
+    { passive: true },
+  );
+}
+
+/**
+ * Fades/slides [data-reveal] sections in once scrolled into
+ * view — mainly the Score Trend and Recent Activity sections,
+ * which often sit below the fold, especially on mobile.
+ */
+function initScrollReveal() {
+  const revealEls = document.querySelectorAll("[data-reveal]");
+  if (!revealEls.length) return;
+
+  if (prefersReducedMotion()) {
+    revealEls.forEach((el) => el.classList.add("reveal-visible"));
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("reveal-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15 },
+  );
+
+  revealEls.forEach((el) => observer.observe(el));
+}
+
+/**
+ * Subtle 3D tilt on the action cards, following the cursor.
+ * Desktop only — touch devices don't fire mousemove anyway, but
+ * the width check keeps this from doing any work at all on
+ * mobile rather than relying on that alone.
+ */
+function initCardTilt() {
+  if (prefersReducedMotion()) return;
+  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+
+  document.querySelectorAll(".action-card").forEach((card) => {
+    card.addEventListener("mousemove", (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const rotateX = ((y - rect.height / 2) / (rect.height / 2)) * -3;
+      const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 3;
+
+      card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
+    });
+
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "";
+    });
+  });
+}
+
+/**
+ * Animates the "Purchased Quizzes" number counting up from 0 to
+ * its real value — a small Duolingo-style touch (their XP/streak
+ * counters do the same). Skipped entirely under reduced motion,
+ * where the target value is just shown immediately.
+ */
+function initCountUp() {
+  const el = document.getElementById("purchasedCountValue");
+  if (!el) return;
+
+  const target = Number(el.dataset.countTarget) || 0;
+
+  if (prefersReducedMotion() || target === 0) {
+    el.textContent = target;
+    return;
+  }
+
+  const durationMs = 700;
+  const startTime = performance.now();
+
+  function tick(now) {
+    const progress = Math.min((now - startTime) / durationMs, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = Math.round(eased * target);
+
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    }
+  }
+
+  requestAnimationFrame(tick);
 }

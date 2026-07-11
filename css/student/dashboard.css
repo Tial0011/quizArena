@@ -13,12 +13,45 @@
 ========================= */
 
 .dashboard-hero {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(135deg, #7c3aed, #5b21b6);
   color: white;
   border-radius: 24px;
   padding: 40px;
   margin-bottom: 30px;
   box-shadow: 0 20px 45px rgba(124, 58, 237, 0.18);
+}
+
+/* Parallax shapes — JS (scrollEffects.js) sets translateY on
+   these via data-parallax-speed; CSS only handles their static
+   look. Same visual language as the landing page hero. */
+.dashboard-hero-shape {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(2px);
+  will-change: transform;
+}
+
+.dashboard-hero-shape-1 {
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.06);
+  top: -60px;
+  right: -40px;
+}
+
+.dashboard-hero-shape-2 {
+  width: 100px;
+  height: 100px;
+  background: rgba(192, 132, 252, 0.16);
+  bottom: -30px;
+  left: 20%;
+}
+
+.hero-text {
+  position: relative;
 }
 
 .hero-text h1 {
@@ -30,6 +63,11 @@
   opacity: 0.9;
   line-height: 1.7;
   max-width: 600px;
+  transition: opacity 0.3s ease;
+}
+
+.hero-text p.message-updating {
+  opacity: 0;
 }
 
 /* =========================
@@ -47,14 +85,23 @@
   border-radius: 22px;
   padding: 28px;
   cursor: pointer;
-  transition: 0.25s;
+  transition:
+    transform 0.15s ease-out,
+    box-shadow 0.25s ease;
   border: 1px solid #ececec;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
 }
 
-.action-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.09);
+/* Hover-lift only on devices with real hover (mouse/trackpad).
+   On touch, :hover often triggers on tap and sticks until the
+   user taps elsewhere — same fix already applied on the landing
+   page's feature cards. The JS tilt effect (initCardTilt) is
+   already separately gated to the same capability check. */
+@media (hover: hover) and (pointer: fine) {
+  .action-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.09);
+  }
 }
 
 .action-icon {
@@ -246,6 +293,134 @@
 
 .logout-btn:hover {
   background: #dc2626;
+}
+
+/* =========================================================
+   ENTRANCE ANIMATIONS (Duolingo-style)
+
+   Two triggers:
+   - .load-in: plays automatically on mount. Used for the
+     action cards and stat cards, since they're above the fold
+     and visible immediately — no need to wait for a scroll
+     event that may never come.
+   - .reveal / .reveal-visible: scroll-triggered (via
+     scrollEffects.js's initScrollReveal), for the Score Trend
+     and Recent Activity sections that often sit below the fold,
+     especially on mobile.
+
+   Both use the same squash-and-stretch bounce curve as the
+   loading-overlay blob, so it reads as one consistent animation
+   language across the app rather than several different styles.
+========================================================= */
+
+@keyframes dashboard-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(14px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.load-in {
+  animation: dashboard-pop-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Stagger the cards so they pop in one after another rather
+   than all at once. */
+.action-grid .action-card:nth-child(1) {
+  animation-delay: 0s;
+}
+.action-grid .action-card:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.action-grid .action-card:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.stats-grid .stat-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.stats-grid .stat-card:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.reveal {
+  opacity: 0;
+  transform: scale(0.92) translateY(20px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* Self-drawing score trend line: the path "draws itself" once
+   the chart is injected into the DOM. 1000 is a fixed value
+   comfortably longer than any realistic chart path — a common,
+   simple alternative to measuring the path's real length in JS. */
+.trend-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: trend-draw 1.1s ease-out 0.15s forwards;
+}
+
+@keyframes trend-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.trend-dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: trend-dot-pop 0.4s ease-out 1.1s forwards;
+}
+
+@keyframes trend-dot-pop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .load-in,
+  .trend-line,
+  .trend-dot {
+    animation: none;
+  }
+
+  /* Without the animation running, the base "hidden" state
+     (stroke-dashoffset: 1000 / opacity: 0) would otherwise leave
+     the chart looking invisible instead of just unanimated. */
+  .trend-line {
+    stroke-dashoffset: 0;
+  }
+
+  .trend-dot {
+    opacity: 1;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 /* =========================
