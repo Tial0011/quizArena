@@ -1,24 +1,297 @@
 [
   {
-    "question": "What is the IUPAC name of the compound CH₃CH₂C(O)CH₂OH?",
+    "question": "Which statement best explains why bacteria are placed in the Kingdom Monera?",
     "image": "",
     "options": [
-      "4-hydroxybutan-2-one",
-      "1-oxobutan-3-ol",
-      "1-hydroxybutan-2-one",
-      "2-hydroxymethylpropan-1-one"
+      "They possess chloroplasts but lack vascular tissues.",
+      "They are unicellular organisms with membrane-bound organelles.",
+      "They are unicellular prokaryotes lacking a true nucleus and membrane-bound organelles.",
+      "They are multicellular organisms reproducing by spores."
     ],
     "answer": 2
   },
   {
-    "question": "What is the IUPAC name of the compound CH₃C(O)CH₂CH(OH)COOH?",
+    "question": "The science concerned with the study of bacteria is known as:",
+    "image": "",
+    "options": ["Mycology", "Phycology", "Cytology", "Bacteriology"],
+    "answer": 3
+  },
+  {
+    "question": "Which bacterial structure is primarily responsible for maintaining the organism's characteristic shape and preventing osmotic lysis?",
     "image": "",
     "options": [
-      "4-hydroxy-2-oxopentanoic acid",
-      "2-oxo-4-hydroxypentanoic acid",
-      "5-oxopentan-3-hydroxyoic acid",
-      "2-hydroxy-4-oxopentanoic acid"
+      "Plasma membrane",
+      "Peptidoglycan cell wall",
+      "Capsule",
+      "Ribosome"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Alex discovers a microorganism with plasmids, ribosomes, peptidoglycan cell wall and no nuclear membrane. The organism is most likely a _____?",
+    "image": "",
+    "options": ["Bacterium", "Fungus", "Alga", "Protozoan"],
+    "answer": 0
+  },
+  {
+    "question": "Which feature distinguishes bacteria from fungi and algae?",
+    "image": "",
+    "options": [
+      "Presence of a cell wall",
+      "Ability to reproduce rapidly",
+      "Absence of membrane-bound organelles",
+      "Occurrence in aquatic habitats"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "The presence of plasmids in certain bacteria is significant because plasmids:",
+    "image": "",
+    "options": [
+      "Carry out protein synthesis.",
+      "Produce ATP.",
+      "Form the bacterial capsule.",
+      "Carry additional genetic information independent of the main chromosome."
     ],
     "answer": 3
+  },
+  {
+    "question": "Which statement about bacteria is FALSE?",
+    "image": "",
+    "options": [
+      "Some species are aerobic while others are anaerobic.",
+      "Some bacteria possess flagella for movement.",
+      "All bacteria contain chlorophyll for photosynthesis.",
+      "They occur in almost every natural habitat."
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which option correctly matches bacteria with their natural habitat or association?",
+    "image": "",
+    "options": [
+      "Rhizobium — Air",
+      "Vibrio cholerae — Milk",
+      "Nitrobacter — Soil",
+      "Lactobacillus — Human skin"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which bacterial structure is directly involved in attachment during conjugation?",
+    "image": "",
+    "options": ["Flagellum", "Capsule", "Pilus", "Mesosome"],
+    "answer": 2
+  },
+  {
+    "question": "Unlike eukaryotic cells, bacterial genetic material is located in the:",
+    "image": "",
+    "options": [
+      "Nucleus",
+      "Endoplasmic reticulum",
+      "Golgi apparatus",
+      "Nucleoid"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which bacterial component serves as the site of protein synthesis?",
+    "image": "",
+    "options": ["Ribosome", "Capsule", "Plasmid", "Flagellum"],
+    "answer": 0
+  },
+  {
+    "question": "The slime layer surrounding many bacteria mainly functions to:",
+    "image": "",
+    "options": [
+      "Synthesize proteins.",
+      "Protect the cell and enhance attachment.",
+      "Carry hereditary information.",
+      "Produce ATP."
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which structure is found beneath the bacterial cell wall and selectively regulates movement of substances into and out of the cell?",
+    "image": "",
+    "options": ["Capsule", "Nucleoid", "Ribosome", "Plasma membrane"],
+    "answer": 3
+  },
+  {
+    "question": "A comma-shaped bacterium belongs to which morphological group?",
+    "image": "",
+    "options": ["Bacillus", "Spirillum", "Vibrio", "Coccus"],
+    "answer": 2
+  },
+  {
+    "question": "Chains of spherical bacteria are described as:",
+    "image": "",
+    "options": ["Staphylococci", "Streptococci", "Diplobacilli", "Spirilla"],
+    "answer": 1
+  },
+  {
+    "question": "During Gram staining, which reagent serves as the mordant?",
+    "image": "",
+    "options": ["Crystal violet", "Safranin", "Gram's iodine", "Alcohol"],
+    "answer": 2
+  },
+  {
+    "question": "Alex performed a gram staining procedure and a bacterium that appears pink after the Gram staining is most likely to be what?",
+    "image": "",
+    "options": [
+      "Gram-positive because it retains crystal violet.",
+      "Gram-negative because it loses crystal violet during decolorization.",
+      "Acid-fast.",
+      "Non-living."
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which sequence correctly represents the Gram staining procedure?",
+    "image": "",
+    "options": [
+      "Safranin → Crystal violet → Iodine → Alcohol",
+      "Alcohol → Crystal violet → Iodine → Safranin",
+      "Crystal violet → Alcohol → Iodine → Safranin",
+      "Crystal violet → Gram's iodine → Alcohol → Safranin"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which description best defines algae?",
+    "image": "",
+    "options": [
+      "Non-green parasitic plants with vascular tissues.",
+      "Seed-bearing aquatic plants.",
+      "Autotrophic, non-vascular thallophytes possessing chlorophyll a.",
+      "Flowering aquatic plants."
+    ],
+    "answer": 2
+  },
+  {
+    "question": "The branch of biology devoted to the scientific study of algae is _____?",
+    "image": "",
+    "options": ["Mycology", "Phycology", "Bacteriology", "Ecology"],
+    "answer": 1
+  },
+  {
+    "question": "Which statement best explains why algae are described as thallophytes?",
+    "image": "",
+    "options": [
+      "They possess true vascular tissues.",
+      "Their body is undifferentiated into roots, stems and leaves.",
+      "They reproduce only by spores.",
+      "They are always microscopic."
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which statement is TRUE regarding algae?",
+    "image": "",
+    "options": [
+      "Only specialized tissues perform photosynthesis.",
+      "They lack chlorophyll a.",
+      "All algae are multicellular.",
+      "Every cell of an alga is capable of photosynthesis."
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which alga is characteristically polysiphonous?",
+    "image": "",
+    "options": ["Ulva", "Volvox", "Oedogonium", "Polysiphonia"],
+    "answer": 3
+  },
+  {
+    "question": "An alga composed of many similar cells joined end-to-end to form a thread is described as:",
+    "image": "",
+    "options": ["Colonial", "Filamentous", "Thalloid", "Unicellular"],
+    "answer": 1
+  },
+  {
+    "question": "Which division of algae is correctly matched with its characteristic storage product?",
+    "image": "",
+    "options": [
+      "Chlorophyta — Laminarin",
+      "Phaeophyta — Floridean starch",
+      "Rhodophyta — Floridean starch",
+      "Euglenophyta — Starch"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Fungi differ fundamentally from algae because fungi:",
+    "image": "",
+    "options": [
+      "Lack cell walls.",
+      "Are always unicellular.",
+      "Lack chlorophyll and depend on external organic matter for nutrition.",
+      "Possess vascular tissues."
+    ],
+    "answer": 2
+  },
+  {
+    "question": "The vegetative body of a fungus is best described as _______?",
+    "image": "",
+    "options": ["Rhizoid", "Thallus", "Mycelium", "Sporophyte"],
+    "answer": 2
+  },
+  {
+    "question": "The thread-like structures composing the fungal body are known as ______?",
+    "image": "",
+    "options": ["Hyphae", "Stolons", "Rhizoids", "Fronds"],
+    "answer": 0
+  },
+  {
+    "question": "A fungal hypha lacking cross walls is referred to as:",
+    "image": "",
+    "options": ["Septate", "Binucleate", "Coenocytic", "Multinucleate"],
+    "answer": 2
+  },
+  {
+    "question": "Which food reserve is commonly stored by fungi?",
+    "image": "",
+    "options": ["Cellulose", "Starch", "Laminarin", "Glycogen"],
+    "answer": 3
+  },
+  {
+    "question": "Which statement correctly describes septate hyphae?",
+    "image": "",
+    "options": [
+      "They contain no nuclei.",
+      "They lack cell walls.",
+      "They possess cross walls called septa.",
+      "They occur only in mushrooms."
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which fungal structure anchors the mushroom to the substrate and absorbs nutrients?",
+    "image": "",
+    "options": ["Gills", "Rhizoids", "Annulus", "Pileus"],
+    "answer": 1
+  },
+  {
+    "question": "Rhizopus stolonifer, the common bread mould, belongs to:",
+    "image": "",
+    "options": ["Basidiomycota", "Zygomycota", "Ascomycota", "Deuteromycota"],
+    "answer": 1
+  },
+  {
+    "question": "Penicillin, one of the earliest antibiotics, is obtained from:",
+    "image": "",
+    "options": [
+      "Rhizopus stolonifer",
+      "Saccharomyces cerevisiae",
+      "Agaricus",
+      "Penicillium notatum"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which association between fungi and higher plant roots improves mineral absorption and benefits both organisms?",
+    "image": "",
+    "options": ["Lichen", "Parasitism", "Mycorrhiza", "Saprophytism"],
+    "answer": 2
   }
 ]

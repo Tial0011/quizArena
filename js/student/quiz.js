@@ -23,24 +23,36 @@ let timer = null;
 let timeRemaining = 0;
 
 export async function startQuiz(subject, count, minutes, userData) {
-  const allQuestions = [];
-
   const purchases = userData?.purchasedQuizzes || [];
 
-  for (const purchaseId of purchases) {
-    const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+  // Fetch every purchase document at once instead of one at a time —
+  // this was the biggest chunk of the ~7s load time when a student
+  // has multiple purchased quizzes.
+  const purchaseDocs = await Promise.all(
+    purchases.map((purchaseId) => getDoc(doc(db, "purchases", purchaseId))),
+  );
 
-    if (!purchaseDoc.exists()) continue;
+  const quizIds = purchaseDocs
+    .filter((docSnap) => docSnap.exists())
+    .map((docSnap) => docSnap.data().quizId);
 
-    const purchase = purchaseDoc.data();
+  // De-duplicate in case the same quiz shows up via more than one
+  // purchase record.
+  const uniqueQuizIds = [...new Set(quizIds)];
 
-    const q = query(
-      collection(db, "questions"),
-      where("quizId", "==", purchase.quizId),
-    );
+  // Fetch each quiz's questions in parallel too, rather than
+  // sequentially awaiting one query per purchase.
+  const questionSnapshots = await Promise.all(
+    uniqueQuizIds.map((quizId) =>
+      getDocs(
+        query(collection(db, "questions"), where("quizId", "==", quizId)),
+      ),
+    ),
+  );
 
-    const snapshot = await getDocs(q);
+  const allQuestions = [];
 
+  questionSnapshots.forEach((snapshot) => {
     snapshot.forEach((docSnap) => {
       const question = {
         id: docSnap.id,
@@ -51,7 +63,7 @@ export async function startQuiz(subject, count, minutes, userData) {
         allQuestions.push(question);
       }
     });
-  }
+  });
 
   if (allQuestions.length === 0) {
     alert("No questions found for this subject.");
@@ -385,6 +397,20 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+/**
+ * Fisher-Yates shuffle — genuinely uniform (every permutation
+ * equally likely), unlike sort(() => Math.random() - 0.5) which
+ * is a known-biased trick. Matches the shuffle already used in
+ * purchasedQuiz.js. Returns a new array — does not mutate the
+ * one passed in.
+ */
 function shuffle(array) {
-  return [...array].sort(() => Math.random() - 0.5);
+  const shuffled = [...array];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled;
 }
