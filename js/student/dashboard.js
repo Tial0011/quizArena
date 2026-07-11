@@ -2,17 +2,15 @@ import { logoutUser } from "../auth.js";
 import { renderPracticeArena } from "./practice.js";
 import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
+import { getRecentAttempts } from "./attemptsService.js";
+import {
+  renderRecentAttemptsMarkup,
+  renderScoreTrendChartMarkup,
+} from "./analyticsWidgets.js";
 
 const app = document.getElementById("app");
 
 export function renderStudentDashboard(userData = {}) {
-  history.replaceState(
-    {
-      page: "dashboard",
-    },
-    "",
-    "",
-  );
   const purchasedCount = userData.purchasedQuizzes?.length || 0;
 
   app.innerHTML = `
@@ -46,11 +44,11 @@ export function renderStudentDashboard(userData = {}) {
           </div>
 
           <h3>
-            Custom Exam Arena
+            Practice Arena
           </h3>
 
           <p>
-            Practice questions from quizzes you've purchased with custom time and custom question limits.
+            Practice questions from quizzes you've purchased with custom time and question limits.
           </p>
 
           <span class="action-link">
@@ -92,7 +90,7 @@ export function renderStudentDashboard(userData = {}) {
           </div>
 
           <h3>
-            My Purchased Quizzes
+            My Quizzes
           </h3>
 
           <p>
@@ -148,17 +146,29 @@ export function renderStudentDashboard(userData = {}) {
         <div class="section-header">
 
           <h2>
+            📊 Score Trend
+          </h2>
+
+        </div>
+
+        <div id="scoreTrendContainer" class="score-trend-container">
+          <p>Loading...</p>
+        </div>
+
+      </section>
+
+      <section class="dashboard-section">
+
+        <div class="section-header">
+
+          <h2>
             📈 Recent Activity
           </h2>
 
         </div>
 
-        <div class="empty-state">
-
-          No quiz attempts yet.
-          <br><br>
-          Start practicing to see your progress here.
-
+        <div id="recentActivityContainer">
+          <p>Loading...</p>
         </div>
 
       </section>
@@ -174,6 +184,31 @@ export function renderStudentDashboard(userData = {}) {
   `;
 
   setupDashboardEvents(userData);
+  loadAnalytics(userData);
+}
+
+/* =========================================================
+   ANALYTICS
+   Loaded async after the initial render. Guarded against the
+   student having already navigated to another page (Practice,
+   Marketplace, etc.) by the time the Firestore read finishes —
+   same class of bug fixed earlier in the admin dashboard, where
+   a stale async load tried to write into DOM nodes that had
+   already been replaced.
+========================================================= */
+async function loadAnalytics(userData) {
+  const attempts = await getRecentAttempts(userData.id, 10);
+
+  const trendContainer = document.getElementById("scoreTrendContainer");
+  const activityContainer = document.getElementById("recentActivityContainer");
+
+  if (trendContainer) {
+    trendContainer.innerHTML = renderScoreTrendChartMarkup(attempts);
+  }
+
+  if (activityContainer) {
+    activityContainer.innerHTML = renderRecentAttemptsMarkup(attempts);
+  }
 }
 
 function setupDashboardEvents(userData) {

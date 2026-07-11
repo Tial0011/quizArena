@@ -14,6 +14,7 @@ import {
   renderQuestionNavigatorMarkup,
   attachNavigatorEvents,
 } from "./questionNavigator.js";
+import { recordQuizAttempt } from "./attemptsService.js";
 
 let questions = [];
 let answers = [];
@@ -22,7 +23,13 @@ let currentQuestion = 0;
 let timer = null;
 let timeRemaining = 0;
 
+let currentUserId = null;
+let currentSubject = "";
+
 export async function startQuiz(subject, count, minutes, userData) {
+  currentUserId = userData?.id || null;
+  currentSubject = subject;
+
   const purchases = userData?.purchasedQuizzes || [];
 
   // Fetch every purchase document at once instead of one at a time —
@@ -67,7 +74,7 @@ export async function startQuiz(subject, count, minutes, userData) {
 
   if (allQuestions.length === 0) {
     alert("No questions found for this subject.");
-    return;
+    return false;
   }
 
   questions = shuffle(allQuestions);
@@ -87,6 +94,8 @@ export async function startQuiz(subject, count, minutes, userData) {
   renderQuestion();
 
   startTimer();
+
+  return true;
 }
 
 function renderQuestion() {
@@ -335,6 +344,17 @@ function finishQuiz() {
   });
 
   const percentage = Math.round((score / questions.length) * 100);
+
+  // Fire-and-forget: analytics should never delay or block the
+  // student from seeing their result. recordQuizAttempt() already
+  // swallows its own errors.
+  recordQuizAttempt({
+    userId: currentUserId,
+    mode: "practice",
+    subjectName: currentSubject,
+    score,
+    totalQuestions: questions.length,
+  });
 
   let message = "Keep Practicing 💪";
 

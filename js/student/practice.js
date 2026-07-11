@@ -10,6 +10,7 @@ import {
 import { startQuiz } from "./quiz.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
+import { showLoadingOverlay } from "./loadingOverlay.js";
 
 /* =========================================================
    DEFAULTS
@@ -27,6 +28,10 @@ export async function renderPracticeArena(userData = {}) {
     "",
     "",
   );
+  await renderPracticeArenaPage(userData);
+}
+
+async function renderPracticeArenaPage(userData) {
   currentUserData = userData;
 
   const app = document.getElementById("app");
@@ -108,29 +113,44 @@ export async function renderPracticeArena(userData = {}) {
 async function loadPurchasedSubjects() {
   const select = document.getElementById("subjectSelect");
 
+  select.disabled = true;
+  select.innerHTML = `<option value="">Loading subjects...</option>`;
+
   const purchases = currentUserData.purchasedQuizzes || [];
 
-  const subjects = new Set();
+  // Fetch every purchase doc at once instead of one at a time —
+  // same fix already applied to startQuiz() in quiz.js. This runs
+  // on page load, before the student can do anything else, so it
+  // was directly contributing to Practice Arena feeling slow to
+  // even open.
+  //
+  // Promise.allSettled (not Promise.all) so a single failed read
+  // doesn't wipe out the whole list — matches the original code's
+  // per-purchase try/catch resilience.
+  const purchaseResults = await Promise.allSettled(
+    purchases.map((purchaseId) => getDoc(doc(db, "purchases", purchaseId))),
+  );
 
-  for (const purchaseId of purchases) {
-    try {
-      const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+  const quizIds = [
+    ...new Set(
+      purchaseResults
+        .filter((r) => r.status === "fulfilled" && r.value.exists())
+        .map((r) => r.value.data().quizId),
+    ),
+  ];
 
-      if (!purchaseDoc.exists()) continue;
+  const quizResults = await Promise.allSettled(
+    quizIds.map((quizId) => getDoc(doc(db, "quizzes", quizId))),
+  );
 
-      const purchase = purchaseDoc.data();
+  const subjects = new Set(
+    quizResults
+      .filter((r) => r.status === "fulfilled" && r.value.exists())
+      .map((r) => r.value.data().subjectName),
+  );
 
-      const quizDoc = await getDoc(doc(db, "quizzes", purchase.quizId));
-
-      if (!quizDoc.exists()) continue;
-
-      const quiz = quizDoc.data();
-
-      subjects.add(quiz.subjectName);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  select.disabled = false;
+  select.innerHTML = `<option value="">Select Subject</option>`;
 
   subjects.forEach((subject) => {
     select.innerHTML += `
@@ -141,7 +161,7 @@ async function loadPurchasedSubjects() {
   });
 }
 
-function beginPractice() {
+async function beginPractice() {
   const subject = document.getElementById("subjectSelect").value;
 
   const count = Number(document.getElementById("questionCount").value);
@@ -163,9 +183,36 @@ function beginPractice() {
     return;
   }
 
+  const app = document.getElementById("app");
+
+  const stopLoading = showLoadingOverlay(
+    app,
+    [
+      "Gathering your questions...",
+      "Shuffling things up...",
+      "Setting your timer...",
+      "Almost ready...",
+    ],
+    { subtitle: "This usually takes just a moment" },
+  );
+
   // Note: if `count` exceeds the number of questions actually
   // available for this subject, startQuiz() in quiz.js already
   // clamps it down to whatever is available — no extra handling
   // needed here.
-  startQuiz(subject, count, time, currentUserData);
+  const didStart = await startQuiz(subject, count, time, currentUserData);
+
+  // Harmless if startQuiz() already replaced #app's contents with
+  // the first question — this just stops the message rotation.
+  stopLoading();
+
+  // startQuiz() can bail out early (e.g. no questions exist for
+  // this subject) without rendering anything — in that case #app
+  // is still showing the loading overlay with nothing to recover
+  // it. Rebuild the practice form directly (not via
+  // renderPracticeArena) so this doesn't push a second, phantom
+  // history entry — the student hasn't navigated anywhere.
+  if (!didStart) {
+    renderPracticeArenaPage(currentUserData);
+  }
 }

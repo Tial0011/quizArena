@@ -8,6 +8,7 @@ import {
 import { startPurchasedQuiz } from "./purchasedQuiz.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
+import { showLoadingOverlay } from "./loadingOverlay.js"; // ✅ added
 
 export async function renderMyQuizzes(userData = {}) {
   history.pushState(
@@ -34,22 +35,29 @@ export async function renderMyQuizzes(userData = {}) {
 
       </header>
 
-      <div id="myQuizList">
-
-        <div class="empty-state">
-          Loading quizzes...
-        </div>
-
-      </div>
+      <div id="myQuizList"></div>
 
     </div>
   `;
 
   const container = document.getElementById("myQuizList");
 
+  // ✅ Show spinner overlay instead of plain text
+  const stopLoading = showLoadingOverlay(
+    container,
+    [
+      "Loading your quizzes...",
+      "Fetching purchase records...",
+      "Preparing quiz cards...",
+      "Almost ready...",
+    ],
+    { subtitle: "This usually takes just a moment" },
+  );
+
   const purchases = userData?.purchasedQuizzes || [];
 
   if (purchases.length === 0) {
+    stopLoading(); // remove overlay
     container.innerHTML = `
       <div class="empty-state">
 
@@ -68,16 +76,12 @@ export async function renderMyQuizzes(userData = {}) {
 
   for (const purchaseId of purchases) {
     try {
-      // Load purchase document
       const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
-
       if (!purchaseDoc.exists()) continue;
 
       const purchase = purchaseDoc.data();
 
-      // Load actual quiz
       const quizDoc = await getDoc(doc(db, "quizzes", purchase.quizId));
-
       if (!quizDoc.exists()) continue;
 
       const quiz = quizDoc.data();
@@ -112,6 +116,8 @@ export async function renderMyQuizzes(userData = {}) {
     }
   }
 
+  stopLoading(); // ✅ remove overlay once quizzes are loaded
+
   if (html === "") {
     container.innerHTML = `
       <div class="empty-state">
@@ -134,6 +140,7 @@ export async function renderMyQuizzes(userData = {}) {
       startPurchasedQuiz(userData, btn.dataset.id, btn.dataset.title);
     });
   });
+
   registerBackHandler(() => {
     renderStudentDashboard(userData);
   });

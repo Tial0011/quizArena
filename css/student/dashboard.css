@@ -120,6 +120,90 @@
 }
 
 /* =========================
+   SCORE TREND CHART
+========================= */
+
+.score-trend-container {
+  width: 100%;
+}
+
+.score-trend-chart {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+.trend-baseline {
+  stroke: #e5e7eb;
+  stroke-width: 1;
+}
+
+.trend-line {
+  stroke: #7c3aed;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-dot {
+  fill: #7c3aed;
+  stroke: white;
+  stroke-width: 2;
+}
+
+/* =========================
+   RECENT ATTEMPTS LIST
+========================= */
+
+.attempts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.attempt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fafafa;
+  border: 1px solid #ececec;
+}
+
+.attempt-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attempt-title {
+  font-weight: 700;
+  color: #111827;
+  font-size: 14px;
+}
+
+.attempt-mode-badge {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.attempt-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.attempt-score {
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+/* =========================
    RECENT ACTIVITY
 ========================= */
 

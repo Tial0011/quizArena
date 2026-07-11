@@ -8,11 +8,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
+import { renderMyQuizzes } from "./myQuizzes.js";
 import { renderReviewAnswers } from "./reviewAnswers.js";
 import {
   renderQuestionNavigatorMarkup,
   attachNavigatorEvents,
 } from "./questionNavigator.js";
+import { recordQuizAttempt } from "./attemptsService.js";
+import { showLoadingOverlay } from "./loadingOverlay.js";
 
 /* =========================================================
    CBT CONFIG
@@ -29,7 +32,13 @@ let currentQuestion = 0;
 let timer;
 let timeRemaining;
 
+let currentUserId = null;
+let currentQuizId = null;
+
 export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
+  currentUserId = userData?.id || null;
+  currentQuizId = quizId;
+
   history.pushState(
     {
       page: "purchasedQuiz",
@@ -37,6 +46,20 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
     "",
     "",
   );
+
+  const app = document.getElementById("app");
+
+  const stopLoading = showLoadingOverlay(
+    app,
+    [
+      "Loading your quiz...",
+      "Picking 25 questions...",
+      "Starting your timer...",
+      "Almost ready...",
+    ],
+    { subtitle: "This usually takes just a moment" },
+  );
+
   const q = query(collection(db, "questions"), where("quizId", "==", quizId));
 
   const snapshot = await getDocs(q);
@@ -51,7 +74,14 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
   });
 
   if (!allQuestions.length) {
+    stopLoading();
     alert("No questions found.");
+    // Self-contained recovery: this file doesn't know what the
+    // caller's list screen looks like, so fall back to the
+    // dashboard — the same destination the back-handler below
+    // would take the student to anyway, rather than leaving the
+    // loading overlay stuck on screen.
+    renderStudentDashboard(userData);
     return;
   }
 
@@ -68,6 +98,8 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
   registerBackHandler(() => {
     renderMyQuizzes(userData);
   });
+
+  stopLoading();
   renderQuestion(quizTitle);
 
   startTimer(quizTitle);
@@ -335,6 +367,19 @@ function finishQuiz(quizTitle) {
   });
 
   const percentage = Math.round((score / questions.length) * 100);
+
+  // Fire-and-forget: analytics should never delay or block the
+  // student from seeing their result. recordQuizAttempt() already
+  // swallows its own errors.
+  recordQuizAttempt({
+    userId: currentUserId,
+    mode: "purchased",
+    subjectName: questions[0]?.subjectName || "",
+    quizId: currentQuizId,
+    quizTitle,
+    score,
+    totalQuestions: questions.length,
+  });
 
   document.getElementById("app").innerHTML = `
     <div class="quiz-result">
