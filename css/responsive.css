@@ -1,32 +1,186 @@
-/* =========================
-   QUIZ RESPONSIVE
-========================= */
+/* =========================================================
+   RESPONSIVE.CSS
+   Mobile / tablet overrides only. Desktop styles are never
+   duplicated or modified here — only overridden at narrower
+   breakpoints.
+
+   IMPORTANT: this file must be linked AFTER all other page
+   stylesheets (dashboard.css, admin.css, etc.) so these
+   overrides win the cascade at shared breakpoints.
+
+   Breakpoints used:
+   - Mobile: max-width: 768px
+   - Tablet: 769px - 1024px (added only where a page needs it)
+========================================================= */
+
+/* =========================================================
+   1. STUDENT DASHBOARD
+   (dashboard.css)
+========================================================= */
 
 @media (max-width: 768px) {
-  .quiz-container {
-    padding: 15px;
+  .dashboard {
+    padding: 20px 16px 40px;
   }
 
-  .quiz-card {
-    padding: 18px;
+  /* Hero */
+  .dashboard-hero {
+    padding: 24px 20px;
+    border-radius: 18px;
+    margin-bottom: 20px;
   }
 
-  .quiz-question {
-    font-size: 18px;
+  .hero-text h1 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
   }
 
-  .quiz-header {
-    flex-direction: column;
-    gap: 10px;
+  .hero-text p {
+    font-size: 0.95rem;
+    max-width: 100%;
   }
 
-  .quiz-actions {
-    flex-direction: column;
+  /* Action cards: stack vertically */
+  .action-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
   }
 
-  .score-circle {
-    width: 120px;
-    height: 120px;
-    font-size: 28px;
+  .action-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .action-icon {
+    width: 54px;
+    height: 54px;
+    font-size: 26px;
+    margin-bottom: 14px;
+  }
+
+  .action-card h3 {
+    font-size: 1.05rem;
+  }
+
+  .action-card p {
+    font-size: 0.9rem;
+  }
+
+  .action-link {
+    margin-top: 14px;
+  }
+
+  /* Stat cards: stack vertically */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-card h2 {
+    font-size: 1.7rem;
+    margin: 10px 0 6px;
+  }
+
+  /* Recent activity */
+  .dashboard-section {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .empty-state {
+    padding: 32px 16px;
+  }
+
+  /* Logout button already full width on desktop; just tighten padding */
+  .logout-btn {
+    padding: 14px;
+    font-size: 15px;
+  }
+}
+
+/* =========================================================
+   2. AUTH / LANDING PAGE
+   (auth.css)
+
+   Note: auth.css is already mobile-first — its default (no
+   media query) rules ARE the mobile layout, and it switches
+   to the desktop side-by-side layout at min-width: 900px.
+   So this block is mainly a bug fix + light polish, not a
+   full mobile rebuild.
+========================================================= */
+
+@media (max-width: 768px) {
+  /* Bug fix: the decorative circle (.hero::before) sits at
+     right: -100px with no overflow clipping on its parent,
+     which causes horizontal scroll on narrow screens. This
+     is very likely why the page felt "desktop-ish" on real
+     phones even with correct breakpoints. */
+  .hero {
+    overflow: hidden;
+    padding: 2rem 1.25rem;
+  }
+
+  .hero h1 {
+    margin-bottom: 0.75rem;
+  }
+
+  .hero p {
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-actions {
+    margin-bottom: 2rem;
+  }
+
+  /* Prevent the 3-column stat row from feeling cramped on
+     small phones. */
+  .stats {
+    gap: 0.5rem;
+  }
+
+  .stat h3 {
+    font-size: 1.25rem;
+  }
+
+  .stat span {
+    font-size: 0.72rem;
+  }
+
+  .auth-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .auth-card h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Parallax shapes are a desktop-only flourish (the matching
+     JS also skips the scroll-linked work below this width — see
+     updateParallax() in landing.js). Hiding them here removes
+     any decorative clutter on narrow screens outright. */
+  .hero-parallax-shape,
+  .story-parallax-shape {
+    display: none;
+  }
+
+  /* Story sections below the login fold: tighten the generous
+     desktop padding for smaller screens. */
+  .story-section,
+  .story-cta {
+    padding: 2.5rem 1.25rem;
+  }
+
+  .story-content {
+    margin-bottom: 1.75rem;
+  }
+
+  .story-feature-card {
+    padding: 1.25rem;
   }
 }

@@ -1,26 +1,36 @@
 import { auth } from "./firebase/config.js";
 
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  onAuthStateChanged,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import { renderLanding } from "./ui/landing.js";
 
-import { getUserData } from "./auth.js";
+/* =========================================================
+   AUTO-LOGIN DISABLED
 
-import { renderStudentDashboard } from "./student/dashboard.js";
+   Firebase Auth persists a signed-in session across page
+   reloads by default. This app intentionally does NOT want
+   that: every fresh page load should show the login screen,
+   even if a previous session is still valid.
 
-import { logoutUser } from "./auth.js";
+   onAuthStateChanged still fires once on load with whatever
+   session Firebase restored — if there is one, it's signed out
+   immediately, then the landing page renders either way.
 
-onAuthStateChanged(auth, async (user) => {
-  console.log("Firebase User:", user);
+   After this first check, the listener unsubscribes itself.
+   It has nothing left to do: a successful login is handled
+   directly by submitForm() in landing.js, which already routes
+   to the right dashboard without needing this listener to fire
+   again.
+========================================================= */
+const unsubscribe = onAuthStateChanged(auth, async (user) => {
+  unsubscribe();
 
-  if (!user) {
-    renderLanding();
-    return;
+  if (user) {
+    await signOut(auth);
   }
 
-  console.log("UID:", user.uid);
-
-  const userData = await getUserData(user.uid);
-
-  renderStudentDashboard(userData);
+  renderLanding();
 });
