@@ -316,25 +316,22 @@ function initParallax() {
   let ticking = false;
 
   function updateParallax() {
-    // Parallax is a desktop-only flourish. On mobile, skip the
-    // work entirely rather than computing and writing styles
-    // that CSS then hides anyway — this is scroll-linked code,
-    // so avoiding unnecessary work here matters for battery/CPU
-    // on phones, where most visitors actually are.
-    if (window.innerWidth < 768) {
-      ticking = false;
-      return;
-    }
-
     const scrollY = window.scrollY;
 
-    document.querySelectorAll("[data-parallax-speed]").forEach((shape) => {
-      const speed = parseFloat(shape.dataset.parallaxSpeed) || 0.15;
-      shape.style.transform = `translateY(${scrollY * speed}px)`;
+    // Animate all elements with data-parallax-speed, regardless of screen size
+    document.querySelectorAll("[data-parallax-speed]").forEach((el) => {
+      const speed = parseFloat(el.dataset.parallaxSpeed) || 0;
+      el.style.transform = `translateY(${scrollY * speed}px)`;
     });
-
-    ticking = false;
   }
+
+  // Attach scroll listener
+  window.addEventListener("scroll", updateParallax);
+
+  // Run once on load so shapes are positioned correctly
+  updateParallax();
+
+  window.addEventListener("scroll", updateParallax);
 
   window.addEventListener(
     "scroll",
