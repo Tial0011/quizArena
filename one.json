@@ -1,297 +1,252 @@
 [
   {
-    "question": "Which statement best explains why bacteria are placed in the Kingdom Monera?",
+    "question": "Which of the following statements correctly distinguishes a magnetic field from an electric field?",
     "image": "",
     "options": [
-      "They possess chloroplasts but lack vascular tissues.",
-      "They are unicellular organisms with membrane-bound organelles.",
-      "They are unicellular prokaryotes lacking a true nucleus and membrane-bound organelles.",
-      "They are multicellular organisms reproducing by spores."
+      "A magnetic field exerts a force on both stationary and moving charges.",
+      "A magnetic field exerts a force only on moving charges.",
+      "A magnetic field can exist only inside a conductor.",
+      "A magnetic field acts only on positively charged particles."
     ],
     "answer": 2
   },
   {
-    "question": "The science concerned with the study of bacteria is known as:",
+    "question": "The SI unit of magnetic flux density is",
     "image": "",
-    "options": ["Mycology", "Phycology", "Cytology", "Bacteriology"],
-    "answer": 3
-  },
-  {
-    "question": "Which bacterial structure is primarily responsible for maintaining the organism's characteristic shape and preventing osmotic lysis?",
-    "image": "",
-    "options": [
-      "Plasma membrane",
-      "Peptidoglycan cell wall",
-      "Capsule",
-      "Ribosome"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "Alex discovers a microorganism with plasmids, ribosomes, peptidoglycan cell wall and no nuclear membrane. The organism is most likely a _____?",
-    "image": "",
-    "options": ["Bacterium", "Fungus", "Alga", "Protozoan"],
-    "answer": 0
-  },
-  {
-    "question": "Which feature distinguishes bacteria from fungi and algae?",
-    "image": "",
-    "options": [
-      "Presence of a cell wall",
-      "Ability to reproduce rapidly",
-      "Absence of membrane-bound organelles",
-      "Occurrence in aquatic habitats"
-    ],
+    "options": ["Weber.", "Tesla.", "Henry.", "Ampere."],
     "answer": 2
   },
   {
-    "question": "The presence of plasmids in certain bacteria is significant because plasmids:",
+    "question": "The direction of the magnetic field around a long straight current-carrying conductor is determined using",
     "image": "",
     "options": [
-      "Carry out protein synthesis.",
-      "Produce ATP.",
-      "Form the bacterial capsule.",
-      "Carry additional genetic information independent of the main chromosome."
+      "Fleming's Left-Hand Rule.",
+      "Fleming's Right-Hand Rule.",
+      "Right-Hand Thumb Rule.",
+      "Lenz's Law."
     ],
     "answer": 3
   },
   {
-    "question": "Which statement about bacteria is FALSE?",
+    "question": "A proton enters a uniform magnetic field with its velocity parallel to the magnetic field lines. The magnetic force acting on the proton is",
     "image": "",
     "options": [
-      "Some species are aerobic while others are anaerobic.",
-      "Some bacteria possess flagella for movement.",
-      "All bacteria contain chlorophyll for photosynthesis.",
-      "They occur in almost every natural habitat."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "Which option correctly matches bacteria with their natural habitat or association?",
-    "image": "",
-    "options": [
-      "Rhizobium — Air",
-      "Vibrio cholerae — Milk",
-      "Nitrobacter — Soil",
-      "Lactobacillus — Human skin"
-    ],
-    "answer": 2
-  },
-  {
-    "question": "Which bacterial structure is directly involved in attachment during conjugation?",
-    "image": "",
-    "options": ["Flagellum", "Capsule", "Pilus", "Mesosome"],
-    "answer": 2
-  },
-  {
-    "question": "Unlike eukaryotic cells, bacterial genetic material is located in the:",
-    "image": "",
-    "options": [
-      "Nucleus",
-      "Endoplasmic reticulum",
-      "Golgi apparatus",
-      "Nucleoid"
+      "Maximum.",
+      "Equal to qvB.",
+      "Zero.",
+      "Directed opposite to its motion."
     ],
     "answer": 3
   },
   {
-    "question": "Which bacterial component serves as the site of protein synthesis?",
-    "image": "",
-    "options": ["Ribosome", "Capsule", "Plasmid", "Flagellum"],
-    "answer": 0
-  },
-  {
-    "question": "The slime layer surrounding many bacteria mainly functions to:",
+    "question": "A charged particle moving perpendicular to a uniform magnetic field follows a",
     "image": "",
     "options": [
-      "Synthesize proteins.",
-      "Protect the cell and enhance attachment.",
-      "Carry hereditary information.",
-      "Produce ATP."
+      "Straight-line path.",
+      "Circular path.",
+      "Parabolic path.",
+      "Elliptical path."
     ],
-    "answer": 1
-  },
-  {
-    "question": "Which structure is found beneath the bacterial cell wall and selectively regulates movement of substances into and out of the cell?",
-    "image": "",
-    "options": ["Capsule", "Nucleoid", "Ribosome", "Plasma membrane"],
-    "answer": 3
-  },
-  {
-    "question": "A comma-shaped bacterium belongs to which morphological group?",
-    "image": "",
-    "options": ["Bacillus", "Spirillum", "Vibrio", "Coccus"],
     "answer": 2
   },
   {
-    "question": "Chains of spherical bacteria are described as:",
-    "image": "",
-    "options": ["Staphylococci", "Streptococci", "Diplobacilli", "Spirilla"],
-    "answer": 1
-  },
-  {
-    "question": "During Gram staining, which reagent serves as the mordant?",
-    "image": "",
-    "options": ["Crystal violet", "Safranin", "Gram's iodine", "Alcohol"],
-    "answer": 2
-  },
-  {
-    "question": "Alex performed a gram staining procedure and a bacterium that appears pink after the Gram staining is most likely to be what?",
+    "question": "A charged particle enters a uniform magnetic field at an angle of 30° to the field lines. The particle will move in a",
     "image": "",
     "options": [
-      "Gram-positive because it retains crystal violet.",
-      "Gram-negative because it loses crystal violet during decolorization.",
-      "Acid-fast.",
-      "Non-living."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "Which sequence correctly represents the Gram staining procedure?",
-    "image": "",
-    "options": [
-      "Safranin → Crystal violet → Iodine → Alcohol",
-      "Alcohol → Crystal violet → Iodine → Safranin",
-      "Crystal violet → Alcohol → Iodine → Safranin",
-      "Crystal violet → Gram's iodine → Alcohol → Safranin"
+      "Straight line.",
+      "Circular path.",
+      "Helical path.",
+      "Parabolic path."
     ],
     "answer": 3
   },
   {
-    "question": "Which description best defines algae?",
+    "question": "The magnetic force acting on a current-carrying conductor placed in a uniform magnetic field is maximum when the conductor is",
     "image": "",
     "options": [
-      "Non-green parasitic plants with vascular tissues.",
-      "Seed-bearing aquatic plants.",
-      "Autotrophic, non-vascular thallophytes possessing chlorophyll a.",
-      "Flowering aquatic plants."
+      "Parallel to the magnetic field.",
+      "Perpendicular to the magnetic field.",
+      "Inclined at 45° to the magnetic field.",
+      "Inclined at 60° to the magnetic field."
     ],
     "answer": 2
   },
   {
-    "question": "The branch of biology devoted to the scientific study of algae is _____?",
+    "question": "A straight conductor of length 0.40 m carries a current of 5 A at right angles to a uniform magnetic field of flux density 0.8 T. The magnetic force acting on the conductor is",
     "image": "",
-    "options": ["Mycology", "Phycology", "Bacteriology", "Ecology"],
-    "answer": 1
+    "options": ["0.80 N.", "1.20 N.", "1.60 N.", "2.00 N."],
+    "answer": 3
   },
   {
-    "question": "Which statement best explains why algae are described as thallophytes?",
+    "question": "Which of the following statements about magnetic field lines is CORRECT?",
     "image": "",
     "options": [
-      "They possess true vascular tissues.",
-      "Their body is undifferentiated into roots, stems and leaves.",
-      "They reproduce only by spores.",
-      "They are always microscopic."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "Which statement is TRUE regarding algae?",
-    "image": "",
-    "options": [
-      "Only specialized tissues perform photosynthesis.",
-      "They lack chlorophyll a.",
-      "All algae are multicellular.",
-      "Every cell of an alga is capable of photosynthesis."
+      "Magnetic field lines originate from the north pole and terminate at the south pole.",
+      "Magnetic field lines intersect wherever two magnets are brought together.",
+      "Magnetic field lines form continuous closed loops.",
+      "Magnetic field lines exist only inside a magnet."
     ],
     "answer": 3
   },
   {
-    "question": "Which alga is characteristically polysiphonous?",
-    "image": "",
-    "options": ["Ulva", "Volvox", "Oedogonium", "Polysiphonia"],
-    "answer": 3
-  },
-  {
-    "question": "An alga composed of many similar cells joined end-to-end to form a thread is described as:",
-    "image": "",
-    "options": ["Colonial", "Filamentous", "Thalloid", "Unicellular"],
-    "answer": 1
-  },
-  {
-    "question": "Which division of algae is correctly matched with its characteristic storage product?",
+    "question": "The magnetic flux density at a point 0.20 m from a long straight conductor carrying a current of 10 A is approximately (Take μ₀ = 4π × 10⁻⁷ H/m)",
     "image": "",
     "options": [
-      "Chlorophyta — Laminarin",
-      "Phaeophyta — Floridean starch",
-      "Rhodophyta — Floridean starch",
-      "Euglenophyta — Starch"
+      "5.0 × 10⁻⁶ T.",
+      "1.0 × 10⁻⁵ T.",
+      "2.0 × 10⁻⁵ T.",
+      "4.0 × 10⁻⁵ T."
     ],
     "answer": 2
   },
   {
-    "question": "Fungi differ fundamentally from algae because fungi:",
+    "question": "A proton and an alpha particle enter the same uniform magnetic field with equal speeds, moving perpendicular to the magnetic field. Which particle experiences the greater magnetic force?",
     "image": "",
     "options": [
-      "Lack cell walls.",
-      "Are always unicellular.",
-      "Lack chlorophyll and depend on external organic matter for nutrition.",
-      "Possess vascular tissues."
+      "The proton.",
+      "The alpha particle.",
+      "Both experience the same magnetic force.",
+      "The force depends on their masses only."
     ],
     "answer": 2
   },
   {
-    "question": "The vegetative body of a fungus is best described as _______?",
-    "image": "",
-    "options": ["Rhizoid", "Thallus", "Mycelium", "Sporophyte"],
-    "answer": 2
-  },
-  {
-    "question": "The thread-like structures composing the fungal body are known as ______?",
-    "image": "",
-    "options": ["Hyphae", "Stolons", "Rhizoids", "Fronds"],
-    "answer": 0
-  },
-  {
-    "question": "A fungal hypha lacking cross walls is referred to as:",
-    "image": "",
-    "options": ["Septate", "Binucleate", "Coenocytic", "Multinucleate"],
-    "answer": 2
-  },
-  {
-    "question": "Which food reserve is commonly stored by fungi?",
-    "image": "",
-    "options": ["Cellulose", "Starch", "Laminarin", "Glycogen"],
-    "answer": 3
-  },
-  {
-    "question": "Which statement correctly describes septate hyphae?",
+    "question": "A current-carrying conductor experiences no magnetic force in a uniform magnetic field. Which of the following could explain this observation?",
     "image": "",
     "options": [
-      "They contain no nuclei.",
-      "They lack cell walls.",
-      "They possess cross walls called septa.",
-      "They occur only in mushrooms."
+      "The conductor is parallel to the magnetic field.",
+      "The conductor is perpendicular to the magnetic field.",
+      "The magnetic field is directed upward.",
+      "The conductor carries alternating current."
     ],
+    "answer": 1
+  },
+  {
+    "question": "A wire of length 0.50 m carrying a current of 8 A is placed perpendicular to a magnetic field and experiences a force of 1.6 N. The magnetic flux density is",
+    "image": "",
+    "options": ["0.20 T.", "0.40 T.", "0.60 T.", "0.80 T."],
     "answer": 2
   },
   {
-    "question": "Which fungal structure anchors the mushroom to the substrate and absorbs nutrients?",
-    "image": "",
-    "options": ["Gills", "Rhizoids", "Annulus", "Pileus"],
-    "answer": 1
-  },
-  {
-    "question": "Rhizopus stolonifer, the common bread mould, belongs to:",
-    "image": "",
-    "options": ["Basidiomycota", "Zygomycota", "Ascomycota", "Deuteromycota"],
-    "answer": 1
-  },
-  {
-    "question": "Penicillin, one of the earliest antibiotics, is obtained from:",
+    "question": "Which of the following statements concerning the magnetic force on a moving charged particle is FALSE?",
     "image": "",
     "options": [
-      "Rhizopus stolonifer",
-      "Saccharomyces cerevisiae",
-      "Agaricus",
-      "Penicillium notatum"
+      "The magnetic force is always perpendicular to the velocity of the particle.",
+      "The magnetic force can change the direction of motion of the particle.",
+      "The magnetic force can increase the kinetic energy of the particle.",
+      "The magnetic force becomes zero when the particle moves parallel to the magnetic field."
     ],
     "answer": 3
   },
   {
-    "question": "Which association between fungi and higher plant roots improves mineral absorption and benefits both organisms?",
+    "question": "A positively charged particle enters a magnetic field directed into the plane of the paper with its velocity directed toward the right. The magnetic force acting on the particle is directed",
     "image": "",
-    "options": ["Lichen", "Parasitism", "Mycorrhiza", "Saprophytism"],
+    "options": [
+      "Upward.",
+      "Downward.",
+      "Into the plane of the paper.",
+      "Out of the plane of the paper."
+    ],
+    "answer": 1
+  },
+  {
+    "question": "A proton enters a uniform magnetic field of flux density 0.50 T with a speed of 4.0 × 10⁶ m/s perpendicular to the field. The magnitude of the magnetic force acting on the proton is closest to",
+    "image": "",
+    "options": [
+      "3.2 × 10⁻¹³ N.",
+      "1.6 × 10⁻¹³ N.",
+      "6.4 × 10⁻¹³ N.",
+      "8.0 × 10⁻¹³ N."
+    ],
+    "answer": 1
+  },
+  {
+    "question": "The radius of the circular path of a charged particle moving perpendicular to a uniform magnetic field depends directly on",
+    "image": "",
+    "options": [
+      "the magnetic flux density only.",
+      "the charge of the particle only.",
+      "the momentum of the particle.",
+      "the potential difference through which the particle was accelerated only."
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following devices operates primarily on the force experienced by a current-carrying conductor in a magnetic field?",
+    "image": "",
+    "options": [
+      "Transformer.",
+      "Electric motor.",
+      "Capacitor.",
+      "Electroscope."
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Two long parallel conductors carry currents in the same direction. The conductors will",
+    "image": "",
+    "options": [
+      "repel each other.",
+      "neither attract nor repel each other.",
+      "attract each other.",
+      "first attract and then repel each other."
+    ],
+    "answer": 3
+  },
+  {
+    "question": "A straight conductor 0.25 m long carries a current of 12 A and is placed perpendicular to a uniform magnetic field. If the conductor experiences a force of 1.5 N, the magnetic flux density is",
+    "image": "",
+    "options": ["0.25 T.", "0.50 T.", "0.75 T.", "1.00 T."],
+    "answer": 2
+  },
+  {
+    "question": "A circular coil of 100 turns carries a current of 2.0 A. If the area of the coil is 5.0 × 10⁻³ m² and it is placed in a uniform magnetic field of flux density 0.40 T, the maximum torque acting on the coil is",
+    "image": "",
+    "options": ["0.04 N·m.", "0.20 N·m.", "0.40 N·m.", "0.80 N·m."],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following statements about a solenoid is CORRECT?",
+    "image": "",
+    "options": [
+      "The magnetic field inside a long solenoid is non-uniform and weakest at the centre.",
+      "The magnetic field inside a long solenoid is approximately uniform and parallel to its axis.",
+      "A solenoid cannot produce a magnetic field without a permanent magnet.",
+      "The magnetic field outside a long solenoid is stronger than that inside it."
+    ],
+    "answer": 2
+  },
+  {
+    "question": "A charged particle moves in a circular path of radius 0.40 m in a magnetic field of flux density 0.25 T. If the particle has a charge of 2.0 × 10⁻⁶ C and moves with a speed of 5.0 × 10⁵ m/s, its mass is",
+    "image": "",
+    "options": [
+      "1.0 × 10⁻⁷ kg.",
+      "2.5 × 10⁻⁷ kg.",
+      "4.0 × 10⁻⁷ kg.",
+      "8.0 × 10⁻⁷ kg."
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Which of the following statements correctly explains why a magnetic field cannot change the speed of a charged particle?",
+    "image": "",
+    "options": [
+      "The magnetic force is always parallel to the particle's velocity.",
+      "The magnetic force is always perpendicular to the particle's velocity and therefore does no work.",
+      "The magnetic force is too small to affect the particle's motion.",
+      "The magnetic force acts only on stationary charges."
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Two long, straight, parallel conductors carry currents I₁ and I₂ in opposite directions. Which of the following correctly describes the interaction between the conductors?",
+    "image": "",
+    "options": [
+      "They attract each other because unlike magnetic poles attract.",
+      "They repel each other because the currents are in opposite directions.",
+      "They experience no force because the magnetic fields cancel.",
+      "They first attract and then repel as the current increases."
+    ],
     "answer": 2
   }
 ]

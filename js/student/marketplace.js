@@ -1,4 +1,6 @@
 import { db } from "../firebase/config.js";
+import { showLoadingOverlay } from "./loadingOverlay.js"; // ✅ added
+
 import {
   collection,
   getDocs,
@@ -47,16 +49,31 @@ async function renderMarketplacePage(userData) {
         <p class="marketplace-subtitle">Browse and unlock quizzes</p>
       </div>
 
-      <div id="marketplaceList" class="marketplace-list-wrapper">
-        <p>Loading...</p>
-      </div>
+      <div id="marketplaceList" class="marketplace-list-wrapper"></div>
     </div>
 
     ${renderPurchaseDialogMarkup()}
   `;
 
   attachDialogEventListeners();
+
+  const list = document.getElementById("marketplaceList");
+
+  // ✅ Show spinner overlay while loading
+  const stopLoading = showLoadingOverlay(
+    list,
+    [
+      "Loading marketplace quizzes...",
+      "Fetching available subjects...",
+      "Preparing quiz cards...",
+      "Almost ready...",
+    ],
+    { subtitle: "This usually takes just a moment" },
+  );
+
   await loadMarketplaceData();
+
+  stopLoading(); // ✅ remove overlay once data is ready
   renderMarketplaceList();
 }
 
