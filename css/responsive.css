@@ -160,15 +160,6 @@
     font-size: 1.5rem;
   }
 
-  /* Parallax shapes are a desktop-only flourish (the matching
-     JS also skips the scroll-linked work below this width — see
-     updateParallax() in landing.js). Hiding them here removes
-     any decorative clutter on narrow screens outright. */
-  .hero-parallax-shape,
-  .story-parallax-shape {
-    display: none;
-  }
-
   /* Story sections below the login fold: tighten the generous
      desktop padding for smaller screens. */
   .story-section,
