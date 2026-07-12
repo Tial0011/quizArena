@@ -1,14 +1,14 @@
 import { renderStudentDashboard } from "../student/dashboard.js";
 import { loginUser, registerUser, getUserData } from "../auth.js";
 import { renderAdminDashboard } from "../admin/dashboard.js";
+import {
+  prefersReducedMotion,
+  initScrollReveal,
+  initParallax,
+} from "../student/scrollEffects.js";
 const app = document.getElementById("app");
 
 let mode = "login";
-
-// Parallax uses a single persistent scroll listener (see
-// initParallax) rather than re-attaching one on every render —
-// this flag makes sure it's only ever set up once.
-let parallaxInitialized = false;
 
 export function renderLanding() {
   app.innerHTML = `
@@ -163,7 +163,7 @@ function loginMarkup() {
     </div>
 
     <button id="submitBtn" class="submit-btn">
-      Log In
+      Sign In
     </button>
 
     <p class="switch">
@@ -280,100 +280,14 @@ async function submitForm() {
 
 /* =========================================================
    SCROLL EFFECTS
-   Pure CSS + vanilla JS — no animation library. Three pieces:
-   parallax background shapes, scroll-triggered section reveals,
-   and a 3D mouse-tilt on the auth card. All respect
-   prefers-reduced-motion.
+   Reveal + parallax now live in the shared scrollEffects.js
+   module (see import above). Only the 3D auth-card tilt is
+   landing-page-specific, so it stays here.
 ========================================================= */
 function initScrollEffects() {
   initParallax();
   initScrollReveal();
   initCardTilt();
-}
-
-function prefersReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-/**
- * Background shapes drift upward at different speeds as the
- * page scrolls, based on each element's data-parallax-speed.
- *
- * Only ever attaches ONE scroll listener, ever — renderLanding()
- * can be called many times in a session (e.g. toggling between
- * Login/Register re-renders the whole page), and re-attaching a
- * window-level scroll listener on every render would stack up
- * duplicates that never get cleaned up. The listener re-queries
- * the DOM fresh on every tick instead of caching elements, so it
- * always targets whatever's currently on the page.
- */
-function initParallax() {
-  if (parallaxInitialized) return;
-  parallaxInitialized = true;
-
-  if (prefersReducedMotion()) return;
-
-  let ticking = false;
-
-  function updateParallax() {
-    const scrollY = window.scrollY;
-
-    // Animate all elements with data-parallax-speed, regardless of screen size
-    document.querySelectorAll("[data-parallax-speed]").forEach((el) => {
-      const speed = parseFloat(el.dataset.parallaxSpeed) || 0;
-      el.style.transform = `translateY(${scrollY * speed}px)`;
-    });
-  }
-
-  // Attach scroll listener
-  window.addEventListener("scroll", updateParallax);
-
-  // Run once on load so shapes are positioned correctly
-  updateParallax();
-
-  window.addEventListener("scroll", updateParallax);
-
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (!ticking) {
-        requestAnimationFrame(updateParallax);
-        ticking = true;
-      }
-    },
-    { passive: true },
-  );
-}
-
-/**
- * Fades/slides each [data-reveal] element in once it scrolls
- * into view. Safe to call on every render — each call creates a
- * fresh observer scoped to that render's elements, and the old
- * observer (along with its now-detached target elements) is
- * simply garbage collected once nothing references it anymore.
- */
-function initScrollReveal() {
-  const revealEls = document.querySelectorAll("[data-reveal]");
-  if (!revealEls.length) return;
-
-  if (prefersReducedMotion()) {
-    revealEls.forEach((el) => el.classList.add("reveal-visible"));
-    return;
-  }
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("reveal-visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.15 },
-  );
-
-  revealEls.forEach((el) => observer.observe(el));
 }
 
 /**

@@ -7,16 +7,17 @@ import {
   renderRecentAttemptsMarkup,
   renderScoreTrendChartMarkup,
 } from "./analyticsWidgets.js";
+import {
+  prefersReducedMotion,
+  initScrollReveal,
+  initParallax,
+  animateCountUp,
+} from "./scrollEffects.js";
 
 const app = document.getElementById("app");
 
-// Parallax uses a single persistent scroll listener — same
-// reasoning as landing.js: renderStudentDashboard() can be
-// called many times in a session (returning from Practice,
-// Marketplace, etc.), and re-attaching a window-level scroll
-// listener every time would stack up duplicates that never get
-// cleaned up.
-let parallaxInitialized = false;
+const DEFAULT_HERO_MESSAGE =
+  "Master one quiz today and keep your streak alive.";
 
 export function renderStudentDashboard(userData = {}) {
   const purchasedCount = userData.purchasedQuizzes?.length || 0;
@@ -35,8 +36,8 @@ export function renderStudentDashboard(userData = {}) {
             👋 Welcome Back${userData.name ? `, ${userData.name}` : ""}
           </h1>
 
-          <p>
-            Master one quiz today and keep your streak alive.
+          <p id="heroMessage">
+            ${DEFAULT_HERO_MESSAGE}
           </p>
 
         </div>
@@ -213,6 +214,7 @@ async function loadAnalytics(userData) {
 
   const trendContainer = document.getElementById("scoreTrendContainer");
   const activityContainer = document.getElementById("recentActivityContainer");
+  const heroMessage = document.getElementById("heroMessage");
 
   if (trendContainer) {
     trendContainer.innerHTML = renderScoreTrendChartMarkup(attempts);
@@ -221,6 +223,54 @@ async function loadAnalytics(userData) {
   if (activityContainer) {
     activityContainer.innerHTML = renderRecentAttemptsMarkup(attempts);
   }
+
+  if (heroMessage) {
+    updateHeroMessage(heroMessage, attempts);
+  }
+}
+
+/**
+ * Storytelling: the hero message adapts to what the student has
+ * actually been doing, using the same attempts data already
+ * fetched for the score trend — first quiz, on a streak, or a
+ * gentle nudge to keep practicing, instead of one static line
+ * every time.
+ */
+function updateHeroMessage(el, attempts) {
+  const message = pickHeroMessage(attempts);
+  if (message === DEFAULT_HERO_MESSAGE) return;
+
+  if (prefersReducedMotion()) {
+    el.textContent = message;
+    return;
+  }
+
+  el.classList.add("message-updating");
+  setTimeout(() => {
+    el.textContent = message;
+    el.classList.remove("message-updating");
+  }, 300);
+}
+
+function pickHeroMessage(attempts) {
+  if (!attempts || attempts.length === 0) {
+    return "Ready to take your first quiz? Let's get started 🚀";
+  }
+
+  if (attempts.length === 1) {
+    return "Nice start! Keep going to build your streak 💪";
+  }
+
+  const [latest, previous] = attempts;
+  if (latest.percentage > previous.percentage) {
+    return "You're on a roll — your scores are trending up 🔥";
+  }
+
+  if (latest.percentage === previous.percentage) {
+    return "Staying consistent — keep that momentum going 📈";
+  }
+
+  return "Every attempt makes you sharper — let's practice more 💪";
 }
 
 function setupDashboardEvents(userData) {
@@ -247,96 +297,26 @@ function setupDashboardEvents(userData) {
 
 /* =========================================================
    VISUAL EFFECTS
-   Pure CSS + vanilla JS, same principles as the landing page:
-   - Parallax is desktop-only work (skipped outright on mobile,
-     not just hidden by CSS, to save battery/CPU where most
-     visitors actually are).
-   - Card tilt is desktop-only (matches devices that actually
-     have a mouse to tilt with).
-   - Scroll-reveal and the count-up both work everywhere — they
-     don't cost much and read fine on any screen size.
-   - Everything respects prefers-reduced-motion.
+   Reveal, parallax, and count-up now live in the shared
+   scrollEffects.js module (also used by landing.js) — no longer
+   duplicated here. Only the action-card 3D tilt is
+   dashboard-specific, so it stays local.
 ========================================================= */
 function initDashboardEffects() {
   initParallax();
   initScrollReveal();
   initCardTilt();
-  initCountUp();
-}
 
-function prefersReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-function initParallax() {
-  if (parallaxInitialized) return;
-  parallaxInitialized = true;
-
-  if (prefersReducedMotion()) return;
-
-  let ticking = false;
-
-  function updateParallax() {
-    if (window.innerWidth < 768) {
-      ticking = false;
-      return;
-    }
-
-    const scrollY = window.scrollY;
-
-    document.querySelectorAll("[data-parallax-speed]").forEach((shape) => {
-      const speed = parseFloat(shape.dataset.parallaxSpeed) || 0.12;
-      shape.style.transform = `translateY(${scrollY * speed}px)`;
-    });
-
-    ticking = false;
+  const countEl = document.getElementById("purchasedCountValue");
+  if (countEl) {
+    animateCountUp(countEl, Number(countEl.dataset.countTarget) || 0);
   }
-
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (!ticking) {
-        requestAnimationFrame(updateParallax);
-        ticking = true;
-      }
-    },
-    { passive: true },
-  );
-}
-
-/**
- * Fades/slides [data-reveal] sections in once scrolled into
- * view — mainly the Score Trend and Recent Activity sections,
- * which often sit below the fold, especially on mobile.
- */
-function initScrollReveal() {
-  const revealEls = document.querySelectorAll("[data-reveal]");
-  if (!revealEls.length) return;
-
-  if (prefersReducedMotion()) {
-    revealEls.forEach((el) => el.classList.add("reveal-visible"));
-    return;
-  }
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("reveal-visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.15 },
-  );
-
-  revealEls.forEach((el) => observer.observe(el));
 }
 
 /**
  * Subtle 3D tilt on the action cards, following the cursor.
  * Desktop only — touch devices don't fire mousemove anyway, but
- * the width check keeps this from doing any work at all on
+ * the capability check keeps this from doing any work at all on
  * mobile rather than relying on that alone.
  */
 function initCardTilt() {
@@ -359,37 +339,4 @@ function initCardTilt() {
       card.style.transform = "";
     });
   });
-}
-
-/**
- * Animates the "Purchased Quizzes" number counting up from 0 to
- * its real value — a small Duolingo-style touch (their XP/streak
- * counters do the same). Skipped entirely under reduced motion,
- * where the target value is just shown immediately.
- */
-function initCountUp() {
-  const el = document.getElementById("purchasedCountValue");
-  if (!el) return;
-
-  const target = Number(el.dataset.countTarget) || 0;
-
-  if (prefersReducedMotion() || target === 0) {
-    el.textContent = target;
-    return;
-  }
-
-  const durationMs = 700;
-  const startTime = performance.now();
-
-  function tick(now) {
-    const progress = Math.min((now - startTime) / durationMs, 1);
-    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-    el.textContent = Math.round(eased * target);
-
-    if (progress < 1) {
-      requestAnimationFrame(tick);
-    }
-  }
-
-  requestAnimationFrame(tick);
 }
