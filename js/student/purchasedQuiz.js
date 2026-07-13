@@ -34,10 +34,12 @@ let timeRemaining;
 
 let currentUserId = null;
 let currentQuizId = null;
+let currentUserData = null;
 
 export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
   currentUserId = userData?.id || null;
   currentQuizId = quizId;
+  currentUserData = userData;
 
   history.pushState(
     {
@@ -418,11 +420,13 @@ function finishQuiz(quizTitle) {
   `;
 
   document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
-    renderReviewAnswers(questions, answers, () => location.reload());
+    renderReviewAnswers(questions, answers, () =>
+      renderStudentDashboard(currentUserData),
+    );
   });
 
   document.getElementById("restartBtn").addEventListener("click", () => {
-    location.reload();
+    renderStudentDashboard(currentUserData);
   });
 }
 
