@@ -2,6 +2,7 @@ import { logoutUser } from "../auth.js";
 import { renderPracticeArena } from "./practice.js";
 import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
+import { renderFriendGroups } from "./friendGroups.js";
 import { getRecentAttempts } from "./attemptsService.js";
 import {
   renderRecentAttemptsMarkup,
@@ -111,6 +112,29 @@ export function renderStudentDashboard(userData = {}) {
 
           <span class="action-link">
             Open →
+          </span>
+
+        </div>
+
+        <div
+          class="action-card load-in"
+          id="friendGroupsBtn"
+        >
+
+          <div class="action-icon">
+            🏆
+          </div>
+
+          <h3>
+            Friend Groups
+          </h3>
+
+          <p>
+            Create or join a squad and see who tops the leaderboard.
+          </p>
+
+          <span class="action-link">
+            Compete →
           </span>
 
         </div>
@@ -284,6 +308,10 @@ function setupDashboardEvents(userData) {
 
   document.getElementById("quizzesBtn")?.addEventListener("click", () => {
     renderMyQuizzes(userData);
+  });
+
+  document.getElementById("friendGroupsBtn")?.addEventListener("click", () => {
+    renderFriendGroups(userData);
   });
 
   document.getElementById("logoutBtn")?.addEventListener("click", async () => {

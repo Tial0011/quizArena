@@ -1,252 +1,246 @@
 [
   {
-    "question": "Which of the following statements correctly distinguishes a magnetic field from an electric field?",
+    "question": "Two groups have the same mean of 3.7 hours. Group A: 6,2,4,5,3,2; Group B: 1,6,7,1,2,6. Which group shows greater dispersion and why?",
     "image": "",
     "options": [
-      "A magnetic field exerts a force on both stationary and moving charges.",
-      "A magnetic field exerts a force only on moving charges.",
-      "A magnetic field can exist only inside a conductor.",
-      "A magnetic field acts only on positively charged particles."
+      "Group A because observations are closer",
+      "Group B because observations are more scattered",
+      "Both have equal dispersion",
+      "Cannot be determined without calculations"
     ],
     "answer": 1
   },
   {
-    "question": "The SI unit of magnetic flux density is",
+    "question": "For the data 4,6,9,3,7, the range is:",
     "image": "",
-    "options": ["Weber.", "Tesla.", "Henry.", "Ampere."],
-    "answer": 1
+    "options": ["6", "9", "3", "5"],
+    "answer": 0
   },
   {
-    "question": "The direction of the magnetic field around a long straight current-carrying conductor is determined using",
+    "question": "For the observations 70,76,80,85,85,85,95,96,100,108, the range is 38. The coefficient of range is:",
+    "image": "",
+    "options": ["21.35", "38", "178", "10.09"],
+    "answer": 0
+  },
+  {
+    "question": "Mean deviation from the mean for a dataset with Σ|Xi – Mean| = 94 and N = 10 is:",
+    "image": "",
+    "options": ["9.4", "11.03", "8.75", "94"],
+    "answer": 0
+  },
+  {
+    "question": "The coefficient of mean deviation for Mean = 88 and MD = 9.4 is:",
+    "image": "",
+    "options": ["10.68", "12.53", "9.44", "8.07"],
+    "answer": 0
+  },
+  {
+    "question": "Standard deviation is the?",
     "image": "",
     "options": [
-      "Fleming's Left-Hand Rule.",
-      "Fleming's Right-Hand Rule.",
-      "Right-Hand Thumb Rule.",
-      "Lenz's Law."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "A proton enters a uniform magnetic field with its velocity parallel to the magnetic field lines. The magnetic force acting on the proton is",
-    "image": "",
-    "options": [
-      "Maximum.",
-      "Equal to qvB.",
-      "Zero.",
-      "Directed opposite to its motion."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "A charged particle moving perpendicular to a uniform magnetic field follows a",
-    "image": "",
-    "options": [
-      "Straight-line path.",
-      "Circular path.",
-      "Parabolic path.",
-      "Elliptical path."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "A charged particle enters a uniform magnetic field at an angle of 30° to the field lines. The particle will move in a",
-    "image": "",
-    "options": [
-      "Straight line.",
-      "Circular path.",
-      "Helical path.",
-      "Parabolic path."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "The magnetic force acting on a current-carrying conductor placed in a uniform magnetic field is maximum when the conductor is",
-    "image": "",
-    "options": [
-      "Parallel to the magnetic field.",
-      "Perpendicular to the magnetic field.",
-      "Inclined at 45° to the magnetic field.",
-      "Inclined at 60° to the magnetic field."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "A straight conductor of length 0.40 m carries a current of 5 A at right angles to a uniform magnetic field of flux density 0.8 T. The magnetic force acting on the conductor is",
-    "image": "",
-    "options": ["0.80 N.", "1.20 N.", "1.60 N.", "2.00 N."],
-    "answer": 2
-  },
-  {
-    "question": "Which of the following statements about magnetic field lines is CORRECT?",
-    "image": "",
-    "options": [
-      "Magnetic field lines originate from the north pole and terminate at the south pole.",
-      "Magnetic field lines intersect wherever two magnets are brought together.",
-      "Magnetic field lines form continuous closed loops.",
-      "Magnetic field lines exist only inside a magnet."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "The magnetic flux density at a point 0.20 m from a long straight conductor carrying a current of 10 A is approximately (Take μ₀ = 4π × 10⁻⁷ H/m)",
-    "image": "",
-    "options": [
-      "5.0 × 10⁻⁶ T.",
-      "1.0 × 10⁻⁵ T.",
-      "2.0 × 10⁻⁵ T.",
-      "4.0 × 10⁻⁵ T."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "A proton and an alpha particle enter the same uniform magnetic field with equal speeds, moving perpendicular to the magnetic field. Which particle experiences the greater magnetic force?",
-    "image": "",
-    "options": [
-      "The proton.",
-      "The alpha particle.",
-      "Both experience the same magnetic force.",
-      "The force depends on their masses only."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "A current-carrying conductor experiences no magnetic force in a uniform magnetic field. Which of the following could explain this observation?",
-    "image": "",
-    "options": [
-      "The conductor is parallel to the magnetic field.",
-      "The conductor is perpendicular to the magnetic field.",
-      "The magnetic field is directed upward.",
-      "The conductor carries alternating current."
+      "Square root of the average squared deviation from mean",
+      "Average absolute deviation from mean",
+      "Half of inter-quartile range",
+      "Difference between maximum and minimum"
     ],
     "answer": 0
   },
   {
-    "question": "A wire of length 0.50 m carrying a current of 8 A is placed perpendicular to a magnetic field and experiences a force of 1.6 N. The magnetic flux density is",
-    "image": "",
-    "options": ["0.20 T.", "0.40 T.", "0.60 T.", "0.80 T."],
-    "answer": 1
-  },
-  {
-    "question": "Which of the following statements concerning the magnetic force on a moving charged particle is FALSE?",
+    "question": "Variance is also known as _______?",
     "image": "",
     "options": [
-      "The magnetic force is always perpendicular to the velocity of the particle.",
-      "The magnetic force can change the direction of motion of the particle.",
-      "The magnetic force can increase the kinetic energy of the particle.",
-      "The magnetic force becomes zero when the particle moves parallel to the magnetic field."
+      "Second moment about the mean",
+      "Square of standard deviation",
+      "Both A and B",
+      "Neither"
     ],
     "answer": 2
   },
   {
-    "question": "A positively charged particle enters a magnetic field directed into the plane of the paper with its velocity directed toward the right. The magnetic force acting on the particle is directed",
+    "question": "For the wages grouped data (Mean ≈ 209.07), if variance using step deviation is 389.89, the standard deviation is ___?",
+    "image": "",
+    "options": ["19.746", "9.44", "16.88", "8.07"],
+    "answer": 0
+  },
+  {
+    "question": "Coefficient of variation for S.D. = 19.746 and Mean = 209.07 is ___?",
+    "image": "",
+    "options": ["9.44", "8.07", "10.68", "12.53"],
+    "answer": 0
+  },
+  {
+    "question": "Quartile deviation (semi-interquartile range) is:",
+    "image": "",
+    "options": ["(Q3 − Q1)/2", "Q3 − Q1", "(Q3 + Q1)/2", "Half of the range"],
+    "answer": 0
+  },
+  {
+    "question": "In the example where Q1 = 78 and Q3 = 95.5 (n = 10), the quartile deviation is _____?",
+    "image": "",
+    "options": ["8.75", "17.5", "17", "9.4"],
+    "answer": 0
+  },
+  {
+    "question": "Coefficient of quartile deviation for Q1 = 78 and Q3 = 95.5 is _____?",
+    "image": "",
+    "options": ["10.09", "8.75", "21.35", "9.44"],
+    "answer": 0
+  },
+  {
+    "question": "Which measure is most affected by extreme values?",
     "image": "",
     "options": [
-      "Upward.",
-      "Downward.",
-      "Into the plane of the paper.",
-      "Out of the plane of the paper."
+      "Quartile deviation",
+      "Range",
+      "Standard deviation",
+      "Mean deviation"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Variance is independent of ____?",
+    "image": "",
+    "options": ["Change in scale", "Change in origin", "Both", "Neither"],
+    "answer": 1
+  },
+  {
+    "question": "If all observations are multiplied by a constant 'a', the new variance becomes:",
+    "image": "",
+    "options": [
+      "Old variance",
+      "a² × old variance",
+      "a × old variance",
+      "Old variance / a²"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "For two series, V(X + Y) = V(X) + V(Y) + 2Cov(X,Y). If X and Y are independent, Cov = 0, then V(X + Y) =",
+    "image": "",
+    "options": ["V(X) + V(Y)", "V(X) × V(Y)", "|V(X) − V(Y)|", "V(X) − V(Y)"],
+    "answer": 0
+  },
+  {
+    "question": "Which is the best measure for comparing dispersion when units and means differ widely?",
+    "image": "",
+    "options": [
+      "Range",
+      "Standard deviation",
+      "Coefficient of variation",
+      "Quartile deviation"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Box plot uses which measures primarily?",
+    "image": "",
+    "options": [
+      "Mean and standard deviation",
+      "Quartiles and IQR",
+      "Mode and range",
+      "Geometric mean only"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "In a box plot, values beyond 1.5 × IQR are considered:",
+    "image": "",
+    "options": ["Median", "Outliers", "Quartiles", "Mean"],
+    "answer": 1
+  },
+  {
+    "question": "Mean deviation ignores the?",
+    "image": "",
+    "options": [
+      "Sign of deviations",
+      "Magnitude",
+      "Frequency",
+      "Central value"
     ],
     "answer": 0
   },
   {
-    "question": "A proton enters a uniform magnetic field of flux density 0.50 T with a speed of 4.0 × 10⁶ m/s perpendicular to the field. The magnitude of the magnetic force acting on the proton is closest to",
+    "question": "For open-end classes, which dispersion measure is most reliable?",
     "image": "",
     "options": [
-      "3.2 × 10⁻¹³ N.",
-      "1.6 × 10⁻¹³ N.",
-      "6.4 × 10⁻¹³ N.",
-      "8.0 × 10⁻¹³ N."
+      "Range",
+      "Standard deviation",
+      "Quartile deviation",
+      "Coefficient of variation"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "If variance of a combined series is to be calculated from two groups with n₁, mean₁, σ₁² and n₂, mean₂, σ₂², we need:",
+    "image": "",
+    "options": [
+      "Only individual variances",
+      "Means and sizes of groups",
+      "Only ranges",
+      "Only modes"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "A distribution has Mean = 88, Σ(Xi − 88)² = 1216, N = 10. The variance and standard deviation are respectively?",
+    "image": "",
+    "options": [
+      "121.6 and 11.03",
+      "9.4 and 9.4",
+      "38 and 6.16",
+      "178 and 13.34"
     ],
     "answer": 0
   },
   {
-    "question": "The radius of the circular path of a charged particle moving perpendicular to a uniform magnetic field depends directly on",
+    "question": "If a constant 5 is added to every observation, the new standard deviation will be?",
+    "image": "",
+    "options": ["Old S.D. + 5", "Old S.D.", "5 × Old S.D.", "Old S.D. − 5"],
+    "answer": 1
+  },
+  {
+    "question": "Coefficient of variation is 12.53 when S.D. = 11.03 and Mean = 88. If the mean becomes 176 (doubled), the new C.V would be?",
+    "image": "",
+    "options": ["6.265", "12.53", "25.06", "11.03"],
+    "answer": 0
+  },
+  {
+    "question": "Which pair has the same mean but different dispersion?",
     "image": "",
     "options": [
-      "the magnetic flux density only.",
-      "the charge of the particle only.",
-      "the momentum of the particle.",
-      "the potential difference through which the particle was accelerated only."
+      "Two salary companies in Case II",
+      "Drug A and Drug B",
+      "Both",
+      "Neither"
     ],
     "answer": 2
   },
   {
-    "question": "Which of the following devices operates primarily on the force experienced by a current-carrying conductor in a magnetic field?",
+    "question": "In the step deviation method,\nVariance = h²[Σfidi²/N − (Σfidi/N)²].\nThis method is used to:",
     "image": "",
     "options": [
-      "Transformer.",
-      "Electric motor.",
-      "Capacitor.",
-      "Electroscope."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "Two long parallel conductors carry currents in the same direction. The conductors will",
-    "image": "",
-    "options": [
-      "repel each other.",
-      "neither attract nor repel each other.",
-      "attract each other.",
-      "first attract and then repel each other."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "A straight conductor 0.25 m long carries a current of 12 A and is placed perpendicular to a uniform magnetic field. If the conductor experiences a force of 1.5 N, the magnetic flux density is",
-    "image": "",
-    "options": ["0.25 T.", "0.50 T.", "0.75 T.", "1.00 T."],
-    "answer": 1
-  },
-  {
-    "question": "A circular coil of 100 turns carries a current of 2.0 A. If the area of the coil is 5.0 × 10⁻³ m² and it is placed in a uniform magnetic field of flux density 0.40 T, the maximum torque acting on the coil is",
-    "image": "",
-    "options": ["0.04 N·m.", "0.20 N·m.", "0.40 N·m.", "0.80 N·m."],
-    "answer": 2
-  },
-  {
-    "question": "Which of the following statements about a solenoid is CORRECT?",
-    "image": "",
-    "options": [
-      "The magnetic field inside a long solenoid is non-uniform and weakest at the centre.",
-      "The magnetic field inside a long solenoid is approximately uniform and parallel to its axis.",
-      "A solenoid cannot produce a magnetic field without a permanent magnet.",
-      "The magnetic field outside a long solenoid is stronger than that inside it."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "A charged particle moves in a circular path of radius 0.40 m in a magnetic field of flux density 0.25 T. If the particle has a charge of 2.0 × 10⁻⁶ C and moves with a speed of 5.0 × 10⁵ m/s, its mass is",
-    "image": "",
-    "options": [
-      "4.0 × 10⁻¹³ kg.",
-      "2.5 × 10⁻⁷ kg.",
-      "4.0 × 10⁻⁷ kg.",
-      "8.0 × 10⁻⁷ kg."
+      "Simplify calculations for grouped data",
+      "Ignore extreme values",
+      "Find mode",
+      "Calculate median"
     ],
     "answer": 0
   },
   {
-    "question": "Which of the following statements correctly explains why a magnetic field cannot change the speed of a charged particle?",
+    "question": "For the marks distribution example, quartile deviation is less preferable than standard deviation for continuous data because:",
     "image": "",
     "options": [
-      "The magnetic force is always parallel to the particle's velocity.",
-      "The magnetic force is always perpendicular to the particle's velocity and therefore does no work.",
-      "The magnetic force is too small to affect the particle's motion.",
-      "The magnetic force acts only on stationary charges."
+      "It ignores all values except Q1 and Q3",
+      "It is affected by extreme values",
+      "It cannot handle open-end classes",
+      "It is not a positional measure"
     ],
-    "answer": 1
+    "answer": 0
   },
   {
-    "question": "Two long, straight, parallel conductors carry currents I₁ and I₂ in opposite directions. Which of the following correctly describes the interaction between the conductors?",
+    "question": "If V(aX + b) = ?",
     "image": "",
-    "options": [
-      "They attract each other because unlike magnetic poles attract.",
-      "They repel each other because the currents are in opposite directions.",
-      "They experience no force because the magnetic fields cancel.",
-      "They first attract and then repel as the current increases."
-    ],
-    "answer": 1
+    "options": ["a²V(X)", "V(X) + b", "aV(X) + b", "V(X)"],
+    "answer": 0
   }
 ]
