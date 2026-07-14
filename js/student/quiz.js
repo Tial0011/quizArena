@@ -15,6 +15,7 @@ import {
   attachNavigatorEvents,
 } from "./questionNavigator.js";
 import { recordQuizAttempt } from "./attemptsService.js";
+import { renderStudentDashboard } from "./dashboard.js";
 
 let questions = [];
 let answers = [];
@@ -25,10 +26,12 @@ let timeRemaining = 0;
 
 let currentUserId = null;
 let currentSubject = "";
+let currentUserData = null;
 
 export async function startQuiz(subject, count, minutes, userData) {
   currentUserId = userData?.id || null;
   currentSubject = subject;
+  currentUserData = userData;
 
   const purchases = userData?.purchasedQuizzes || [];
 
@@ -401,11 +404,13 @@ function finishQuiz() {
   `;
 
   document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
-    renderReviewAnswers(questions, answers, () => location.reload());
+    renderReviewAnswers(questions, answers, () =>
+      renderStudentDashboard(currentUserData),
+    );
   });
 
   document.getElementById("restartBtn").addEventListener("click", () => {
-    location.reload();
+    renderStudentDashboard(currentUserData);
   });
 }
 

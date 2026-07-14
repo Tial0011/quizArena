@@ -21,6 +21,7 @@ let currentUserId = null;
 let currentUserData = null;
 let selectedQuizForPurchase = null;
 let isPurchasing = false;
+let selectedSubject = "All";
 
 /* =========================================================
    PUBLIC ENTRY POINT
@@ -44,13 +45,24 @@ async function renderMarketplacePage(userData) {
 
   app.innerHTML = `
     <div class="admin-card">
-      <div class="marketplace-header">
-        <h2>Marketplace</h2>
-        <p class="marketplace-subtitle">Browse and unlock quizzes</p>
-      </div>
+     <div class="marketplace-header">
+  <h2>Marketplace</h2>
+  <p class="marketplace-subtitle">Browse and unlock quizzes</p>
 
-      <div id="marketplaceList" class="marketplace-list-wrapper"></div>
-    </div>
+  <div class="marketplace-toolbar">
+    <input
+      type="text"
+      id="marketplaceSearch"
+      class="marketplace-search"
+      placeholder="Search by title, subject or week..."
+    />
+
+    <div id="marketplaceFilters" class="marketplace-filters"></div>
+  </div>
+</div>
+<div id="marketplaceSummary" class="marketplace-summary"></div>
+
+<div id="marketplaceList" class="marketplace-list-wrapper"></div>
 
     ${renderPurchaseDialogMarkup()}
   `;
@@ -75,6 +87,9 @@ async function renderMarketplacePage(userData) {
 
   stopLoading(); // ✅ remove overlay once data is ready
   renderMarketplaceList();
+  renderMarketplaceFilters();
+  renderMarketplaceSummary();
+  attachSearchListener();
 }
 
 /* =========================================================
@@ -105,23 +120,127 @@ async function loadActiveQuizzes() {
 /* =========================================================
    RENDER QUIZ GRID
 ========================================================= */
-function renderMarketplaceList() {
+function attachSearchListener() {
+  const search = document.getElementById("marketplaceSearch");
+
+  search.addEventListener("input", () => {
+    renderMarketplaceList(search.value.trim().toLowerCase());
+  });
+}
+
+function renderMarketplaceList(searchTerm = "") {
   const list = document.getElementById("marketplaceList");
 
-  if (quizzesCache.length === 0) {
+  const filtered = quizzesCache.filter((quiz) => {
+    const week = `week ${quiz.week}`;
+
+    const matchesSearch =
+      quiz.title.toLowerCase().includes(searchTerm) ||
+      quiz.subjectName.toLowerCase().includes(searchTerm) ||
+      week.includes(searchTerm);
+
+    const matchesSubject =
+      selectedSubject === "All" || quiz.subjectName === selectedSubject;
+
+    return matchesSearch && matchesSubject;
+  });
+
+  if (filtered.length === 0) {
     list.innerHTML = renderEmptyState();
     return;
   }
 
-  list.innerHTML = `
-    <div class="marketplace-grid">
-      ${quizzesCache.map(renderQuizCard).join("")}
-    </div>
-  `;
+  const grouped = filtered.reduce((groups, quiz) => {
+    if (!groups[quiz.subjectName]) {
+      groups[quiz.subjectName] = [];
+    }
 
+    groups[quiz.subjectName].push(quiz);
+    return groups;
+  }, {});
+
+  list.innerHTML = Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([subject, quizzes]) => {
+      quizzes.sort((a, b) => a.week - b.week);
+      return `
+      <section class="marketplace-section">
+        <div class="marketplace-section-header">
+          <h3 class="marketplace-section-title">${subject}</h3>
+          <span class="marketplace-section-count">
+            ${quizzes.length} Quiz${quizzes.length > 1 ? "zes" : ""}
+          </span>
+        </div>
+
+        <div class="marketplace-grid">
+          ${quizzes.map(renderQuizCard).join("")}
+        </div>
+      </section>
+    `;
+    })
+    .join("");
   attachCardEventListeners(list);
 }
+function renderMarketplaceFilters() {
+  const container = document.getElementById("marketplaceFilters");
+  if (!container) return;
 
+  const subjects = [
+    "All",
+    ...new Set(quizzesCache.map((quiz) => quiz.subjectName)),
+  ].sort((a, b) => {
+    if (a === "All") return -1;
+    if (b === "All") return 1;
+    return a.localeCompare(b);
+  });
+
+  container.innerHTML = subjects
+    .map(
+      (subject) => `
+        <button
+          class="filter-chip ${selectedSubject === subject ? "active" : ""}"
+          data-subject="${subject}">
+          ${subject}
+        </button>
+      `,
+    )
+    .join("");
+
+  container.querySelectorAll(".filter-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      selectedSubject = chip.dataset.subject;
+
+      renderMarketplaceFilters();
+      renderMarketplaceList(
+        document.getElementById("marketplaceSearch").value.trim().toLowerCase(),
+      );
+    });
+  });
+}
+function renderMarketplaceSummary() {
+  const summary = document.getElementById("marketplaceSummary");
+  if (!summary) return;
+
+  const subjectCount = new Set(quizzesCache.map((quiz) => quiz.subjectName))
+    .size;
+
+  summary.innerHTML = `
+    <div class="marketplace-stat">
+      <span class="marketplace-stat-value">${quizzesCache.length}</span>
+      <span class="marketplace-stat-label">Quizzes</span>
+    </div>
+
+    <div class="marketplace-stat">
+      <span class="marketplace-stat-value">${subjectCount}</span>
+      <span class="marketplace-stat-label">Subjects</span>
+    </div>
+
+    <div class="marketplace-stat">
+      <span class="marketplace-stat-value">${ownedQuizIds.size}</span>
+      <span class="marketplace-stat-label">Purchased</span>
+    </div>
+  `;
+}
 function renderEmptyState() {
   return `
     <div class="marketplace-empty-state">

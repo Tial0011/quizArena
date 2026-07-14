@@ -1,7 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+import {
+  getAnalytics,
+  isSupported,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 // Your config
 const firebaseConfig = {
   apiKey: "AIzaSyBzKtJ5P_2bL0LWDOJt4KqMlA1Z8sMOSwo",
@@ -20,3 +23,13 @@ const app = initializeApp(firebaseConfig);
 // 🔥 EXPORT THESE
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+let analytics = null;
+
+isSupported().then((supported) => {
+  if (supported) {
+    analytics = getAnalytics(app);
+  }
+});
+
+export { analytics };
