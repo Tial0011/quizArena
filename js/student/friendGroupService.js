@@ -32,9 +32,10 @@ import {
    { groupId, requesterId, requesterEmail, requesterName, status: "pending"|"accepted"|"rejected", createdAt }
 ========================================================= */
 
-// Change this one line next week when subject scope expands.
+// Change this one line next week whenu sbject scope expands.
 export const LEADERBOARD_SUBJECT = "MTH 121";
-
+const MIN_GROUP_SIZE_FOR_ELIGIBILITY = 3;
+const GROUP_INFLUENCE_WEIGHT = 0.15;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 (avoid ambiguity)
 
 function generateCode(length = 6) {
@@ -197,6 +198,190 @@ export async function rejectJoinRequest(requestId) {
   await updateDoc(doc(db, "groupJoinRequests", requestId), {
     status: "rejected",
   });
+}
+
+// Tune these two as you go — both directly control how hard the
+// leaderboard is to game and how much teammates matter.// "a bit" — 15% group average, 85% individual
+
+/**
+ * GLOBAL leaderboard — every attempt across every user for
+ * LEADERBOARD_SUBJECT, aggregated into a per-user average and
+ * ranked. This is the reward-eligible ranking: unlike a
+ * group-scoped board, it can't be gamed by inviting weak fake
+ * friends into a private group, since it's computed against
+ * every real student on the platform.
+ *
+ * TWO ELIGIBILITY/SCORING RULES on top of the raw average:
+ *
+ * 1. Minimum group size: a user only counts toward the global
+ *    leaderboard if they belong to at least one group with
+ *    MIN_GROUP_SIZE_FOR_ELIGIBILITY or more members (regardless
+ *    of whether those members have attempted anything yet — this
+ *    is a real-squad-size check, not an activity check). Being in
+ *    zero groups, or only in groups smaller than that, means no
+ *    ranking at all. This is what actually forces real recruiting
+ *    rather than gaming a 1-2 person "group."
+ *
+ * 2. Group influence on score: once eligible, a user's ranking
+ *    score is a blend of their own individual average and their
+ *    group's average (mean of member averages, counting only
+ *    members who have at least one attempt). If a user belongs to
+ *    more than one qualifying group, their best (most favorable)
+ *    blended score across those groups is used — joining more
+ *    than one group should never hurt you.
+ *
+ * NOTE: pilot-scale implementation — fetches the full set of
+ * matching attempts AND every group in one pass each, aggregating
+ * client-side. Fine for a small first cohort; revisit with
+ * server-side aggregation if attempt/group volume grows large
+ * (see "adjust next week" scope note in the header comment above).
+ *
+ * Returns { top, all } — `top` is the slice for display,
+ * `all` is the full ranked list so a specific user's rank can
+ * be looked up even if they're outside the displayed top N.
+ */
+export async function getGlobalLeaderboard(limitCount = 20) {
+  const attemptsSnap = await getDocs(
+    query(
+      collection(db, "attempts"),
+      where("subjectName", "==", LEADERBOARD_SUBJECT),
+    ),
+  );
+
+  const individualStats = new Map();
+
+  attemptsSnap.forEach((docSnap) => {
+    const data = docSnap.data();
+
+    const entry = individualStats.get(data.userId) || {
+      totalPercentage: 0,
+      count: 0,
+    };
+
+    entry.totalPercentage += data.percentage || 0;
+    entry.count++;
+
+    individualStats.set(data.userId, entry);
+  });
+
+  function getIndividualAverage(userId) {
+    const entry = individualStats.get(userId);
+
+    if (!entry) return null;
+
+    return entry.totalPercentage / entry.count;
+  }
+  const groupsSnap = await getDocs(collection(db, "friendGroups"));
+
+  const qualifyingGroups = groupsSnap.docs
+    .map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }))
+    .filter(
+      (group) =>
+        (group.memberIds || []).length >= MIN_GROUP_SIZE_FOR_ELIGIBILITY,
+    );
+
+  // Compute each qualifying group's average ONCE, reused for every
+  // member's blend below rather than recomputed per-member.
+  const groupsWithAverages = qualifyingGroups.map((group) => {
+    const memberAverages = group.memberIds
+      .map((uid) => getIndividualAverage(uid))
+      .filter((avg) => avg !== null);
+
+    const groupAverage =
+      memberAverages.length > 0
+        ? memberAverages.reduce((sum, avg) => sum + avg, 0) /
+          memberAverages.length
+        : null;
+
+    return {
+      memberIds: group.memberIds,
+      groupAverage,
+    };
+  });
+  const eligibleUserIds = new Set();
+
+  groupsWithAverages.forEach((group) => {
+    group.memberIds.forEach((uid) => {
+      eligibleUserIds.add(uid);
+    });
+  });
+  const scored = [];
+
+  eligibleUserIds.forEach((userId) => {
+    const individualAvg = getIndividualAverage(userId);
+
+    // User has no attempts
+    if (individualAvg === null) return;
+
+    let bestBlended = null;
+
+    groupsWithAverages.forEach((group) => {
+      // User isn't in this group
+      if (!group.memberIds.includes(userId)) return;
+
+      // Nobody in this group has attempted yet
+      if (group.groupAverage === null) return;
+
+      const blended =
+        individualAvg * (1 - GROUP_INFLUENCE_WEIGHT) +
+        group.groupAverage * GROUP_INFLUENCE_WEIGHT;
+
+      if (bestBlended === null || blended > bestBlended) {
+        bestBlended = blended;
+      }
+    });
+
+    // User wasn't in any valid scoring group
+    if (bestBlended === null) return;
+
+    scored.push({
+      uid: userId,
+      individualAverage: Math.round(individualAvg),
+      blendedScore: bestBlended,
+      attemptCount: individualStats.get(userId).count,
+    });
+  });
+
+  const userDocs = await Promise.allSettled(
+    scored.map((s) => getDoc(doc(db, "users", s.uid))),
+  );
+
+  const ranked = scored.map((s, index) => {
+    const userResult = userDocs[index];
+    const name =
+      userResult.status === "fulfilled" && userResult.value.exists()
+        ? userResult.value.data().name || "Student"
+        : "Student";
+
+    return {
+      uid: s.uid,
+      name,
+      attemptCount: s.attemptCount,
+      individualAverage: s.individualAverage,
+      averagePercentage: Math.round(s.blendedScore), // the actual ranking/display number
+    };
+  });
+
+  ranked.sort((a, b) => b.averagePercentage - a.averagePercentage);
+
+  return {
+    top: ranked.slice(0, limitCount),
+    all: ranked,
+  };
+}
+
+/**
+ * Finds a specific user's 1-indexed rank within the FULL global
+ * ranking (`all` from getGlobalLeaderboard), not just the
+ * displayed top slice. Returns null if they have no qualifying
+ * attempts yet.
+ */
+export function findGlobalRank(allRanked, userId) {
+  const index = allRanked.findIndex((entry) => entry.uid === userId);
+  return index === -1 ? null : index + 1;
 }
 
 /**

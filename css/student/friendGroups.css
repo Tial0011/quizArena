@@ -1,4 +1,133 @@
 /* =========================================================
+   FRIEND GROUP INFO
+========================================================= */
+
+.friend-group-info-card {
+  background: linear-gradient(135deg, #ffffff, #faf7ff);
+  border: 1px solid #e9d5ff;
+  border-left: 5px solid #7c3aed;
+  border-radius: 18px;
+  padding: 18px;
+  margin: 18px 0 22px;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.08);
+}
+
+.info-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #6d28d9;
+  margin-bottom: 12px;
+}
+
+.friend-group-info-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.friend-group-info-card li {
+  margin-bottom: 10px;
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.friend-group-info-card strong {
+  color: #111827;
+} /* =========================================================
+   GLOBAL LEADERBOARD
+========================================================= */
+
+.global-leaderboard-section {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  border-radius: 20px;
+  padding: 22px;
+  margin: 20px 0;
+  color: white;
+  box-shadow: 0 15px 35px rgba(124, 58, 237, 0.25);
+}
+
+.global-leaderboard-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 14px 0;
+  font-size: 1.05rem;
+}
+
+.official-badge {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.leaderboard-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 18px 0 20px;
+}
+
+.summary-card {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+}
+
+.summary-value {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+}
+
+.summary-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.global-leaderboard-section .leaderboard-row {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.global-leaderboard-section .leaderboard-row-me {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.global-leaderboard-section .leaderboard-name,
+.global-leaderboard-section .leaderboard-score,
+.global-leaderboard-section .leaderboard-rank {
+  color: white;
+}
+
+.global-leaderboard-section .empty-state {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border: none;
+}
+
+/* Global rank badge shown next to a member's name inside a
+   group's leaderboard — "your rank in your squad" vs "your
+   actual global rank" side by side. */
+.global-rank-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* =========================================================
    FRIEND GROUPS
 ========================================================= */
 
@@ -98,6 +227,36 @@
   margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 1px solid #f1f1f1;
+}
+.group-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.group-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.group-status.qualified {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.group-status.not-qualified {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.group-meta {
+  margin-top: 10px;
+  color: #6b7280;
+  font-size: 13px;
 }
 
 .friend-group-card-header h3 {
@@ -230,21 +389,40 @@
   background: #fafafa;
   border: 1px solid #ececec;
 }
+.leaderboard-row {
+  transition: 0.25s ease;
+}
+
+.leaderboard-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+.first-place {
+  background: linear-gradient(90deg, #fff7cc, #fffdf4);
+  border-color: #facc15;
+}
+
+.second-place {
+  background: linear-gradient(90deg, #f3f4f6, #ffffff);
+  border-color: #d1d5db;
+}
+
+.third-place {
+  background: linear-gradient(90deg, #fce7d6, #ffffff);
+  border-color: #fdba74;
+}
 
 .leaderboard-row-me {
   background: #f5f3ff;
-  border-color: #c4b5fd;
+  border: 2px solid #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
 }
 
 .leaderboard-rank {
-  width: 32px;
-  flex-shrink: 0;
-  font-size: 1rem;
+  width: 40px;
+  font-size: 22px;
   font-weight: 700;
-  text-align: center;
-  color: #6b7280;
 }
-
 .leaderboard-name {
   flex: 1;
   font-weight: 600;
@@ -253,10 +431,9 @@
 }
 
 .leaderboard-score {
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   color: #7c3aed;
-  font-size: 14px;
-  flex-shrink: 0;
 }
 
 @media (min-width: 700px) {
@@ -287,4 +464,39 @@
   .pending-request-actions button {
     flex: 1;
   }
+}
+.my-ranking-card {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: white;
+  border-radius: 20px;
+  padding: 22px;
+  margin-bottom: 22px;
+  box-shadow: 0 15px 35px rgba(124, 58, 237, 0.25);
+}
+
+.my-ranking-card h3 {
+  margin: 0 0 18px;
+}
+
+.ranking-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.ranking-grid div {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.ranking-label {
+  display: block;
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+.ranking-grid strong {
+  font-size: 26px;
 }
