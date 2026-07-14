@@ -20,7 +20,8 @@ const firebaseConfig = {
 // Initialize
 const app = initializeApp(firebaseConfig);
 
-// 🔥 EXPORT THESEexport const auth = getAuth(app);
+// 🔥 EXPORT THESE
+export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 let analytics = null;
