@@ -1,10 +1,36 @@
 /* =========================
+   SEARCH
+========================= */
+
+.my-quizzes-toolbar {
+  margin-top: 20px;
+}
+
+.my-quizzes-search {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.my-quizzes-search::placeholder {
+  color: #9ca3af;
+}
+
+.my-quizzes-search:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+}
+/* =========================
    MY QUIZZES
 ========================= */
 
 #myQuizList {
-  display: grid;
-  gap: 20px;
+  display: block;
   margin-top: 25px;
 }
 
@@ -134,7 +160,82 @@
 ========================= */
 
 @media (min-width: 768px) {
-  #myQuizList {
+  .my-quiz-grid {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
+  .my-quizzes-summary {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================
+   SUMMARY
+========================= */
+
+.my-quizzes-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.my-quiz-stat {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  transition: 0.25s;
+}
+
+.my-quiz-stat:hover {
+  transform: translateY(-3px);
+}
+
+.my-quiz-stat-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.my-quiz-stat-label {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+/* =========================
+   SUBJECT SECTIONS
+========================= */
+
+.my-quiz-section {
+  margin-bottom: 40px;
+}
+
+.my-quiz-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ececec;
+}
+
+.my-quiz-section-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.my-quiz-section-count {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.my-quiz-grid {
+  display: grid;
+  gap: 20px;
 }

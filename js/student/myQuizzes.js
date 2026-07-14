@@ -9,8 +9,11 @@ import { startPurchasedQuiz } from "./purchasedQuiz.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
 import { showLoadingOverlay } from "./loadingOverlay.js"; // ✅ added
+let purchasedQuizzes = [];
+let currentUserData = null;
 
 export async function renderMyQuizzes(userData = {}) {
+  currentUserData = userData;
   history.pushState(
     {
       page: "myQuizzes",
@@ -19,27 +22,32 @@ export async function renderMyQuizzes(userData = {}) {
     "",
   );
   const app = document.getElementById("app");
-
+  registerBackHandler(() => {
+    renderStudentDashboard(userData);
+  });
   app.innerHTML = `
     <div class="dashboard">
+<header class="dashboard-header">
 
-      <header class="dashboard-header">
+  <h1>📚 My Quizzes</h1>
 
-        <h1>
-          📚 My Quizzes
-        </h1>
+  <p>Access and attempt your purchased weekly quizzes.</p>
 
-        <p>
-          Access and attempt your purchased weekly quizzes.
-        </p>
+  <div class="my-quizzes-toolbar">
+    <input
+      type="text"
+      id="myQuizSearch"
+      class="my-quizzes-search"
+      placeholder="Search by title, subject or week..."
+    />
+  </div>
 
-      </header>
-
+</header>
+<div id="myQuizSummary" class="my-quizzes-summary"></div>
       <div id="myQuizList"></div>
 
     </div>
   `;
-
   const container = document.getElementById("myQuizList");
 
   // ✅ Show spinner overlay instead of plain text
@@ -71,77 +79,172 @@ export async function renderMyQuizzes(userData = {}) {
     `;
     return;
   }
+  const quizzes = await Promise.all(
+    purchases.map(async (purchaseId) => {
+      try {
+        const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+        if (!purchaseDoc.exists()) return null;
 
-  let html = "";
+        const purchase = purchaseDoc.data();
 
-  for (const purchaseId of purchases) {
-    try {
-      const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
-      if (!purchaseDoc.exists()) continue;
+        const quizDoc = await getDoc(doc(db, "quizzes", purchase.quizId));
+        if (!quizDoc.exists()) return null;
 
-      const purchase = purchaseDoc.data();
+        const quiz = quizDoc.data();
 
-      const quizDoc = await getDoc(doc(db, "quizzes", purchase.quizId));
-      if (!quizDoc.exists()) continue;
+        return {
+          id: purchase.quizId,
+          title: quiz.title,
+          subjectName: quiz.subjectName,
+          week: quiz.week,
+        };
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }),
+  );
+  if (!document.getElementById("myQuizList")) return;
 
-      const quiz = quizDoc.data();
-
-      html += `
-        <div class="quiz-card">
-
-          <span class="quiz-subject">
-            ${quiz.subjectName}
-          </span>
-
-          <h3>
-            ${quiz.title}
-          </h3>
-
-          <p class="quiz-week">
-            Week ${quiz.week}
-          </p>
-
-          <button
-            class="attempt-btn"
-            data-id="${purchase.quizId}"
-            data-title="${quiz.title}"
-          >
-            🚀 Start Quiz
-          </button>
-
-        </div>
-      `;
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  purchasedQuizzes = quizzes.filter(Boolean);
 
   stopLoading(); // ✅ remove overlay once quizzes are loaded
 
-  if (html === "") {
+  if (purchasedQuizzes.length === 0) {
+    container.innerHTML = `
+    <div class="empty-state">
+      <h3>Could not load quizzes</h3>
+      <p>Please try again later.</p>
+    </div>
+  `;
+    return;
+  }
+
+  renderQuizSummary();
+  renderQuizList();
+  attachSearchListener();
+}
+function renderQuizList(searchTerm = "") {
+  const container = document.getElementById("myQuizList");
+  if (!container) return;
+
+  const filtered = purchasedQuizzes.filter((quiz) => {
+    const week = `week ${quiz.week}`;
+
+    return (
+      quiz.title.toLowerCase().includes(searchTerm) ||
+      quiz.subjectName.toLowerCase().includes(searchTerm) ||
+      week.includes(searchTerm)
+    );
+  });
+
+  if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-
-        <h3>Could not load quizzes</h3>
-
-        <p>
-          Please try again later.
-        </p>
-
+        <h3>No quizzes found</h3>
+        <p>Try another search.</p>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = html;
+  container.innerHTML = filtered;
+  const grouped = filtered.reduce((groups, quiz) => {
+    if (!groups[quiz.subjectName]) {
+      groups[quiz.subjectName] = [];
+    }
 
-  document.querySelectorAll(".attempt-btn").forEach((btn) => {
+    groups[quiz.subjectName].push(quiz);
+    return groups;
+  }, {});
+
+  container.innerHTML = Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([subject, quizzes]) => {
+      quizzes.sort((a, b) => a.week - b.week);
+
+      return `
+      <section class="my-quiz-section">
+
+        <div class="my-quiz-section-header">
+          <h3 class="my-quiz-section-title">${subject}</h3>
+
+          <span class="my-quiz-section-count">
+            ${quizzes.length} Quiz${quizzes.length > 1 ? "zes" : ""}
+          </span>
+        </div>
+
+        <div class="my-quiz-grid">
+
+          ${quizzes
+            .map(
+              (quiz) => `
+                <div class="quiz-card">
+
+                  <span class="quiz-subject">
+                    ${quiz.subjectName}
+                  </span>
+
+                  <h3>${quiz.title}</h3>
+
+                  <p class="quiz-week">
+                    Week ${quiz.week}
+                  </p>
+
+                  <button
+                    class="attempt-btn"
+                    data-id="${quiz.id}"
+                    data-title="${quiz.title}"
+                  >
+                    🚀 Start Quiz
+                  </button>
+
+                </div>
+              `,
+            )
+            .join("")}
+
+        </div>
+
+      </section>
+    `;
+    })
+    .join("");
+  container.querySelectorAll(".attempt-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      startPurchasedQuiz(userData, btn.dataset.id, btn.dataset.title);
+      startPurchasedQuiz(currentUserData, btn.dataset.id, btn.dataset.title);
     });
   });
+}
+function renderQuizSummary() {
+  const summary = document.getElementById("myQuizSummary");
+  if (!summary) return;
 
-  registerBackHandler(() => {
-    renderStudentDashboard(userData);
+  const subjectCount = new Set(purchasedQuizzes.map((quiz) => quiz.subjectName))
+    .size;
+
+  summary.innerHTML = `
+    <div class="my-quiz-stat">
+      <span class="my-quiz-stat-value">${purchasedQuizzes.length}</span>
+      <span class="my-quiz-stat-label">Purchased</span>
+    </div>
+
+    <div class="my-quiz-stat">
+      <span class="my-quiz-stat-value">${subjectCount}</span>
+      <span class="my-quiz-stat-label">Subjects</span>
+    </div>
+
+    <div class="my-quiz-stat">
+      <span class="my-quiz-stat-value">${purchasedQuizzes.length}</span>
+      <span class="my-quiz-stat-label">Ready</span>
+    </div>
+  `;
+}
+
+function attachSearchListener() {
+  const search = document.getElementById("myQuizSearch");
+
+  search.addEventListener("input", () => {
+    renderQuizList(search.value.trim().toLowerCase());
   });
 }
