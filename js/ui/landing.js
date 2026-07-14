@@ -1,5 +1,11 @@
 import { renderStudentDashboard } from "../student/dashboard.js";
-import { loginUser, registerUser, getUserData } from "../auth.js";
+import {
+  loginUser,
+  registerUser,
+  getUserData,
+  signInWithGoogle,
+  resetPassword,
+} from "../auth.js";
 import { renderAdminDashboard } from "../admin/dashboard.js";
 import {
   prefersReducedMotion,
@@ -133,10 +139,30 @@ export function renderLanding() {
   initScrollEffects();
 }
 
+function googleButtonMarkup() {
+  return `
+    <button type="button" id="googleSignInBtn" class="google-btn">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider">
+      <span>or</span>
+    </div>
+  `;
+}
+
 function loginMarkup() {
   return `
     <h2>Welcome Back</h2>
     <p class="auth-subtitle">Enter your email and password to continue</p>
+
+    ${googleButtonMarkup()}
 
     <div class="form-group">
       <label for="email">Email</label>
@@ -160,6 +186,9 @@ function loginMarkup() {
           placeholder="Enter your password"
         >
       </div>
+      <p class="forgot-password">
+        <span id="forgotPasswordLink">Forgot password?</span>
+      </p>
     </div>
 
     <button id="submitBtn" class="submit-btn">
@@ -180,6 +209,8 @@ function registerMarkup() {
   return `
     <h2>Create Account</h2>
     <p class="auth-subtitle">Set up your details to get started</p>
+
+    ${googleButtonMarkup()}
 
     <div class="form-group">
       <label for="name">Full Name</label>
@@ -238,6 +269,12 @@ function attachEvents() {
   });
 
   document.getElementById("submitBtn")?.addEventListener("click", submitForm);
+  document
+    .getElementById("googleSignInBtn")
+    ?.addEventListener("click", handleGoogleSignIn);
+  document
+    .getElementById("forgotPasswordLink")
+    ?.addEventListener("click", handleForgotPassword);
 }
 
 async function submitForm() {
@@ -267,12 +304,62 @@ async function submitForm() {
     return;
   }
 
+  await routeAfterAuth(result.user);
+}
+
+/**
+ * Google Sign-In handles both login and registration in one
+ * action, so this doesn't branch on `mode` the way submitForm()
+ * does — it just signs in (creating the account if new) and
+ * routes.
+ */
+async function handleGoogleSignIn() {
+  const btn = document.getElementById("googleSignInBtn");
+  btn.disabled = true;
+
+  const result = await signInWithGoogle();
+
+  if (!result.success) {
+    btn.disabled = false;
+    alert(result.message);
+    return;
+  }
+
+  await routeAfterAuth(result.user);
+}
+
+async function handleForgotPassword() {
+  const emailInput = document.getElementById("email");
+  const email = emailInput?.value.trim();
+
+  if (!email) {
+    alert('Enter your email above first, then click "Forgot password?" again.');
+    emailInput?.focus();
+    return;
+  }
+
+  const confirmed = confirm(
+    `A password reset link will be sent to ${email}. Check your spam box if not seen or contact the admin`,
+  );
+  if (!confirmed) return;
+
+  const result = await resetPassword(email);
+  alert(result.message);
+}
+
+/**
+ * Shared by submitForm() and handleGoogleSignIn() — both need
+ * the identical admin-vs-student routing decision after a
+ * successful sign-in, so it lives in one place rather than
+ * being duplicated.
+ */
+async function routeAfterAuth(user) {
   const ADMIN_EMAIL = "admin@test.com";
 
-  if (result.user.email === ADMIN_EMAIL) {
+  if (user.email === ADMIN_EMAIL) {
     renderAdminDashboard();
   } else {
-    const userData = await getUserData(result.user.uid);
+    const userData = await getUserData(user.uid);
 
     renderStudentDashboard(userData);
   }
