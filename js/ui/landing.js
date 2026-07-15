@@ -141,6 +141,10 @@ export function renderLanding() {
 
 function googleButtonMarkup() {
   return `
+    <div class="auth-divider">
+      <span>or</span>
+    </div>
+
     <button type="button" id="googleSignInBtn" class="google-btn">
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
@@ -150,10 +154,6 @@ function googleButtonMarkup() {
       </svg>
       Continue with Google
     </button>
-
-    <div class="auth-divider">
-      <span>or</span>
-    </div>
   `;
 }
 
@@ -161,8 +161,6 @@ function loginMarkup() {
   return `
     <h2>Welcome Back</h2>
     <p class="auth-subtitle">Enter your email and password to continue</p>
-
-    ${googleButtonMarkup()}
 
     <div class="form-group">
       <label for="email">Email</label>
@@ -191,6 +189,8 @@ function loginMarkup() {
       </p>
     </div>
 
+    ${googleButtonMarkup()}
+
     <button id="submitBtn" class="submit-btn">
       Sign In
     </button>
@@ -209,8 +209,6 @@ function registerMarkup() {
   return `
     <h2>Create Account</h2>
     <p class="auth-subtitle">Set up your details to get started</p>
-
-    ${googleButtonMarkup()}
 
     <div class="form-group">
       <label for="name">Full Name</label>
@@ -246,6 +244,8 @@ function registerMarkup() {
         >
       </div>
     </div>
+
+    ${googleButtonMarkup()}
 
     <button id="submitBtn" class="submit-btn">
       Register
