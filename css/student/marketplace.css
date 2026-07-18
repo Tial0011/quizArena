@@ -514,6 +514,20 @@
 
 @media (max-width: 420px) {
   .marketplace-summary {
-    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .marketplace-stat {
+    padding: 12px 8px;
+    border-radius: 12px;
+  }
+
+  .marketplace-stat-value {
+    font-size: 20px;
+  }
+
+  .marketplace-stat-label {
+    margin-top: 4px;
+    font-size: 12px;
   }
 }
