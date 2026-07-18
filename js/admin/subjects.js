@@ -27,19 +27,29 @@ export async function renderSubjects(container) {
       </div>
 
       <div class="subject-form">
+  <input
+    id="subjectName"
+    type="text"
+    placeholder="Enter subject name (e.g. MTH 121)"
+  />
 
-        <input
-          id="subjectName"
-          type="text"
-          placeholder="Enter subject name"
-        />
+  <select id="subjectLevel">
+    <option value="100" selected>100 Level</option>
+    <option value="200">200 Level</option>
+    <option value="300">300 Level</option>
+    <option value="400">400 Level</option>
+    <option value="500">500 Level</option>
+  </select>
 
-        <button id="addSubjectBtn">
-          + Add Subject
-        </button>
+  <select id="subjectSemester">
+    <option value="1">First Semester</option>
+    <option value="2" selected>Second Semester</option>
+  </select>
 
-      </div>
-
+  <button id="addSubjectBtn">
+    + Add Subject
+  </button>
+</div>
       <div id="subjectsList">
         Loading...
       </div>
@@ -55,9 +65,13 @@ export async function renderSubjects(container) {
 }
 
 async function addSubject() {
-  const input = document.getElementById("subjectName");
+  const nameInput = document.getElementById("subjectName");
+  const levelInput = document.getElementById("subjectLevel");
+  const semesterInput = document.getElementById("subjectSemester");
 
-  const name = input.value.trim();
+  const name = nameInput.value.trim();
+  const level = Number(levelInput.value);
+  const semester = Number(semesterInput.value);
 
   if (!name) {
     alert("Enter a subject name.");
@@ -67,10 +81,12 @@ async function addSubject() {
   try {
     await addDoc(collection(db, "subjects"), {
       name,
+      level,
+      semester,
       createdAt: serverTimestamp(),
     });
 
-    input.value = "";
+    nameInput.value = "";
 
     loadSubjects();
   } catch (err) {
@@ -104,27 +120,31 @@ async function loadSubjects() {
     const subject = docSnap.data();
 
     html += `
-      <div class="subject-card">
+  <div class="subject-card">
 
-        <div>
+    <div class="subject-card-info">
 
-          <h3>${subject.name}</h3>
+        <h3>${subject.name}</h3>
 
-          <small>
-            Available for quizzes
-          </small>
+        <small>Available for quizzes</small>
 
+        <div class="subject-tags">
+            <span class="subject-tag level">
+                ${subject.level} Level
+            </span>
+
+            <span class="subject-tag semester">
+                ${subject.semesterLabel || `Semester ${subject.semester}`}
+            </span>
         </div>
 
-        <button
-          class="delete-subject"
-          data-id="${docSnap.id}"
-        >
-          Delete
-        </button>
+    </div>
 
-      </div>
-    `;
+    <button class="delete-subject">
+        Delete
+    </button>
+
+</div>`;
   });
 
   html += `</div>`;

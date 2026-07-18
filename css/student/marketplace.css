@@ -277,37 +277,6 @@
 }
 
 /* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 720px) {
-  .marketplace-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .marketplace-card-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .owned-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .btn-buy,
-  .btn-open {
-    width: 100%;
-  }
-
-  .purchase-dialog-actions {
-    flex-direction: column;
-  }
-  .marketplace-summary {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* =========================
    SEARCH + FILTERS
 ========================= */
 
@@ -353,6 +322,10 @@
   display: none;
 }
 
+/* Subject filter pills — rendered by renderMarketplaceFilters() with
+   class "marketplace-filter-btn" (data-subject buttons), styled the
+   same as the old .filter-chip look. */
+.marketplace-filter-btn,
 .filter-chip {
   border: none;
   background: #f3f4f6;
@@ -366,17 +339,20 @@
   transition: all 0.2s ease;
 }
 
+.marketplace-filter-btn:hover,
 .filter-chip:hover {
   background: #ede9fe;
   color: #6d28d9;
   transform: translateY(-1px);
 }
 
+.marketplace-filter-btn.active,
 .filter-chip.active {
   background: #7c3aed;
   color: #fff;
   box-shadow: 0 6px 18px rgba(124, 58, 237, 0.25);
 }
+
 /* =========================
    SUBJECT SECTIONS
 ========================= */
@@ -406,13 +382,16 @@
   color: #6b7280;
   font-weight: 600;
 }
+
 /* =========================
    SUMMARY
 ========================= */
 
+/* 2x2 grid: Quizzes | Subjects on row 1, Purchased | Total Purchased
+   on row 2. All four stat cards share the same look. */
 .marketplace-summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -443,4 +422,98 @@
   margin-top: 6px;
   color: #6b7280;
   font-size: 14px;
+}
+
+/* Total Purchased now uses the plain .marketplace-stat styling
+   above — no separate rules needed, it just sits in the grid like
+   the other three. */
+
+/* =========================================================
+   LEVEL & SEMESTER SELECTORS
+========================================================= */
+
+.marketplace-level-semester-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.marketplace-level-filter,
+.marketplace-semester-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.marketplace-level-filter label,
+.marketplace-semester-filter label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.marketplace-level-filter select,
+.marketplace-semester-filter select {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.marketplace-level-filter select:hover,
+.marketplace-semester-filter select:hover {
+  border-color: #c4b5fd;
+}
+
+.marketplace-level-filter select:focus,
+.marketplace-semester-filter select:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 720px) {
+  .marketplace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .owned-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-buy,
+  .btn-open {
+    width: 100%;
+  }
+
+  .purchase-dialog-actions {
+    flex-direction: column;
+  }
+
+  .marketplace-level-semester-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .marketplace-summary {
+    grid-template-columns: 1fr;
+  }
 }

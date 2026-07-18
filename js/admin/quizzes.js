@@ -87,25 +87,50 @@ export async function renderQuizzes(container) {
 ========================================================= */
 async function loadSubjects() {
   const select = document.getElementById("subjectSelect");
+
+  // Clear old options (important if this page is rendered again)
+  select.innerHTML = `<option value="">Select Subject</option>`;
+
   const snapshot = await getDocs(collection(db, "subjects"));
 
   snapshot.forEach((docSnap) => {
     const subject = docSnap.data();
+
     const option = document.createElement("option");
+
     option.value = docSnap.id;
-    option.textContent = subject.name;
+
+    // Store the actual values
+    option.dataset.name = subject.name;
+    option.dataset.level = subject.level;
+    option.dataset.semester = subject.semester;
+
+    const semesterLabel =
+      subject.semester === 1
+        ? "First Semester"
+        : subject.semester === 2
+          ? "Second Semester"
+          : `Semester ${subject.semester}`;
+
+    option.textContent = `${subject.name} • ${subject.level} Level • ${semesterLabel}`;
+
     select.appendChild(option);
   });
 }
-
 /* =========================================================
    FORM HELPERS
 ========================================================= */
 function getFormValues() {
   const subjectSelect = document.getElementById("subjectSelect");
+  const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
+
   return {
     subjectId: subjectSelect.value,
-    subjectName: subjectSelect.options[subjectSelect.selectedIndex]?.text || "",
+    subjectName: selectedOption.dataset.name,
+
+    level: Number(selectedOption.dataset.level),
+    semester: Number(selectedOption.dataset.semester),
+
     week: document.getElementById("weekInput").value,
     title: document.getElementById("titleInput").value.trim(),
     price: document.getElementById("priceInput").value,
@@ -185,9 +210,14 @@ async function createQuiz(values) {
   await addDoc(collection(db, "quizzes"), {
     subjectId: values.subjectId,
     subjectName: values.subjectName,
+
+    level: values.level,
+    semester: values.semester,
+
     week: Number(values.week),
     title: values.title,
     price: Number(values.price),
+
     active: true,
     createdAt: serverTimestamp(),
   });
@@ -197,6 +227,10 @@ async function updateQuiz(id, values) {
   await updateDoc(doc(db, "quizzes", id), {
     subjectId: values.subjectId,
     subjectName: values.subjectName,
+
+    level: values.level,
+    semester: values.semester,
+
     week: Number(values.week),
     title: values.title,
     price: Number(values.price),

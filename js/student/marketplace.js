@@ -22,6 +22,8 @@ let currentUserData = null;
 let selectedQuizForPurchase = null;
 let isPurchasing = false;
 let selectedSubject = "All";
+let selectedLevel = "100";
+let selectedSemester = "2";
 
 /* =========================================================
    PUBLIC ENTRY POINT
@@ -48,6 +50,8 @@ async function renderMarketplacePage(userData) {
      <div class="marketplace-header">
   <h2>Marketplace</h2>
   <p class="marketplace-subtitle">Browse and unlock quizzes</p>
+
+  <div id="marketplaceLevelSemesterFilters" class="marketplace-level-semester-filters"></div>
 
   <div class="marketplace-toolbar">
     <input
@@ -88,6 +92,7 @@ async function renderMarketplacePage(userData) {
   stopLoading(); // ✅ remove overlay once data is ready
   renderMarketplaceList();
   renderMarketplaceFilters();
+  renderLevelSemesterFilters();
   renderMarketplaceSummary();
   attachSearchListener();
 }
@@ -103,6 +108,7 @@ async function loadMarketplaceData() {
 
   quizzesCache = quizzes;
   ownedQuizIds = owned;
+  console.log("Marketplace quizzes:", quizzesCache);
 }
 
 async function loadActiveQuizzes() {
@@ -111,10 +117,116 @@ async function loadActiveQuizzes() {
 
   const quizzes = [];
   snapshot.forEach((docSnap) => {
-    quizzes.push({ id: docSnap.id, ...docSnap.data() });
+    const data = docSnap.data();
+
+    // Backward compatibility: quizzes created before level/semester
+    // existed default to 100 Level, Semester 2.
+    quizzes.push({
+      id: docSnap.id,
+      ...data,
+      level: data.level ?? 100,
+      semester: data.semester ?? 2,
+    });
   });
 
   return quizzes;
+}
+
+/* =========================================================
+   LEVEL / SEMESTER FILTERING
+========================================================= */
+function getLevelSemesterFilteredQuizzes() {
+  return quizzesCache.filter(
+    (quiz) =>
+      String(quiz.level) === selectedLevel &&
+      String(quiz.semester) === selectedSemester,
+  );
+}
+
+function renderLevelSemesterFilters() {
+  const container = document.getElementById("marketplaceLevelSemesterFilters");
+  if (!container) return;
+
+  const levels = sortDropdownValues([
+    ...new Set(quizzesCache.map((quiz) => String(quiz.level))),
+  ]);
+  const semesters = sortDropdownValues([
+    ...new Set(quizzesCache.map((quiz) => String(quiz.semester))),
+  ]);
+
+  container.innerHTML = `
+    <div class="marketplace-level-filter">
+      <label for="levelSelect">Level</label>
+      <select id="levelSelect">
+        ${levels
+          .map(
+            (level) => `
+              <option value="${level}" ${level === selectedLevel ? "selected" : ""}>
+                ${Number.isFinite(Number(level)) ? `${level} Level` : level}
+              </option>
+            `,
+          )
+          .join("")}
+      </select>
+    </div>
+
+    <div class="marketplace-semester-filter">
+      <label for="semesterSelect">Semester</label>
+      <select id="semesterSelect">
+        ${semesters
+          .map(
+            (semester) => `
+              <option value="${semester}" ${semester === selectedSemester ? "selected" : ""}>
+  ${
+    semester === "1"
+      ? "First Semester"
+      : semester === "2"
+        ? " Second Semester"
+        : `Semester ${semester}`
+  }
+</option>
+            `,
+          )
+          .join("")}
+      </select>
+    </div>
+  `;
+
+  document.getElementById("levelSelect").addEventListener("change", (e) => {
+    selectedLevel = e.target.value;
+    selectedSubject = "All"; // available subjects may differ per level/semester
+    renderMarketplaceFilters();
+    renderMarketplaceList(
+      document.getElementById("marketplaceSearch").value.trim().toLowerCase(),
+    );
+    renderMarketplaceSummary();
+  });
+
+  document.getElementById("semesterSelect").addEventListener("change", (e) => {
+    selectedSemester = e.target.value;
+    selectedSubject = "All";
+    renderMarketplaceFilters();
+    renderMarketplaceList(
+      document.getElementById("marketplaceSearch").value.trim().toLowerCase(),
+    );
+    renderMarketplaceSummary();
+  });
+}
+
+// Numeric values sort ascending; non-numeric values (e.g. "PostUtme")
+// sort alphabetically after all numeric ones.
+function sortDropdownValues(values) {
+  return values.sort((a, b) => {
+    const numA = Number(a);
+    const numB = Number(b);
+    const aIsNum = !Number.isNaN(numA);
+    const bIsNum = !Number.isNaN(numB);
+
+    if (aIsNum && bIsNum) return numA - numB;
+    if (aIsNum) return -1;
+    if (bIsNum) return 1;
+    return a.localeCompare(b);
+  });
 }
 
 /* =========================================================
@@ -124,7 +236,9 @@ function attachSearchListener() {
   const search = document.getElementById("marketplaceSearch");
 
   search.addEventListener("input", () => {
-    renderMarketplaceList(search.value.trim().toLowerCase());
+    const term = search.value.trim().toLowerCase();
+    renderMarketplaceList(term);
+    renderMarketplaceSummary(term);
   });
 }
 
@@ -142,7 +256,10 @@ function renderMarketplaceList(searchTerm = "") {
     const matchesSubject =
       selectedSubject === "All" || quiz.subjectName === selectedSubject;
 
-    return matchesSearch && matchesSubject;
+    const matchesLevel = String(quiz.level) === selectedLevel;
+    const matchesSemester = String(quiz.semester) === selectedSemester;
+
+    return matchesSearch && matchesSubject && matchesLevel && matchesSemester;
   });
 
   if (filtered.length === 0) {
@@ -181,66 +298,115 @@ function renderMarketplaceList(searchTerm = "") {
     .join("");
   attachCardEventListeners(list);
 }
+
 function renderMarketplaceFilters() {
   const container = document.getElementById("marketplaceFilters");
   if (!container) return;
 
+  const levelSemesterQuizzes = getLevelSemesterFilteredQuizzes();
   const subjects = [
     "All",
-    ...new Set(quizzesCache.map((quiz) => quiz.subjectName)),
-  ].sort((a, b) => {
-    if (a === "All") return -1;
-    if (b === "All") return 1;
-    return a.localeCompare(b);
-  });
+    ...new Set(levelSemesterQuizzes.map((quiz) => quiz.subjectName)),
+  ].sort((a, b) => (a === "All" ? -1 : b === "All" ? 1 : a.localeCompare(b)));
 
   container.innerHTML = subjects
     .map(
       (subject) => `
         <button
-          class="filter-chip ${selectedSubject === subject ? "active" : ""}"
-          data-subject="${subject}">
+          type="button"
+          class="marketplace-filter-btn${subject === selectedSubject ? " active" : ""}"
+          data-subject="${subject}"
+        >
           ${subject}
         </button>
       `,
     )
     .join("");
 
-  container.querySelectorAll(".filter-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      selectedSubject = chip.dataset.subject;
-
+  container.querySelectorAll("[data-subject]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedSubject = btn.dataset.subject;
+      const term = document
+        .getElementById("marketplaceSearch")
+        .value.trim()
+        .toLowerCase();
       renderMarketplaceFilters();
-      renderMarketplaceList(
-        document.getElementById("marketplaceSearch").value.trim().toLowerCase(),
-      );
+      renderMarketplaceList(term);
+      renderMarketplaceSummary(term);
     });
   });
 }
-function renderMarketplaceSummary() {
+
+function renderMarketplaceSummary(searchTerm = "") {
   const summary = document.getElementById("marketplaceSummary");
   if (!summary) return;
 
-  const subjectCount = new Set(quizzesCache.map((quiz) => quiz.subjectName))
+  const visibleQuizzes = quizzesCache.filter((quiz) => {
+    const week = `week ${quiz.week}`;
+
+    const matchesSearch =
+      quiz.title.toLowerCase().includes(searchTerm) ||
+      quiz.subjectName.toLowerCase().includes(searchTerm) ||
+      week.includes(searchTerm);
+
+    const matchesSubject =
+      selectedSubject === "All" || quiz.subjectName === selectedSubject;
+
+    const matchesLevel = String(quiz.level) === selectedLevel;
+
+    const matchesSemester = String(quiz.semester) === selectedSemester;
+
+    return matchesSearch && matchesSubject && matchesLevel && matchesSemester;
+  });
+
+  const subjectCount = new Set(visibleQuizzes.map((quiz) => quiz.subjectName))
     .size;
+
+  const purchasedCount = visibleQuizzes.filter((quiz) =>
+    ownedQuizIds.has(quiz.id),
+  ).length;
+
+  const totalPurchased = ownedQuizIds.size;
 
   summary.innerHTML = `
     <div class="marketplace-stat">
-      <span class="marketplace-stat-value">${quizzesCache.length}</span>
-      <span class="marketplace-stat-label">Quizzes</span>
+      <span class="marketplace-stat-value">
+        ${visibleQuizzes.length}
+      </span>
+      <span class="marketplace-stat-label">
+        Quizzes
+      </span>
     </div>
 
     <div class="marketplace-stat">
-      <span class="marketplace-stat-value">${subjectCount}</span>
-      <span class="marketplace-stat-label">Subjects</span>
+      <span class="marketplace-stat-value">
+        ${subjectCount}
+      </span>
+      <span class="marketplace-stat-label">
+        Subjects
+      </span>
     </div>
 
     <div class="marketplace-stat">
-      <span class="marketplace-stat-value">${ownedQuizIds.size}</span>
-      <span class="marketplace-stat-label">Purchased</span>
+      <span class="marketplace-stat-value">
+        ${purchasedCount}
+      </span>
+      <span class="marketplace-stat-label">
+        Purchased
+      </span>
+    </div>
+
+    <div class="marketplace-stat marketplace-stat-global">
+      <span class="marketplace-stat-value">
+        ${totalPurchased}
+      </span>
+      <span class="marketplace-stat-label">
+        Total Purchased
+      </span>
     </div>
   `;
 }
+
 function renderEmptyState() {
   return `
     <div class="marketplace-empty-state">
