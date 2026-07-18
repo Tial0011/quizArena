@@ -12,6 +12,7 @@ import { showLoadingOverlay } from "./loadingOverlay.js"; // ✅ added
 let purchasedQuizzes = [];
 let currentUserData = null;
 let selectedSemester = "All";
+let selectedSubject = "All";
 
 export async function renderMyQuizzes(userData = {}) {
   currentUserData = userData;
@@ -44,6 +45,8 @@ export async function renderMyQuizzes(userData = {}) {
 
     <div id="myQuizSemesterFilter" class="my-quizzes-semester-filter"></div>
   </div>
+
+  <div id="myQuizSubjectFilter" class="my-quizzes-subject-filter"></div>
 
 </header>
 <div id="myQuizSummary" class="my-quizzes-summary"></div>
@@ -128,6 +131,7 @@ export async function renderMyQuizzes(userData = {}) {
   }
 
   renderSemesterFilter();
+  renderSubjectFilter();
   renderQuizSummary();
   renderQuizList();
   attachSearchListener();
@@ -171,13 +175,69 @@ function renderSemesterFilter() {
     .getElementById("myQuizSemesterSelect")
     .addEventListener("change", (e) => {
       selectedSemester = e.target.value;
-      const term = document
-        .getElementById("myQuizSearch")
-        .value.trim()
-        .toLowerCase();
-      renderQuizList(term);
-      renderQuizSummary(term);
+      // Available subjects can differ per semester, so the subject
+      // chips are rebuilt (and reset to "All") whenever the
+      // semester changes — same relationship marketplace.js keeps
+      // between its level/semester dropdowns and its subject chips.
+      selectedSubject = "All";
+      renderSubjectFilter();
+      rerenderList();
     });
+}
+
+/* =========================================================
+   SUBJECT FILTER (chips)
+   Same visual/behavioral pattern as marketplace.js's
+   renderMarketplaceFilters() — a row of pill buttons, one per
+   subject, scoped to whatever's currently selected in the
+   semester dropdown above.
+========================================================= */
+function renderSubjectFilter() {
+  const container = document.getElementById("myQuizSubjectFilter");
+  if (!container) return;
+
+  const semesterScopedQuizzes = purchasedQuizzes.filter(
+    (quiz) =>
+      selectedSemester === "All" || String(quiz.semester) === selectedSemester,
+  );
+
+  const subjects = [
+    "All",
+    ...new Set(semesterScopedQuizzes.map((quiz) => quiz.subjectName)),
+  ].sort((a, b) => {
+    if (a === "All") return -1;
+    if (b === "All") return 1;
+    return a.localeCompare(b);
+  });
+
+  container.innerHTML = subjects
+    .map(
+      (subject) => `
+        <button
+          class="filter-chip ${selectedSubject === subject ? "active" : ""}"
+          data-subject="${subject}">
+          ${subject}
+        </button>
+      `,
+    )
+    .join("");
+
+  container.querySelectorAll(".filter-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      selectedSubject = chip.dataset.subject;
+      renderSubjectFilter();
+      rerenderList();
+    });
+  });
+}
+
+function rerenderList() {
+  const term = document
+    .getElementById("myQuizSearch")
+    .value.trim()
+    .toLowerCase();
+  renderQuizList(term);
+  renderQuizSummary(term);
 }
 
 // Numeric values sort ascending; non-numeric values sort
@@ -208,7 +268,10 @@ function matchesFilters(quiz, searchTerm) {
   const matchesSemester =
     selectedSemester === "All" || String(quiz.semester) === selectedSemester;
 
-  return matchesSearch && matchesSemester;
+  const matchesSubject =
+    selectedSubject === "All" || quiz.subjectName === selectedSubject;
+
+  return matchesSearch && matchesSemester && matchesSubject;
 }
 
 function renderQuizList(searchTerm = "") {
@@ -223,7 +286,7 @@ function renderQuizList(searchTerm = "") {
     container.innerHTML = `
       <div class="empty-state">
         <h3>No quizzes found</h3>
-        <p>Try another search or semester.</p>
+        <p>Try another search, subject or semester.</p>
       </div>
     `;
     return;

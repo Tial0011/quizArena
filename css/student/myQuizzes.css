@@ -329,3 +329,26 @@
     width: 100%;
   }
 }
+/* =========================
+   MY QUIZZES SUBJECT FILTER
+========================= */
+
+.my-quizzes-subject-filter {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-top: 16px;
+
+  scrollbar-width: none;
+}
+
+.my-quizzes-subject-filter::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .my-quizzes-subject-filter {
+    gap: 8px;
+  }
+}
