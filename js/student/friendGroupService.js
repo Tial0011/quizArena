@@ -10,6 +10,7 @@ import {
   where,
   arrayUnion,
   serverTimestamp,
+  Timestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 /* =========================================================
@@ -18,24 +19,28 @@ import {
    Sole reader/writer for "friendGroups" and "groupJoinRequests" —
    same pattern as purchaseService.js / attemptsService.js.
 
-   PILOT SCOPE (this week only, per the product conversation this
-   was scoped from): leaderboard is hardcoded to one subject, no
-   weekly reset, no automated reward payout. All of that is
-   intentional for a fast, low-risk first version — adjust
-   LEADERBOARD_SUBJECT and add reset/payout logic later once this
-   is proven out.
-
    friendGroups/{id}:
    { name, code, ownerId, ownerName, memberIds: [uid...], createdAt }
 
    groupJoinRequests/{id}:
    { groupId, requesterId, requesterEmail, requesterName, status: "pending"|"accepted"|"rejected", createdAt }
+
+   RULES:
+   - A user can OWN at most MAX_GROUPS_OWNED group.
+   - A user can be a MEMBER of at most MAX_GROUPS_JOINED groups
+     total (owned group counts toward this).
+   - A group only unlocks the Global Challenge once it has
+     MIN_GROUP_SIZE_FOR_ELIGIBILITY (3) or more members.
+
+   There's a single leaderboard now — the Global Challenge — no
+   separate all-time board. It's individual (your own score drives
+   it), resets weekly, spans every quiz (not one hardcoded
+   subject), and your qualifying group gives you a small nudge.
 ========================================================= */
 
-// Change this one line next week whenu sbject scope expands.
-export const LEADERBOARD_SUBJECT = "MTH 121";
 const MIN_GROUP_SIZE_FOR_ELIGIBILITY = 3;
-const GROUP_INFLUENCE_WEIGHT = 0.15;
+const MAX_GROUPS_OWNED = 1;
+const MAX_GROUPS_JOINED = 3;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 (avoid ambiguity)
 
 function generateCode(length = 6) {
@@ -47,12 +52,34 @@ function generateCode(length = 6) {
 }
 
 /**
- * Creates a new friend group owned by the given user. Retries a
- * few times on the rare chance of a code collision.
+ * Creates a new friend group owned by the given user. Enforces the
+ * 1-group-owned and 3-groups-joined caps before touching Firestore.
+ * Retries a few times on the rare chance of a code collision.
  */
 export async function createFriendGroup(ownerId, ownerName, groupName) {
   if (!ownerId || !groupName) {
     return { success: false, message: "Missing group name." };
+  }
+
+  const [ownedSnap, myGroups] = await Promise.all([
+    getDocs(
+      query(collection(db, "friendGroups"), where("ownerId", "==", ownerId)),
+    ),
+    getMyGroups(ownerId),
+  ]);
+
+  if (!ownedSnap.empty) {
+    return {
+      success: false,
+      message: `You can only own ${MAX_GROUPS_OWNED} group at a time.`,
+    };
+  }
+
+  if (myGroups.length >= MAX_GROUPS_JOINED) {
+    return {
+      success: false,
+      message: `You're already in ${MAX_GROUPS_JOINED} groups — leave one before creating another.`,
+    };
   }
 
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -84,8 +111,8 @@ export async function createFriendGroup(ownerId, ownerName, groupName) {
 
 /**
  * Submits a request to join a group by its code. Prevents
- * duplicate pending requests and joining a group you're already
- * in.
+ * duplicate pending requests, joining a group you're already in,
+ * and exceeding the MAX_GROUPS_JOINED cap.
  */
 export async function requestToJoinGroup(
   code,
@@ -95,6 +122,14 @@ export async function requestToJoinGroup(
 ) {
   if (!code || !requesterId) {
     return { success: false, message: "Missing information." };
+  }
+
+  const myGroups = await getMyGroups(requesterId);
+  if (myGroups.length >= MAX_GROUPS_JOINED) {
+    return {
+      success: false,
+      message: `You're already in the maximum of ${MAX_GROUPS_JOINED} groups.`,
+    };
   }
 
   const groupSnap = await getDocs(
@@ -184,7 +219,28 @@ export async function getPendingRequests(groupId) {
   }));
 }
 
+/**
+ * Accepts a pending join request. Re-checks the requester's group
+ * count at accept-time (not just at request-time) — they may have
+ * joined other groups while this request sat pending, so this is
+ * what actually enforces MAX_GROUPS_JOINED. If they're already at
+ * the cap, the request is auto-rejected instead of silently
+ * exceeding the limit.
+ */
 export async function acceptJoinRequest(requestId, groupId, requesterId) {
+  const myGroups = await getMyGroups(requesterId);
+
+  if (myGroups.length >= MAX_GROUPS_JOINED) {
+    await updateDoc(doc(db, "groupJoinRequests", requestId), {
+      status: "rejected",
+    });
+
+    return {
+      success: false,
+      message: `This student is already in ${MAX_GROUPS_JOINED} groups and can't join another.`,
+    };
+  }
+
   await updateDoc(doc(db, "groupJoinRequests", requestId), {
     status: "accepted",
   });
@@ -192,6 +248,8 @@ export async function acceptJoinRequest(requestId, groupId, requesterId) {
   await updateDoc(doc(db, "friendGroups", groupId), {
     memberIds: arrayUnion(requesterId),
   });
+
+  return { success: true };
 }
 
 export async function rejectJoinRequest(requestId) {
@@ -200,91 +258,126 @@ export async function rejectJoinRequest(requestId) {
   });
 }
 
-// Tune these two as you go — both directly control how hard the
-// leaderboard is to game and how much teammates matter.// "a bit" — 15% group average, 85% individual
+/**
+ * Finds a specific user's 1-indexed rank within the FULL ranked
+ * list (`all` from getGlobalChallengeLeaderboard), not just the
+ * displayed top slice. Returns null if they're not ranked.
+ */
+export function findGlobalRank(allRanked, userId) {
+  const index = allRanked.findIndex((entry) => entry.uid === userId);
+  return index === -1 ? null : index + 1;
+}
+
+/* =========================================================
+   GLOBAL CHALLENGE (₦1000, resets weekly)
+
+   - Spans every quiz attempt, any subject — not one hardcoded
+     subject.
+   - ELIGIBILITY: must belong to a group with
+     MIN_GROUP_SIZE_FOR_ELIGIBILITY (3+) members. No qualifying
+     group, no ranking — same gate that used to apply to the old
+     all-time board.
+   - SCORE: mostly your own performance this week, with your best
+     qualifying group's weekly average giving a small nudge —
+     never the main driver.
+========================================================= */
+
+const CHALLENGE_SCORE_WEIGHT = 0.65; // your own average score this week
+const CHALLENGE_VOLUME_WEIGHT = 0.2; // your attempt volume this week
+const CHALLENGE_GROUP_WEIGHT = 0.15; // your best qualifying group's weekly average — "small" nudge
+// Attempts needed to earn full volume credit. Doing more than this
+// doesn't add extra credit — it just caps the reward for spamming
+// attempts instead of actually improving your score.
+const CHALLENGE_TARGET_ATTEMPTS = 10;
 
 /**
- * GLOBAL leaderboard — every attempt across every user for
- * LEADERBOARD_SUBJECT, aggregated into a per-user average and
- * ranked. This is the reward-eligible ranking: unlike a
- * group-scoped board, it can't be gamed by inviting weak fake
- * friends into a private group, since it's computed against
- * every real student on the platform.
- *
- * TWO ELIGIBILITY/SCORING RULES on top of the raw average:
- *
- * 1. Minimum group size: a user only counts toward the global
- *    leaderboard if they belong to at least one group with
- *    MIN_GROUP_SIZE_FOR_ELIGIBILITY or more members (regardless
- *    of whether those members have attempted anything yet — this
- *    is a real-squad-size check, not an activity check). Being in
- *    zero groups, or only in groups smaller than that, means no
- *    ranking at all. This is what actually forces real recruiting
- *    rather than gaming a 1-2 person "group."
- *
- * 2. Group influence on score: once eligible, a user's ranking
- *    score is a blend of their own individual average and their
- *    group's average (mean of member averages, counting only
- *    members who have at least one attempt). If a user belongs to
- *    more than one qualifying group, their best (most favorable)
- *    blended score across those groups is used — joining more
- *    than one group should never hurt you.
- *
- * NOTE: pilot-scale implementation — fetches the full set of
- * matching attempts AND every group in one pass each, aggregating
- * client-side. Fine for a small first cohort; revisit with
- * server-side aggregation if attempt/group volume grows large
- * (see "adjust next week" scope note in the header comment above).
- *
- * Returns { top, all } — `top` is the slice for display,
- * `all` is the full ranked list so a specific user's rank can
- * be looked up even if they're outside the displayed top N.
+ * Returns the Monday 00:00:00.000 → Sunday 23:59:59.999 bounds for
+ * the week containing `date` (defaults to now), plus a display
+ * label and a stable key (e.g. "2026-W29") — handy later if you
+ * want to store "who won week X" records for payout tracking.
  */
-export async function getGlobalLeaderboard(limitCount = 20) {
-  const attemptsSnap = await getDocs(
-    query(
-      collection(db, "attempts"),
-      where("subjectName", "==", LEADERBOARD_SUBJECT),
-    ),
+function getWeekBounds(date = new Date()) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = Sunday, 1 = Monday, ...
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const weekStart = new Date(d);
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() + diffToMonday);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+  weekEnd.setMilliseconds(-1); // rolls back to Sunday 23:59:59.999
+
+  // Good-enough (not spec-perfect ISO) week numbering — just needs
+  // to be stable and unique per calendar week for the key.
+  const firstJan = new Date(weekStart.getFullYear(), 0, 1);
+  const weekNumber = Math.ceil(
+    ((weekStart - firstJan) / 86400000 + firstJan.getDay() + 1) / 7,
   );
 
-  const individualStats = new Map();
+  const fmt = (dt) =>
+    dt.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
+  return {
+    weekStart,
+    weekEnd,
+    weekKey: `${weekStart.getFullYear()}-W${String(weekNumber).padStart(2, "0")}`,
+    weekLabel: `${fmt(weekStart)} – ${fmt(weekEnd)}`,
+  };
+}
+
+/**
+ * The Global Challenge leaderboard for the current week. Returns
+ * { top, all, weekKey, weekLabel } — `top` for display, `all` so
+ * a specific user's rank can be looked up via findGlobalRank even
+ * if they're outside the displayed top N.
+ *
+ * NOTE: this only range-filters `completedAt` (no equality filter
+ * combined with it), so it does NOT need a Firestore composite
+ * index — simpler than the old subject-scoped version.
+ */
+export async function getGlobalChallengeLeaderboard(limitCount = 20) {
+  const { weekStart, weekEnd, weekKey, weekLabel } = getWeekBounds();
+
+  const [attemptsSnap, groupsSnap] = await Promise.all([
+    getDocs(
+      query(
+        collection(db, "attempts"),
+        where("completedAt", ">=", Timestamp.fromDate(weekStart)),
+        where("completedAt", "<=", Timestamp.fromDate(weekEnd)),
+      ),
+    ),
+    getDocs(collection(db, "friendGroups")),
+  ]);
+
+  // Every attempt this week, any subject, aggregated per user.
+  const individualStats = new Map();
   attemptsSnap.forEach((docSnap) => {
     const data = docSnap.data();
-
     const entry = individualStats.get(data.userId) || {
       totalPercentage: 0,
       count: 0,
     };
-
     entry.totalPercentage += data.percentage || 0;
     entry.count++;
-
     individualStats.set(data.userId, entry);
   });
 
   function getIndividualAverage(userId) {
     const entry = individualStats.get(userId);
-
-    if (!entry) return null;
-
-    return entry.totalPercentage / entry.count;
+    return entry ? entry.totalPercentage / entry.count : null;
   }
-  const groupsSnap = await getDocs(collection(db, "friendGroups"));
 
   const qualifyingGroups = groupsSnap.docs
-    .map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }))
+    .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
     .filter(
       (group) =>
         (group.memberIds || []).length >= MIN_GROUP_SIZE_FOR_ELIGIBILITY,
     );
 
-  // Compute each qualifying group's average ONCE, reused for every
-  // member's blend below rather than recomputed per-member.
+  // Each qualifying group's weekly average, computed once, reused
+  // for every member's blend below.
   const groupsWithAverages = qualifyingGroups.map((group) => {
     const memberAverages = group.memberIds
       .map((uid) => getIndividualAverage(uid))
@@ -296,52 +389,47 @@ export async function getGlobalLeaderboard(limitCount = 20) {
           memberAverages.length
         : null;
 
-    return {
-      memberIds: group.memberIds,
-      groupAverage,
-    };
+    return { memberIds: group.memberIds, groupAverage };
   });
-  const eligibleUserIds = new Set();
 
+  const eligibleUserIds = new Set();
   groupsWithAverages.forEach((group) => {
-    group.memberIds.forEach((uid) => {
-      eligibleUserIds.add(uid);
-    });
+    group.memberIds.forEach((uid) => eligibleUserIds.add(uid));
   });
+
   const scored = [];
 
   eligibleUserIds.forEach((userId) => {
     const individualAvg = getIndividualAverage(userId);
+    if (individualAvg === null) return; // no attempts this week
 
-    // User has no attempts
-    if (individualAvg === null) return;
+    const entry = individualStats.get(userId);
 
-    let bestBlended = null;
+    const volumeCredit =
+      Math.min(entry.count / CHALLENGE_TARGET_ATTEMPTS, 1) * 100;
 
+    // Best qualifying group's average this week — 0 if none of the
+    // user's qualifying groups have any attempts yet, so it just
+    // doesn't add anything rather than penalizing them.
+    let bestGroupAverage = 0;
     groupsWithAverages.forEach((group) => {
-      // User isn't in this group
       if (!group.memberIds.includes(userId)) return;
-
-      // Nobody in this group has attempted yet
       if (group.groupAverage === null) return;
-
-      const blended =
-        individualAvg * (1 - GROUP_INFLUENCE_WEIGHT) +
-        group.groupAverage * GROUP_INFLUENCE_WEIGHT;
-
-      if (bestBlended === null || blended > bestBlended) {
-        bestBlended = blended;
+      if (group.groupAverage > bestGroupAverage) {
+        bestGroupAverage = group.groupAverage;
       }
     });
 
-    // User wasn't in any valid scoring group
-    if (bestBlended === null) return;
+    const weeklyScore =
+      individualAvg * CHALLENGE_SCORE_WEIGHT +
+      volumeCredit * CHALLENGE_VOLUME_WEIGHT +
+      bestGroupAverage * CHALLENGE_GROUP_WEIGHT;
 
     scored.push({
       uid: userId,
+      attemptCount: entry.count,
       individualAverage: Math.round(individualAvg),
-      blendedScore: bestBlended,
-      attemptCount: individualStats.get(userId).count,
+      weeklyScore,
     });
   });
 
@@ -361,7 +449,7 @@ export async function getGlobalLeaderboard(limitCount = 20) {
       name,
       attemptCount: s.attemptCount,
       individualAverage: s.individualAverage,
-      averagePercentage: Math.round(s.blendedScore), // the actual ranking/display number
+      averagePercentage: Math.round(s.weeklyScore), // ranking/display number
     };
   });
 
@@ -370,31 +458,17 @@ export async function getGlobalLeaderboard(limitCount = 20) {
   return {
     top: ranked.slice(0, limitCount),
     all: ranked,
+    weekKey,
+    weekLabel,
   };
 }
 
 /**
- * Finds a specific user's 1-indexed rank within the FULL global
- * ranking (`all` from getGlobalLeaderboard), not just the
- * displayed top slice. Returns null if they have no qualifying
- * attempts yet.
- */
-export function findGlobalRank(allRanked, userId) {
-  const index = allRanked.findIndex((entry) => entry.uid === userId);
-  return index === -1 ? null : index + 1;
-}
-
-/**
- * Builds the ranked leaderboard for a group: each member's
- * average percentage across their LEADERBOARD_SUBJECT attempts
- * (Practice + Purchased Quiz combined — "mode" isn't filtered,
- * subject is what matters here).
- *
- * NOTE: this queries per-member (one query per group member) since
- * Firestore's `in` operator combined with an equality filter on a
- * different field can require a composite index that may not
- * exist yet — Firestore will show a console link to create it if
- * needed the first time this runs, same as attemptsService.js.
+ * Builds the internal leaderboard for a single group: each
+ * member's average percentage across ALL their quiz attempts
+ * (any subject, Practice + Purchased Quiz combined, all-time —
+ * this is just "how is my squad doing", separate from the
+ * time-boxed Global Challenge above).
  */
 export async function getGroupLeaderboard(group) {
   const memberIds = group.memberIds || [];
@@ -403,13 +477,7 @@ export async function getGroupLeaderboard(group) {
     memberIds.map(async (uid) => {
       const [userSnap, attemptsSnap] = await Promise.all([
         getDoc(doc(db, "users", uid)),
-        getDocs(
-          query(
-            collection(db, "attempts"),
-            where("userId", "==", uid),
-            where("subjectName", "==", LEADERBOARD_SUBJECT),
-          ),
-        ),
+        getDocs(query(collection(db, "attempts"), where("userId", "==", uid))),
       ]);
 
       const name = userSnap.exists()

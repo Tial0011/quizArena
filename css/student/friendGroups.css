@@ -19,6 +19,13 @@
   margin-bottom: 12px;
 }
 
+.friend-group-info-card p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
 .friend-group-info-card ul {
   margin: 0;
   padding-left: 18px;
@@ -33,90 +40,106 @@
 
 .friend-group-info-card strong {
   color: #111827;
-} /* =========================================================
-   GLOBAL LEADERBOARD
+}
+
+/* =========================================================
+   GLOBAL CHALLENGE
+   Single leaderboard now (no more separate all-time board) — a
+   compact merged banner (leader | you | prize) plus a plain
+   top-list section below it, so there's only one gradient "hero"
+   card on the page instead of two.
 ========================================================= */
 
-.global-leaderboard-section {
+.challenge-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  margin: 18px 0;
+  border-radius: 18px;
   background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  border-radius: 20px;
-  padding: 22px;
-  margin: 20px 0;
   color: white;
   box-shadow: 0 15px 35px rgba(124, 58, 237, 0.25);
 }
 
-.global-leaderboard-section h3 {
+.challenge-banner-half {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.challenge-banner-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.challenge-banner-half strong {
+  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.challenge-banner-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.challenge-banner-divider {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.challenge-banner-prize {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.global-challenge-section {
+  margin: 20px 0 28px;
+}
+
+.global-challenge-section h3 {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin: 0 0 14px 0;
+  margin: 0 0 6px;
   font-size: 1.05rem;
+  color: #111827;
 }
 
-.official-badge {
-  background: rgba(255, 255, 255, 0.18);
+.challenge-badge {
+  background: #ede9fe;
+  color: #6d28d9;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
 }
 
-.leaderboard-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: 18px 0 20px;
+.challenge-subtitle {
+  margin: 0 0 14px;
+  color: #6b7280;
+  font-size: 13px;
 }
 
-.summary-card {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  padding: 14px;
-  text-align: center;
-}
-
-.summary-value {
-  display: block;
-  font-size: 22px;
-  font-weight: 800;
-  color: white;
-}
-
-.summary-label {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
-}
-.global-leaderboard-section .leaderboard-row {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.global-leaderboard-section .leaderboard-row-me {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.global-leaderboard-section .leaderboard-name,
-.global-leaderboard-section .leaderboard-score,
-.global-leaderboard-section .leaderboard-rank {
-  color: white;
-}
-
-.global-leaderboard-section .empty-state {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  border: none;
-}
-
-/* Global rank badge shown next to a member's name inside a
-   group's leaderboard — "your rank in your squad" vs "your
-   actual global rank" side by side. */
-.global-rank-badge {
+/* Rank badge shown next to a member's name inside a group's
+   internal leaderboard — their standing on the Global Challenge,
+   the only global ranking there is now. */
+.challenge-rank-badge {
   display: inline-block;
   margin-left: 8px;
   padding: 2px 8px;
@@ -198,6 +221,13 @@
 .friend-group-form-card button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.group-limits-note {
+  margin: -4px 0 20px;
+  color: #9ca3af;
+  font-size: 12px;
+  text-align: center;
 }
 
 /* =========================
@@ -370,8 +400,51 @@
   cursor: not-allowed;
 }
 
+/* =========================================================
+   COLLAPSIBLE GROUP LEADERBOARD
+   Native <details>/<summary> — keeps each group's member list
+   tucked away until asked for, instead of always shown open.
+========================================================= */
+
+.group-leaderboard-details {
+  margin-top: 6px;
+}
+
+.group-leaderboard-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c3aed;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.group-leaderboard-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.group-leaderboard-details summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.group-leaderboard-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.group-leaderboard-details summary:hover {
+  color: #6d28d9;
+}
+
+.group-leaderboard-details .group-leaderboard {
+  margin-top: 10px;
+}
+
 /* =========================
    LEADERBOARD
+   Shared by the Global Challenge top-list and each group's
+   internal leaderboard.
 ========================= */
 
 .leaderboard-list {
@@ -436,6 +509,18 @@
   color: #7c3aed;
 }
 
+/* Generic empty-state used by the challenge list, group
+   leaderboards, and "no groups yet" message. */
+.empty-state {
+  text-align: center;
+  padding: 24px 16px;
+  border: 1px dashed #ddd;
+  border-radius: 14px;
+  background: #fafafa;
+  color: #888;
+  font-size: 14px;
+}
+
 @media (min-width: 700px) {
   .friend-group-forms {
     grid-template-columns: repeat(2, 1fr);
@@ -465,38 +550,9 @@
     flex: 1;
   }
 }
-.my-ranking-card {
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  color: white;
-  border-radius: 20px;
-  padding: 22px;
-  margin-bottom: 22px;
-  box-shadow: 0 15px 35px rgba(124, 58, 237, 0.25);
-}
 
-.my-ranking-card h3 {
-  margin: 0 0 18px;
-}
-
-.ranking-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
-}
-
-.ranking-grid div {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  padding: 16px;
-}
-
-.ranking-label {
-  display: block;
-  font-size: 12px;
-  opacity: 0.8;
-  margin-bottom: 6px;
-}
-
-.ranking-grid strong {
-  font-size: 26px;
+@media (max-width: 500px) {
+  .challenge-banner {
+    flex-wrap: wrap;
+  }
 }

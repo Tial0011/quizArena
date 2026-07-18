@@ -1,13 +1,17 @@
 /* =========================
-   SEARCH
+   SEARCH + SEMESTER FILTER
 ========================= */
 
 .my-quizzes-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-top: 20px;
 }
 
 .my-quizzes-search {
-  width: 100%;
+  flex: 1;
+  min-width: 220px;
   padding: 14px 18px;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
@@ -25,6 +29,49 @@
   border-color: #7c3aed;
   box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
 }
+
+/* Wrapper div rendered by renderSemesterFilter() — empty (no
+   select inside) when there's nothing to filter, so it collapses
+   to zero width automatically. */
+.my-quizzes-semester-filter select {
+  height: 100%;
+  min-width: 170px;
+  padding: 0 40px 0 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'><path d='M1 1L7 7L13 1' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  transition: 0.2s;
+}
+
+.my-quizzes-semester-filter select:hover {
+  border-color: #c4b5fd;
+}
+
+.my-quizzes-semester-filter select:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+}
+
+@media (max-width: 600px) {
+  .my-quizzes-toolbar {
+    flex-direction: column;
+  }
+
+  .my-quizzes-semester-filter select {
+    width: 100%;
+  }
+}
+
 /* =========================
    MY QUIZZES
 ========================= */
@@ -238,4 +285,47 @@
 .my-quiz-grid {
   display: grid;
   gap: 20px;
+}
+/* =========================
+   SEMESTER FILTER
+========================= */
+
+.my-quizzes-semester-filter select {
+  height: 100%;
+  min-width: 170px;
+  min-height: 50px;
+  padding: 0 40px 0 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'><path d='M1 1L7 7L13 1' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  transition: 0.2s;
+}
+
+.my-quizzes-semester-filter select:hover {
+  border-color: #c4b5fd;
+}
+
+.my-quizzes-semester-filter select:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+}
+
+@media (max-width: 600px) {
+  .my-quizzes-toolbar {
+    flex-direction: column;
+  }
+
+  .my-quizzes-semester-filter select {
+    width: 100%;
+  }
 }

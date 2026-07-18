@@ -8,13 +8,12 @@ import {
   acceptJoinRequest,
   rejectJoinRequest,
   getGroupLeaderboard,
-  getGlobalLeaderboard,
+  getGlobalChallengeLeaderboard,
   findGlobalRank,
-  LEADERBOARD_SUBJECT,
 } from "./friendGroupService.js";
 
 let currentUserData = {};
-let globalRankedCache = []; // full ranked list, used to look up any member's global rank
+let challengeRankedCache = []; // full ranked list from this week's Global Challenge, used to tag each group member's challenge rank
 
 export async function renderFriendGroups(userData = {}) {
   history.pushState(
@@ -41,58 +40,36 @@ async function renderFriendGroupsPage(userData) {
 
       <header class="dashboard-header">
         <h1>🏆 Friend Groups</h1>
-        <p>
-          Invite your squad on ${LEADERBOARD_SUBJECT} — the ₦500 reward is
-          based on the official global leaderboard, not your squad alone.
-        </p>
+        <p>Team up to unlock the Global Challenge and climb together.</p>
       </header>
-<div class="friend-group-info-card">
 
-  <div class="info-title">
-    💡 How Friend Groups Work
-  </div>
+      <div class="friend-group-info-card">
+        <div class="info-title">💡 How it works</div>
+        <p>
+          A group of <strong>3+ members</strong> unlocks the
+          <strong>Global Challenge</strong> — a ₦1000 prize that resets every
+          week, across any quiz. Your own score drives it most; your
+          squad's average only gives you a small nudge.
+        </p>
+      </div>
 
-  <ul>
-    <li>Join a group with at least <strong>3 members</strong> to qualify for the Global Leaderboard.</li>
-    <li>Your final score is based mostly on <strong>your own performance</strong>.</li>
-    <li>Your teammates' average score gives you a <strong>small bonus (15%)</strong>.</li>
-    <li>If you're in multiple qualifying groups, Quiz Arena automatically uses the one that gives you the <strong>highest ranking</strong>.</li>
-    <li>Invite strong teammates—the better your squad performs, the higher everyone can climb.</li>
-  </ul>
+      <div id="challengeBanner"></div>
 
-</div>
-<div id="myRankingCard"></div>
-      <div class="global-leaderboard-section">
+      <div class="global-challenge-section">
 
-  <h3>
-    🌍 Global Leaderboard
-    <span class="official-badge">
-      Official ₦500 Competition
-    </span>
-  </h3>
+        <h3>
+          🌍 Global Challenge
+          <span class="challenge-badge">₦1000 This Week</span>
+        </h3>
 
-  <div class="leaderboard-summary">
+        <p class="challenge-subtitle" id="challengeSubtitle">
+          Groups of 3+ only.
+        </p>
 
-    <div class="summary-card">
-      <span class="summary-value">3+</span>
-      <span class="summary-label">Members Required</span>
-    </div>
-
-    <div class="summary-card">
-      <span class="summary-value">85%</span>
-      <span class="summary-label">Your Performance</span>
-    </div>
-
-    <div class="summary-card">
-      <span class="summary-value">15%</span>
-      <span class="summary-label">Team Boost</span>
-    </div>
-
-  </div>
-
-  <div id="globalLeaderboardList">
+        <div id="challengeLeaderboardList">
           <p>Loading...</p>
         </div>
+
       </div>
 
       <div class="friend-group-forms">
@@ -125,6 +102,10 @@ async function renderFriendGroupsPage(userData) {
 
       </div>
 
+      <p class="group-limits-note">
+        You can own 1 group and be part of up to 3 total.
+      </p>
+
       <div id="myGroupsList" class="my-groups-list">
         <p>Loading your groups...</p>
       </div>
@@ -139,90 +120,92 @@ async function renderFriendGroupsPage(userData) {
     .getElementById("joinGroupBtn")
     .addEventListener("click", handleJoinGroup);
 
-  // Global leaderboard is fetched once per page load and reused both for
-  // its own section and to look up each group member's global rank —
-  // avoids re-fetching the entire attempts collection once per group.
-  await loadGlobalLeaderboard();
+  // Fetched once per page load and reused both for its own section
+  // and to tag each group member's challenge rank inside their
+  // group's internal leaderboard.
+  await loadChallengeLeaderboard();
   await loadMyGroups();
 }
 
-async function loadGlobalLeaderboard() {
-  const { top, all } = await getGlobalLeaderboard(20);
+/**
+ * Loads the Global Challenge (this week, any quiz, group-gated).
+ * Populates the merged leader/your-rank banner and the top-list.
+ */
+async function loadChallengeLeaderboard() {
+  const { top, all, weekLabel } = await getGlobalChallengeLeaderboard(10);
 
-  globalRankedCache = all;
+  challengeRankedCache = all;
 
   const myEntry = all.find((member) => member.uid === currentUserData.id);
-
   const myRank = findGlobalRank(all, currentUserData.id);
 
-  renderMyRanking(myEntry, myRank);
+  const subtitle = document.getElementById("challengeSubtitle");
+  if (subtitle) {
+    subtitle.textContent = `Groups of 3+ only — resets every Monday. This week: ${weekLabel}.`;
+  }
 
-  const container = document.getElementById("globalLeaderboardList");
+  renderChallengeBanner(top[0] || null, myEntry, myRank);
+
+  const container = document.getElementById("challengeLeaderboardList");
   if (!container) return;
 
-  container.innerHTML = renderGlobalLeaderboard(top);
+  container.innerHTML = renderLeaderboardList(top);
 }
-function renderMyRanking(myEntry, myRank) {
-  const card = document.getElementById("myRankingCard");
 
-  if (!card) return;
+/**
+ * Single compact card replacing what used to be two separate
+ * cards (a "leader" banner and a "your rank" card) — leader on
+ * the left, your own standing on the right, prize tag on the end.
+ */
+function renderChallengeBanner(topEntry, myEntry, myRank) {
+  const el = document.getElementById("challengeBanner");
+  if (!el) return;
 
-  if (!myEntry) {
-    card.innerHTML = `
-      <div class="my-ranking-card">
-
-        <h3>🏅 Your Ranking</h3>
-
-        <p>
-          You're not currently ranked.
-        </p>
-
-        <small>
-          Join a qualifying group (3+ members) and complete an
-          ${LEADERBOARD_SUBJECT} quiz to appear on the leaderboard.
-        </small>
-
+  const leaderHtml = topEntry
+    ? `
+      <div class="challenge-banner-half">
+        <span class="challenge-banner-label">🥇 Leading</span>
+        <strong>${topEntry.name}</strong>
+        <span class="challenge-banner-meta">${topEntry.individualAverage}% avg · ${topEntry.attemptCount} attempt${topEntry.attemptCount === 1 ? "" : "s"}</span>
+      </div>
+    `
+    : `
+      <div class="challenge-banner-half">
+        <span class="challenge-banner-label">🥇 Leading</span>
+        <strong>No one yet</strong>
+        <span class="challenge-banner-meta">Be the first this week</span>
       </div>
     `;
 
-    return;
-  }
-
-  card.innerHTML = `
-    <div class="my-ranking-card">
-
-      <h3>🏅 Your Ranking</h3>
-
-      <div class="ranking-grid">
-
-        <div>
-
-          <span class="ranking-label">
-            Global Rank
-          </span>
-
-          <strong>#${myRank}</strong>
-
-        </div>
-
-        <div>
-
-          <span class="ranking-label">
-            Average
-          </span>
-
-          <strong>${myEntry.averagePercentage}%</strong>
-
-        </div>
-
+  const meHtml = myEntry
+    ? `
+      <div class="challenge-banner-half">
+        <span class="challenge-banner-label">📍 You</span>
+        <strong>#${myRank} · ${myEntry.individualAverage}%</strong>
+        <span class="challenge-banner-meta">${myEntry.attemptCount} attempt${myEntry.attemptCount === 1 ? "" : "s"}</span>
       </div>
+    `
+    : `
+      <div class="challenge-banner-half">
+        <span class="challenge-banner-label">📍 You</span>
+        <strong>Not ranked</strong>
+        <span class="challenge-banner-meta">Join a group of 3+ and attempt a quiz</span>
+      </div>
+    `;
 
+  el.innerHTML = `
+    <div class="challenge-banner">
+      ${leaderHtml}
+      <div class="challenge-banner-divider"></div>
+      ${meHtml}
+      <span class="challenge-banner-prize">₦1000</span>
     </div>
   `;
 }
-function renderGlobalLeaderboard(topMembers) {
+
+function renderLeaderboardList(topMembers) {
   if (topMembers.length === 0) {
-    return `<div class="empty-state">No ${LEADERBOARD_SUBJECT} attempts yet — be the first!</div>`;
+    return `<div class="empty-state">No qualifying attempts yet this week — be the first!</div>`;
   }
 
   const medals = ["🥇", "🥈", "🥉"];
@@ -378,7 +361,7 @@ function renderGroupCardSkeleton(group) {
 
       ${
         qualified
-          ? "• Eligible for Global Ranking"
+          ? "• Eligible for Global Challenge"
           : `• ${3 - memberCount} more needed`
       }
 
@@ -398,9 +381,12 @@ function renderGroupCardSkeleton(group) {
 
       ${isOwner ? `<div id="pendingRequests-${group.id}" class="pending-requests"></div>` : ""}
 
-      <div id="leaderboard-${group.id}" class="group-leaderboard">
-        <p>Loading leaderboard...</p>
-      </div>
+      <details class="group-leaderboard-details">
+        <summary>View leaderboard</summary>
+        <div id="leaderboard-${group.id}" class="group-leaderboard">
+          <p>Loading leaderboard...</p>
+        </div>
+      </details>
 
     </div>
   `;
@@ -413,7 +399,7 @@ function attachShareButtons(groups) {
       const name = btn.dataset.name;
 
       const text = encodeURIComponent(
-        `Join my "${name}" squad on Quiz Arena and let's see who tops the ${LEADERBOARD_SUBJECT} leaderboard 🔥 Use code: ${code}`,
+        `Join my "${name}" squad on Quiz Arena and let's see who tops the Global Challenge 🔥 Use code: ${code}`,
       );
 
       window.open(`https://wa.me/?text=${text}`, "_blank");
@@ -487,11 +473,14 @@ function attachRequestActionEvents(groupId) {
     .forEach((btn) => {
       btn.addEventListener("click", async () => {
         btn.disabled = true;
-        await acceptJoinRequest(
+        const result = await acceptJoinRequest(
           btn.dataset.requestId,
           btn.dataset.groupId,
           btn.dataset.requesterId,
         );
+        if (!result.success) {
+          alert(result.message);
+        }
         await loadMyGroups();
       });
     });
@@ -519,7 +508,10 @@ function renderLeaderboard(members) {
       ${members
         .map((member, index) => {
           const isMe = member.uid === currentUserData.id;
-          const globalRank = findGlobalRank(globalRankedCache, member.uid);
+          const challengeRank = findGlobalRank(
+            challengeRankedCache,
+            member.uid,
+          );
 
           return `
             <div class="leaderboard-row
@@ -530,7 +522,7 @@ function renderLeaderboard(members) {
               <span class="leaderboard-rank">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
                 ${member.name}${isMe ? " (You)" : ""}
-                ${globalRank ? `<span class="global-rank-badge">Global #${globalRank}</span>` : ""}
+                ${challengeRank ? `<span class="challenge-rank-badge">Challenge #${challengeRank}</span>` : ""}
               </span>
               <span class="leaderboard-score">
                 ${member.attemptCount > 0 ? `${member.averagePercentage}%` : "No attempts yet"}

@@ -11,6 +11,7 @@ import { renderStudentDashboard } from "./dashboard.js";
 import { showLoadingOverlay } from "./loadingOverlay.js"; // ✅ added
 let purchasedQuizzes = [];
 let currentUserData = null;
+let selectedSemester = "All";
 
 export async function renderMyQuizzes(userData = {}) {
   currentUserData = userData;
@@ -40,6 +41,8 @@ export async function renderMyQuizzes(userData = {}) {
       class="my-quizzes-search"
       placeholder="Search by title, subject or week..."
     />
+
+    <div id="myQuizSemesterFilter" class="my-quizzes-semester-filter"></div>
   </div>
 
 </header>
@@ -97,6 +100,10 @@ export async function renderMyQuizzes(userData = {}) {
           title: quiz.title,
           subjectName: quiz.subjectName,
           week: quiz.week,
+          // Backward compatibility: quizzes created before semester
+          // existed default to Semester 2 — same fallback used in
+          // marketplace.js's loadActiveQuizzes().
+          semester: quiz.semester ?? 2,
         };
       } catch (error) {
         console.error(error);
@@ -120,35 +127,108 @@ export async function renderMyQuizzes(userData = {}) {
     return;
   }
 
+  renderSemesterFilter();
   renderQuizSummary();
   renderQuizList();
   attachSearchListener();
 }
+
+/* =========================================================
+   SEMESTER FILTER
+========================================================= */
+function renderSemesterFilter() {
+  const container = document.getElementById("myQuizSemesterFilter");
+  if (!container) return;
+
+  const semesters = sortDropdownValues([
+    ...new Set(purchasedQuizzes.map((quiz) => String(quiz.semester))),
+  ]);
+
+  container.innerHTML = `
+    <select id="myQuizSemesterSelect">
+      <option value="All" ${selectedSemester === "All" ? "selected" : ""}>
+        All Semesters
+      </option>
+      ${semesters
+        .map(
+          (semester) => `
+            <option value="${semester}" ${semester === selectedSemester ? "selected" : ""}>
+              ${
+                semester === "1"
+                  ? "First Semester"
+                  : semester === "2"
+                    ? "Second Semester"
+                    : `Semester ${semester}`
+              }
+            </option>
+          `,
+        )
+        .join("")}
+    </select>
+  `;
+
+  document
+    .getElementById("myQuizSemesterSelect")
+    .addEventListener("change", (e) => {
+      selectedSemester = e.target.value;
+      const term = document
+        .getElementById("myQuizSearch")
+        .value.trim()
+        .toLowerCase();
+      renderQuizList(term);
+      renderQuizSummary(term);
+    });
+}
+
+// Numeric values sort ascending; non-numeric values sort
+// alphabetically after all numeric ones. Same convention as
+// marketplace.js's sortDropdownValues.
+function sortDropdownValues(values) {
+  return values.sort((a, b) => {
+    const numA = Number(a);
+    const numB = Number(b);
+    const aIsNum = !Number.isNaN(numA);
+    const bIsNum = !Number.isNaN(numB);
+
+    if (aIsNum && bIsNum) return numA - numB;
+    if (aIsNum) return -1;
+    if (bIsNum) return 1;
+    return a.localeCompare(b);
+  });
+}
+
+function matchesFilters(quiz, searchTerm) {
+  const week = `week ${quiz.week}`;
+
+  const matchesSearch =
+    quiz.title.toLowerCase().includes(searchTerm) ||
+    quiz.subjectName.toLowerCase().includes(searchTerm) ||
+    week.includes(searchTerm);
+
+  const matchesSemester =
+    selectedSemester === "All" || String(quiz.semester) === selectedSemester;
+
+  return matchesSearch && matchesSemester;
+}
+
 function renderQuizList(searchTerm = "") {
   const container = document.getElementById("myQuizList");
   if (!container) return;
 
-  const filtered = purchasedQuizzes.filter((quiz) => {
-    const week = `week ${quiz.week}`;
-
-    return (
-      quiz.title.toLowerCase().includes(searchTerm) ||
-      quiz.subjectName.toLowerCase().includes(searchTerm) ||
-      week.includes(searchTerm)
-    );
-  });
+  const filtered = purchasedQuizzes.filter((quiz) =>
+    matchesFilters(quiz, searchTerm),
+  );
 
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <h3>No quizzes found</h3>
-        <p>Try another search.</p>
+        <p>Try another search or semester.</p>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = filtered;
   const grouped = filtered.reduce((groups, quiz) => {
     if (!groups[quiz.subjectName]) {
       groups[quiz.subjectName] = [];
@@ -216,16 +296,20 @@ function renderQuizList(searchTerm = "") {
     });
   });
 }
-function renderQuizSummary() {
+function renderQuizSummary(searchTerm = "") {
   const summary = document.getElementById("myQuizSummary");
   if (!summary) return;
 
-  const subjectCount = new Set(purchasedQuizzes.map((quiz) => quiz.subjectName))
+  const visibleQuizzes = purchasedQuizzes.filter((quiz) =>
+    matchesFilters(quiz, searchTerm),
+  );
+
+  const subjectCount = new Set(visibleQuizzes.map((quiz) => quiz.subjectName))
     .size;
 
   summary.innerHTML = `
     <div class="my-quiz-stat">
-      <span class="my-quiz-stat-value">${purchasedQuizzes.length}</span>
+      <span class="my-quiz-stat-value">${visibleQuizzes.length}</span>
       <span class="my-quiz-stat-label">Purchased</span>
     </div>
 
@@ -235,7 +319,7 @@ function renderQuizSummary() {
     </div>
 
     <div class="my-quiz-stat">
-      <span class="my-quiz-stat-value">${purchasedQuizzes.length}</span>
+      <span class="my-quiz-stat-value">${visibleQuizzes.length}</span>
       <span class="my-quiz-stat-label">Ready</span>
     </div>
   `;
@@ -245,6 +329,8 @@ function attachSearchListener() {
   const search = document.getElementById("myQuizSearch");
 
   search.addEventListener("input", () => {
-    renderQuizList(search.value.trim().toLowerCase());
+    const term = search.value.trim().toLowerCase();
+    renderQuizList(term);
+    renderQuizSummary(term);
   });
 }
