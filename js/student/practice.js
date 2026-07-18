@@ -51,55 +51,57 @@ async function renderPracticeArenaPage(userData) {
 
       <div class="practice-card">
 
-        <div class="form-group">
+       <div class="form-group">
+  <label for="subjectSelect">Subject</label>
+  <select id="subjectSelect">
+    <option value="">Select Subject</option>
+  </select>
+</div>
 
-          <label for="subjectSelect">Subject</label>
+<div class="practice-row">
+  <div class="form-group">
+    <label for="questionCount">Questions</label>
+    <div class="practice-field-unit">
+      <input id="questionCount" type="number" min="1" value="${DEFAULT_QUESTION_COUNT}">
+      <span>questions</span>
+    </div>
+  </div>
 
-          <select id="subjectSelect">
-            <option value="">
-              Select Subject
-            </option>
-          </select>
+  <div class="form-group">
+    <label for="timeLimit">Time</label>
+    <div class="practice-field-unit">
+      <input id="timeLimit" type="number" min="1" value="${DEFAULT_TIME_MINUTES}">
+      <span>min</span>
+    </div>
+  </div>
+</div>
 
-        </div>
+<p class="practice-pace" id="pacePreview"></p>
 
-        <div class="form-group">
-
-          <label for="questionCount">Number of Questions</label>
-
-          <input
-            id="questionCount"
-            type="number"
-            min="1"
-            value="${DEFAULT_QUESTION_COUNT}"
-          >
-
-        </div>
-
-        <div class="form-group">
-
-          <label for="timeLimit">Time (Minutes)</label>
-
-          <input
-            id="timeLimit"
-            type="number"
-            min="1"
-            value="${DEFAULT_TIME_MINUTES}"
-          >
-
-        </div>
-
-        <button id="startPracticeBtn">
-
-          🚀 Start Practice
-
-        </button>
+<button id="startPracticeBtn">🚀 Start Practice</button>
 
       </div>
 
     </div>
   `;
+  function updatePacePreview() {
+    const count = Number(document.getElementById("questionCount").value);
+    const time = Number(document.getElementById("timeLimit").value);
+    const pace = document.getElementById("pacePreview");
+    if (count > 0 && time > 0) {
+      pace.textContent = `≈ ${(time / count).toFixed(1)} min per question`;
+    } else {
+      pace.textContent = "";
+    }
+  }
 
+  document
+    .getElementById("questionCount")
+    .addEventListener("input", updatePacePreview);
+  document
+    .getElementById("timeLimit")
+    .addEventListener("input", updatePacePreview);
+  updatePacePreview();
   await loadPurchasedSubjects();
 
   document

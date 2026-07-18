@@ -3,85 +3,191 @@
 ========================= */
 
 .practice-card {
+  position: relative;
   max-width: 600px;
-
   margin: 25px auto;
-
   background: white;
-
-  padding: 30px;
-
+  padding: 34px 30px 30px;
   border-radius: 22px;
-
   border: 1px solid #ececec;
-
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* Thin accent bar across the top edge — ties the card to the
+   purple/amber duo used inside (subject+action vs. time+pace)
+   without repeating the target rings twice. */
+.practice-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #7c3aed 0%, #7c3aed 65%, #f59e0b 100%);
+}
+
+/* Concentric target rings, echoing the 🎯 in the page header.
+   Purely decorative, sits behind the card content in the
+   top-right corner. */
+.practice-card::after {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 22px solid rgba(124, 58, 237, 0.05);
+  box-shadow: 0 0 0 22px rgba(124, 58, 237, 0.035);
+  pointer-events: none;
 }
 
 .practice-card .form-group {
+  position: relative;
   margin-bottom: 22px;
 }
 
 .practice-card label {
   display: block;
-
   margin-bottom: 8px;
-
   font-weight: 600;
-
-  color: #374151;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6b7280;
 }
 
 .practice-card select,
 .practice-card input[type="number"] {
   width: 100%;
-
   padding: 15px;
-
   border: 1px solid #d1d5db;
-
   border-radius: 14px;
-
   font-size: 15px;
-
+  font-weight: 600;
+  color: #1f2430;
   background: white;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
 
-  transition: 0.2s;
+/* Custom chevron for the subject select, since appearance is
+   stripped above. */
+.practice-card select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'><path d='M1 1L7 7L13 1' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 42px;
+  cursor: pointer;
 }
 
 .practice-card select:focus,
 .practice-card input[type="number"]:focus {
   outline: none;
-
   border-color: #7c3aed;
-
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
+/* =========================
+   QUESTIONS + TIME — grouped as peers, unit-suffixed
+========================= */
+
+.practice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Wraps a single number input so a unit label ("questions", "min")
+   can sit inside the field instead of the number floating alone. */
+.practice-field-unit {
+  position: relative;
+}
+
+.practice-field-unit input[type="number"] {
+  padding-right: 78px;
+}
+
+.practice-field-unit span {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(calc(-50% + 12px));
+  font-size: 13px;
+  font-weight: 600;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* Time's label + unit lean amber, subject/questions stay purple —
+   a quiet color-coding of "how much" vs. "how long". */
+.practice-row .form-group:last-child label {
+  color: #b45309;
+}
+
+.practice-row .form-group:last-child input[type="number"]:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+/* =========================
+   PACE READOUT
+========================= */
+
+/* Small live summary line: "≈1.0 min per question". Populate with
+   JS — see note below — falls back to just not showing if left
+   empty. */
+.practice-pace {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -6px 0 22px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fdf9f0;
+  border: 1px solid #fde9c2;
+  font-size: 13px;
+  font-weight: 600;
+  color: #79510b;
+}
+
+.practice-pace:empty {
+  display: none;
+}
+
+.practice-pace::before {
+  content: "⏱";
+  font-size: 14px;
+}
+
+/* =========================
+   START BUTTON
+========================= */
+
 #startPracticeBtn {
   width: 100%;
-
   padding: 16px;
-
   border: none;
-
   border-radius: 14px;
-
   background: #7c3aed;
-
   color: white;
-
   font-size: 16px;
-
   font-weight: 700;
-
   cursor: pointer;
-
-  transition: 0.25s;
+  transition:
+    background 0.25s ease,
+    transform 0.15s ease,
+    box-shadow 0.25s ease;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
 }
 
 #startPracticeBtn:hover {
   background: #6d28d9;
+  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.32);
 }
 
 #startPracticeBtn:active {
@@ -90,6 +196,11 @@
 
 @media (max-width: 768px) {
   .practice-card {
-    padding: 22px;
+    padding: 28px 22px 22px;
+  }
+
+  .practice-row {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }
