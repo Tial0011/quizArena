@@ -1,4 +1,5 @@
 import { renderStudentDashboard } from "../student/dashboard.js";
+import { startSessionManager } from "../sessionManager.js";
 import {
   loginUser,
   registerUser,
@@ -39,11 +40,8 @@ export function renderLanding() {
         </h1>
 
         <p>
-          Practice Physics, Biology,
-          Chemistry and Statistics with
-          weekly quizzes designed for
-          serious students.
-        </p>
+Quiz Arena helps UNIMED students prepare for 100 Level courses with timed CBT practice, topic-based quizzes and exam-style questions.
+</p>
 
         <div class="stats">
           <div class="stat">
@@ -355,6 +353,9 @@ async function handleForgotPassword() {
  */
 async function routeAfterAuth(user) {
   const ADMIN_EMAIL = "admin@test.com";
+
+  // Start inactivity tracking
+  startSessionManager();
 
   if (user.email === ADMIN_EMAIL) {
     renderAdminDashboard();

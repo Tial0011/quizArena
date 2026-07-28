@@ -1,4 +1,5 @@
 import { auth, db } from "./firebase/config.js";
+import { stopSessionManager } from "./sessionManager.js";
 
 import {
   createUserWithEmailAndPassword,
@@ -174,14 +175,17 @@ export async function getUserData(uid) {
 // =========================
 export async function logoutUser() {
   try {
+    stopSessionManager();
+
     await signOut(auth);
 
-    // Redirect after successful logout
-    window.location.href = "/index.html"; // adjust path to your login/landing page
-
-    return { success: true };
+    window.location.href = "/index.html";
   } catch (error) {
     console.error(error);
-    return { success: false, message: error.message };
+
+    return {
+      success: false,
+      message: error.message,
+    };
   }
 }
