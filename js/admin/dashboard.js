@@ -1,7 +1,7 @@
 import { renderSubjects } from "./subjects.js";
 import { renderQuizzes } from "./quizzes.js";
 import { renderQuestions } from "./questions.js";
-
+import { logoutUser } from "../auth.js";
 import { db } from "../firebase/config.js";
 
 import {
@@ -17,18 +17,21 @@ let activeTab = "dashboard";
 
 export function renderAdminDashboard() {
   app.innerHTML = `
-    <div class="admin-container">
+<header class="admin-header">
 
-      <header class="admin-header">
-
-        <div>
-          <h1>Quiz Arena Admin</h1>
-          <p>
-            Manage quizzes, subjects and students.
-          </p>
-        </div>
-
-      </header>
+  <div>
+    <h1>Quiz Arena Admin</h1>
+    <p>
+      Manage quizzes, subjects and students.
+    </p>
+  </div>
+  <button
+    id="adminLogoutBtn"
+    class="admin-logout-btn"
+  >
+    Logout
+  </button>
+</header>
 
       <nav class="admin-tabs">
 
@@ -70,8 +73,19 @@ export function renderAdminDashboard() {
   setupTabs();
 
   renderTabContent();
+  setupLogout();
 }
+function setupLogout() {
+  document
+    .getElementById("adminLogoutBtn")
+    ?.addEventListener("click", async () => {
+      const confirmLogout = confirm("Are you sure you want to logout?");
 
+      if (!confirmLogout) return;
+
+      await logoutUser();
+    });
+}
 function setupTabs() {
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
