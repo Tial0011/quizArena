@@ -19,7 +19,7 @@ import { renderStudentDashboard } from "./dashboard.js";
    FLUTTERWAVE CONFIG
 ========================================================= */
 const FLUTTERWAVE_PUBLIC_KEY =
-  "FLWPUBK_TEST-f03ffa1ccee339c0c7eedfee1438e15a-X";
+  "FLWPUBK_TEST-5bb34a262c34b22a265eff9921165acc-X";
 
 /* =========================================================
    MODULE STATE
