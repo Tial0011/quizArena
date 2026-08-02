@@ -7,10 +7,19 @@ import {
   query,
   where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { purchaseQuiz, getUserOwnedQuizIds } from "./purchaseService.js";
+import {
+  confirmFlutterwavePurchase,
+  getUserOwnedQuizIds,
+} from "./purchaseService.js";
 import { getUserData } from "../auth.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
+
+/* =========================================================
+   FLUTTERWAVE CONFIG
+========================================================= */
+const FLUTTERWAVE_PUBLIC_KEY =
+  "FLWPUBK_TEST-f03ffa1ccee339c0c7eedfee1438e15a-X";
 
 /* =========================================================
    MODULE STATE
@@ -507,7 +516,7 @@ function handleOpenQuizClick(quizId) {
 }
 
 /* =========================================================
-   MOCK PURCHASE DIALOG
+   FLUTTERWAVE PURCHASE DIALOG
 ========================================================= */
 function renderPurchaseDialogMarkup() {
   return `
@@ -521,7 +530,7 @@ function renderPurchaseDialogMarkup() {
         </div>
 
         <p class="purchase-dialog-notice">
-          This is a demo purchase. No payment will be made.
+          You'll be redirected to Flutterwave to complete payment securely.
         </p>
 
         <div class="purchase-dialog-actions">
@@ -575,19 +584,15 @@ function closePurchaseDialog() {
 }
 
 /**
- * PAYSTACK INSERTION POINT
+ * FLUTTERWAVE PAYMENT FLOW
  * ------------------------
- * Right now this function calls purchaseQuiz() directly, simulating
- * a payment that already succeeded. To wire in real payments later,
- * replace the body of this function with:
- *
- *   1. Launch Paystack Checkout for selectedQuizForPurchase.price
- *   2. In Paystack's onSuccess callback, call:
- *        const result = await purchaseQuiz(currentUserId, selectedQuizForPurchase.id);
- *   3. Keep everything below (refresh + re-render) unchanged.
- *
- * No other file needs to change — purchaseService.js and the rest
- * of the Marketplace UI stay exactly as they are.
+ * 1. Opens Flutterwave's inline checkout for the selected quiz's price.
+ * 2. On the client-side callback, does NOT trust response.status alone —
+ *    calls confirmFlutterwavePurchase(), which hits the verifyFlutterwavePurchase
+ *    Cloud Function to independently re-verify the transaction with
+ *    Flutterwave's servers before anything gets written to Firestore.
+ * 3. Only once the Cloud Function confirms success do we refresh user data
+ *    and re-render the Marketplace.
  */
 async function handleConfirmPurchase() {
   if (!selectedQuizForPurchase || isPurchasing) return;
@@ -597,34 +602,75 @@ async function handleConfirmPurchase() {
   confirmBtn.disabled = true;
   confirmBtn.textContent = "Processing...";
 
-  const quizId = selectedQuizForPurchase.id;
-  const result = await purchaseQuiz(currentUserId, quizId);
+  const quiz = selectedQuizForPurchase;
+  const txRef = `quiz_${quiz.id}_${currentUserId}_${Date.now()}`;
 
-  isPurchasing = false;
+  window.FlutterwaveCheckout({
+    public_key: FLUTTERWAVE_PUBLIC_KEY,
+    tx_ref: txRef,
+    amount: quiz.price,
+    currency: "NGN",
+    payment_options: "card,ussd,banktransfer",
+    customer: {
+      email: currentUserData.email,
+      name: currentUserData.fullName || currentUserData.name || "Student",
+    },
+    customizations: {
+      title: "QuizArena",
+      description: quiz.title,
+    },
+    callback: async (response) => {
+      if (response.status !== "successful") {
+        isPurchasing = false;
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Purchase";
+        alert("Payment was not completed.");
+        return;
+      }
 
-  if (!result.success) {
-    alert(result.message || "Purchase failed. Please try again.");
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = "Purchase";
-    return;
-  }
+      const result = await confirmFlutterwavePurchase(
+        currentUserId,
+        quiz.id,
+        txRef,
+        response.transaction_id,
+      );
 
-  // Pull the freshly-written user document (purchasedQuizzes now
-  // includes the new purchase) instead of trusting local state.
-  const freshUserData = await getUserData(currentUserId);
-  if (freshUserData) {
-    currentUserData = freshUserData;
-  }
+      isPurchasing = false;
 
-  closePurchaseDialog();
+      if (!result.success) {
+        alert(
+          result.message ||
+            "Payment verification failed. Please contact support.",
+        );
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Purchase";
+        return;
+      }
 
-  // Full re-render, sourced from Firestore: rebuilds the quiz grid
-  // (so this card flips to "Owned"), re-registers the back handler
-  // with the updated currentUserData, and keeps everything as an
-  // SPA update — no location.reload() anywhere. Calls the internal
-  // render function directly (not the exported renderMarketplace)
-  // so this refresh doesn't push a second, phantom history entry —
-  // the student hasn't navigated anywhere, they're still on
-  // Marketplace, just looking at updated data.
-  await renderMarketplacePage(currentUserData);
+      // Pull the freshly-written user document (purchasedQuizzes now
+      // includes the new purchase) instead of trusting local state.
+      const freshUserData = await getUserData(currentUserId);
+      if (freshUserData) {
+        currentUserData = freshUserData;
+      }
+
+      closePurchaseDialog();
+
+      // Full re-render, sourced from Firestore: rebuilds the quiz grid
+      // (so this card flips to "Owned"), re-registers the back handler
+      // with the updated currentUserData, and keeps everything as an
+      // SPA update — no location.reload() anywhere. Calls the internal
+      // render function directly (not the exported renderMarketplace)
+      // so this refresh doesn't push a second, phantom history entry —
+      // the student hasn't navigated anywhere, they're still on
+      // Marketplace, just looking at updated data.
+      await renderMarketplacePage(currentUserData);
+    },
+    onclose: () => {
+      // User closed the Flutterwave modal without paying.
+      isPurchasing = false;
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Purchase";
+    },
+  });
 }

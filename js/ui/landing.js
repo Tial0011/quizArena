@@ -16,6 +16,35 @@ import {
 const app = document.getElementById("app");
 
 let mode = "login";
+let deferredInstallPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById("installAppBtn")?.removeAttribute("hidden");
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  document.getElementById("installAppBtn")?.setAttribute("hidden", "");
+});
+
+async function handleInstallClick() {
+  if (!deferredInstallPrompt) return;
+
+  const btn = document.getElementById("installAppBtn");
+  btn.disabled = true;
+
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+
+  deferredInstallPrompt = null;
+  if (outcome !== "accepted") {
+    btn.disabled = false;
+  } else {
+    btn.setAttribute("hidden", "");
+  }
+}
 
 export function renderLanding() {
   app.innerHTML = `
@@ -23,16 +52,20 @@ export function renderLanding() {
 
       <section class="hero">
 
-        <div class="hero-parallax-shape hero-parallax-shape-1" data-parallax-speed="0.15"></div>
-        <div class="hero-parallax-shape hero-parallax-shape-2" data-parallax-speed="0.3"></div>
+<div class="hero-parallax-shape hero-parallax-shape-1" data-parallax-speed="0.15"></div>
+<div class="hero-parallax-shape hero-parallax-shape-2" data-parallax-speed="0.3"></div>
 
-        <div class="live-badge">
-          Live Platform
-        </div>
+<div class="live-badge">
+  Live Platform
+</div>
 
-        <div class="logo">
-          Quiz Arena
-        </div>
+<button id="installAppBtn" class="install-app-btn" hidden>
+  ⬇️ Install App
+</button>
+
+<div class="logo">
+  Quiz Arena
+</div>
 
         <h1>
           Master Your Subjects.<br>
@@ -262,7 +295,6 @@ function registerMarkup() {
 function attachEvents() {
   document.getElementById("switchMode")?.addEventListener("click", () => {
     mode = mode === "login" ? "register" : "login";
-
     renderLanding();
   });
 
@@ -273,8 +305,10 @@ function attachEvents() {
   document
     .getElementById("forgotPasswordLink")
     ?.addEventListener("click", handleForgotPassword);
+  document
+    .getElementById("installAppBtn")
+    ?.addEventListener("click", handleInstallClick);
 }
-
 async function submitForm() {
   const submitBtn = document.getElementById("submitBtn");
 

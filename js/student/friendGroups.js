@@ -48,8 +48,9 @@ async function renderFriendGroupsPage(userData) {
         <p>
           A group of <strong>3+ members</strong> unlocks the
           <strong>Global Challenge</strong> — a ₦1000 prize that resets every
-          week, across any quiz. Your own score drives it most; your
-          squad's average only gives you a small nudge.
+          week, across any quiz. Your own score drives it most; doing
+          <strong>different quizzes</strong> (not just repeating one) earns
+          you more credit, and your squad's average gives you a small nudge.
         </p>
       </div>
 
@@ -166,7 +167,7 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
       <div class="challenge-banner-half">
         <span class="challenge-banner-label">🥇 Leading</span>
         <strong>${topEntry.name}</strong>
-        <span class="challenge-banner-meta">${topEntry.individualAverage}% avg · ${topEntry.attemptCount} attempt${topEntry.attemptCount === 1 ? "" : "s"}</span>
+        <span class="challenge-banner-meta">${topEntry.individualAverage}% avg · ${topEntry.attemptCount} attempt${topEntry.attemptCount === 1 ? "" : "s"} · ${topEntry.varietyCount} quiz${topEntry.varietyCount === 1 ? "" : "zes"}</span>
       </div>
     `
     : `
@@ -182,7 +183,7 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
       <div class="challenge-banner-half">
         <span class="challenge-banner-label">📍 You</span>
         <strong>#${myRank} · ${myEntry.individualAverage}%</strong>
-        <span class="challenge-banner-meta">${myEntry.attemptCount} attempt${myEntry.attemptCount === 1 ? "" : "s"}</span>
+        <span class="challenge-banner-meta">${myEntry.attemptCount} attempt${myEntry.attemptCount === 1 ? "" : "s"} · ${myEntry.varietyCount} quiz${myEntry.varietyCount === 1 ? "" : "zes"}</span>
       </div>
     `
     : `
@@ -223,7 +224,10 @@ function renderLeaderboardList(topMembers) {
     ${index === 1 ? "second-place" : ""}
     ${index === 2 ? "third-place" : ""}">
               <span class="leaderboard-rank">${medals[index] || `#${index + 1}`}</span>
-              <span class="leaderboard-name">${member.name}${isMe ? " (You)" : ""}</span>
+              <span class="leaderboard-name">
+                ${member.name}${isMe ? " (You)" : ""}
+                ${member.varietyCount > 1 ? `<span class="challenge-rank-badge">${member.varietyCount} quizzes</span>` : ""}
+              </span>
               <span class="leaderboard-score">${member.averagePercentage}%</span>
             </div>
           `;

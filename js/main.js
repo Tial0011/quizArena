@@ -7,7 +7,13 @@ import { renderLanding } from "./ui/landing.js";
 import { getUserData } from "./auth.js";
 import { renderStudentDashboard } from "./student/dashboard.js";
 import { renderAdminDashboard } from "./admin/dashboard.js";
-
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .catch((err) => console.error("SW registration failed:", err));
+  });
+}
 const ADMIN_EMAIL = "admin@test.com";
 
 let initialized = false;

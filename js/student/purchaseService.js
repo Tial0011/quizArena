@@ -1,4 +1,5 @@
 import { db } from "../firebase/config.js";
+import { app } from "../firebase/config.js";
 import {
   collection,
   addDoc,
@@ -11,6 +12,10 @@ import {
   serverTimestamp,
   arrayUnion,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFunctions,
+  httpsCallable,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 /* =========================================================
    PURCHASE SERVICE
@@ -22,20 +27,25 @@ import {
    getUserOwnedQuizIds() — never touch Firestore directly
    for purchase-related data.
 
-   WHY THIS MATTERS FOR PAYSTACK LATER:
-   Right now, purchaseQuiz() is called immediately when the
-   user clicks "Purchase" in the mock dialog — simulating a
-   payment that already succeeded. When Paystack is wired
-   in, the ONLY change needed is *when* purchaseQuiz() is
-   called:
+   FLUTTERWAVE:
+   purchaseQuiz() below is the OLD mock-purchase writer —
+   kept here for reference / backward compatibility, but no
+   longer called by the Marketplace UI.
 
-     Purchase button -> Paystack Checkout -> on successful
-     payment callback -> purchaseQuiz(userId, quizId)
-
-   The function signature, its validation, and everything it
-   writes to Firestore stays exactly the same. No caller of
-   purchaseQuiz() needs to change.
+   Real payments now go through confirmFlutterwavePurchase(),
+   which calls the verifyFlutterwavePurchase Cloud Function.
+   That function independently re-verifies the transaction
+   with Flutterwave's servers and does the equivalent
+   Firestore writes (same "purchases" collection, same
+   purchasedQuizzes array) server-side, so no other file in
+   the app needs to change.
 ========================================================= */
+
+const functions = getFunctions(app);
+const verifyFlutterwavePurchaseCallable = httpsCallable(
+  functions,
+  "verifyFlutterwavePurchase",
+);
 
 /**
  * Checks whether a user already owns (has a paid purchase for) a quiz.
@@ -82,14 +92,9 @@ export async function getUserOwnedQuizIds(userId) {
 }
 
 /**
- * Purchases a quiz for a user.
- *
- * - Prevents duplicate purchases.
- * - Creates a "purchases" document.
- * - Appends the new purchase's doc ID to the user's purchasedQuizzes array.
- *
- * Returns a result object instead of throwing, so calling UI code can
- * branch on `.success` without try/catch everywhere.
+ * OLD mock-purchase writer. No longer called by the Marketplace UI —
+ * kept here in case anything else in the app still references it.
+ * Real purchases now go through confirmFlutterwavePurchase() below.
  *
  * @returns {Promise<{success: boolean, alreadyOwned?: boolean, purchaseId?: string, message: string}>}
  */
@@ -135,6 +140,39 @@ export async function purchaseQuiz(userId, quizId) {
     return {
       success: false,
       message: "Something went wrong. Please try again.",
+    };
+  }
+}
+
+/**
+ * Confirms a Flutterwave payment by calling the verifyFlutterwavePurchase
+ * Cloud Function, which re-checks the transaction directly with
+ * Flutterwave's servers before writing anything to Firestore.
+ *
+ * This is the ONLY way a Flutterwave purchase should be finalized —
+ * never write "paid" to Firestore from the browser directly.
+ *
+ * @returns {Promise<{success: boolean, alreadyOwned?: boolean, purchaseId?: string, message: string}>}
+ */
+export async function confirmFlutterwavePurchase(
+  userId,
+  quizId,
+  txRef,
+  transactionId,
+) {
+  try {
+    const result = await verifyFlutterwavePurchaseCallable({
+      userId,
+      quizId,
+      txRef,
+      transactionId,
+    });
+    return result.data;
+  } catch (err) {
+    console.error("confirmFlutterwavePurchase failed:", err);
+    return {
+      success: false,
+      message: "Payment verification failed. Please contact support.",
     };
   }
 }
