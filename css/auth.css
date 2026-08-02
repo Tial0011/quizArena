@@ -95,6 +95,10 @@
 
   background: #22c55e;
 }
+
+/* Install App button — sits top-right of the hero at every
+   screen size (not just desktop), so it needs to live in the
+   base styles rather than inside the 900px media query. */
 .install-app-btn {
   position: absolute;
   top: 20px;
