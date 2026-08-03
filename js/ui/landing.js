@@ -59,7 +59,7 @@ export function renderLanding() {
   Live Platform
 </div>
 
-<button id="installAppBtn" class="install-app-btn" hidden>
+<button id="installAppBtn" class="install-app-btn" ${deferredInstallPrompt ? "" : "hidden"}>
   ⬇️ Install App
 </button>
 
