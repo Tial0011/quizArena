@@ -46,12 +46,20 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
     return { success: false, message: "Quiz not found." };
   }
   const quiz = quizSnap.data();
-
   if (tx.currency !== "NGN" || tx.amount < quiz.price) {
+    console.log("Amount/currency check failed", {
+      txAmount: tx.amount,
+      txCurrency: tx.currency,
+      quizPrice: quiz.price,
+    });
     return { success: false, message: "Payment amount mismatch." };
   }
 
   if (tx.tx_ref !== txRef) {
+    console.log("tx_ref mismatch", {
+      fromFlutterwave: tx.tx_ref,
+      fromClient: txRef,
+    });
     return { success: false, message: "Transaction reference mismatch." };
   }
 

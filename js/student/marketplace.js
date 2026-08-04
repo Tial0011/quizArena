@@ -31,7 +31,7 @@ let selectedQuizForPurchase = null;
 let isPurchasing = false;
 let selectedSubject = "All";
 let selectedLevel = "100";
-let selectedSemester = "2";
+let selectedSemester = "1";
 
 /* =========================================================
    PUBLIC ENTRY POINT
@@ -520,7 +520,7 @@ function handleOpenQuizClick(quizId) {
 function renderPurchaseDialogMarkup() {
   return `
     <div id="purchaseDialogOverlay" class="purchase-dialog-overlay" hidden>
-      <div class="purchase-dialog">
+      <div class="purchase-dialog" id="purchaseDialogBox">
         <h3>Purchase Quiz?</h3>
 
         <div class="purchase-dialog-details">
@@ -590,7 +590,14 @@ function closePurchaseDialog() {
  *    calls confirmFlutterwavePurchase(), which hits the verifyFlutterwavePurchase
  *    Cloud Function to independently re-verify the transaction with
  *    Flutterwave's servers before anything gets written to Firestore.
- * 3. Only once the Cloud Function confirms success do we refresh user data
+ * 3. Card payments resolve with status "successful"/"cancelled" synchronously
+ *    in this callback. Bank transfer payments are asynchronous — Flutterwave
+ *    often reports "pending" here while it's still waiting on bank
+ *    confirmation, sometimes for a couple of minutes. Treating "pending" as
+ *    a hard failure is what was causing "payment not completed" to show up
+ *    even though the transfer had gone through — so pending gets polled
+ *    against the Cloud Function instead of being rejected outright.
+ * 4. Only once the Cloud Function confirms success do we refresh user data
  *    and re-render the Marketplace.
  */
 async function handleConfirmPurchase() {
@@ -603,6 +610,12 @@ async function handleConfirmPurchase() {
 
   const quiz = selectedQuizForPurchase;
   const txRef = `quiz_${quiz.id}_${currentUserId}_${Date.now()}`;
+
+  console.log("[purchase] Launching Flutterwave checkout", {
+    quizId: quiz.id,
+    price: quiz.price,
+    txRef,
+  });
 
   window.FlutterwaveCheckout({
     public_key: FLUTTERWAVE_PUBLIC_KEY,
@@ -619,57 +632,177 @@ async function handleConfirmPurchase() {
       description: quiz.title,
     },
     callback: async (response) => {
-      if (response.status !== "successful") {
-        isPurchasing = false;
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "Purchase";
-        alert("Payment was not completed.");
+      console.log("[purchase] Flutterwave callback fired", response);
+
+      if (response.status === "successful") {
+        console.log("[purchase] Status successful — finalizing immediately");
+        await finalizePurchase(response, quiz.id);
         return;
       }
 
-      const result = await confirmFlutterwavePurchase(
-        currentUserId,
-        quiz.id,
-        txRef,
-        response.transaction_id,
-      );
-
-      isPurchasing = false;
-
-      if (!result.success) {
-        alert(
-          result.message ||
-            "Payment verification failed. Please contact support.",
+      if (response.status === "pending") {
+        console.log(
+          "[purchase] Status pending (typical for bank transfer) — polling for confirmation",
         );
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "Purchase";
+        confirmBtn.textContent = "Confirming payment...";
+        await pollForConfirmation(response, quiz.id);
         return;
       }
 
-      // Pull the freshly-written user document (purchasedQuizzes now
-      // includes the new purchase) instead of trusting local state.
-      const freshUserData = await getUserData(currentUserId);
-      if (freshUserData) {
-        currentUserData = freshUserData;
-      }
-
-      closePurchaseDialog();
-
-      // Full re-render, sourced from Firestore: rebuilds the quiz grid
-      // (so this card flips to "Owned"), re-registers the back handler
-      // with the updated currentUserData, and keeps everything as an
-      // SPA update — no location.reload() anywhere. Calls the internal
-      // render function directly (not the exported renderMarketplace)
-      // so this refresh doesn't push a second, phantom history entry —
-      // the student hasn't navigated anywhere, they're still on
-      // Marketplace, just looking at updated data.
-      await renderMarketplacePage(currentUserData);
+      // Anything else (e.g. "cancelled") is a genuine failure.
+      console.log(
+        "[purchase] Status not successful/pending — treating as failed",
+        response.status,
+      );
+      isPurchasing = false;
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Purchase";
+      alert("Payment was not completed.");
     },
     onclose: () => {
+      console.log("[purchase] Flutterwave modal closed by user");
       // User closed the Flutterwave modal without paying.
       isPurchasing = false;
       confirmBtn.disabled = false;
       confirmBtn.textContent = "Purchase";
     },
   });
+}
+
+/**
+ * Verifies + finalizes a purchase that Flutterwave has already reported
+ * as successful (used both for the immediate card-payment path and for
+ * the tail end of the bank-transfer polling path once it succeeds).
+ */
+async function finalizePurchase(response, quizId) {
+  console.log("[purchase] Calling confirmFlutterwavePurchase()", {
+    quizId,
+    txRef: response.tx_ref,
+    transactionId: response.transaction_id,
+  });
+
+  const result = await confirmFlutterwavePurchase(
+    currentUserId,
+    quizId,
+    response.tx_ref,
+    response.transaction_id,
+  );
+
+  console.log("[purchase] confirmFlutterwavePurchase() result", result);
+
+  isPurchasing = false;
+
+  const confirmBtn = document.getElementById("confirmPurchaseBtn");
+
+  if (!result.success) {
+    console.warn("[purchase] Verification failed", result.message);
+    alert(
+      result.message || "Payment verification failed. Please contact support.",
+    );
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Purchase";
+    }
+    return;
+  }
+
+  console.log(
+    "[purchase] Verified + recorded successfully. Refreshing user data.",
+  );
+
+  // Pull the freshly-written user document (purchasedQuizzes now
+  // includes the new purchase) instead of trusting local state.
+  const freshUserData = await getUserData(currentUserId);
+  if (freshUserData) {
+    currentUserData = freshUserData;
+  }
+
+  closePurchaseDialog();
+
+  // Full re-render, sourced from Firestore: rebuilds the quiz grid
+  // (so this card flips to "Owned"), re-registers the back handler
+  // with the updated currentUserData, and keeps everything as an
+  // SPA update — no location.reload() anywhere. Calls the internal
+  // render function directly (not the exported renderMarketplace)
+  // so this refresh doesn't push a second, phantom history entry —
+  // the student hasn't navigated anywhere, they're still on
+  // Marketplace, just looking at updated data.
+  await renderMarketplacePage(currentUserData);
+}
+
+/**
+ * Polls confirmFlutterwavePurchase() a handful of times for a bank
+ * transfer that Flutterwave reported as "pending" in the checkout
+ * callback. The Cloud Function itself re-checks the real status with
+ * Flutterwave's servers each time, so this is just "keep asking until
+ * either it's confirmed or we give up and tell the user to check back."
+ */
+async function pollForConfirmation(response, quizId, attempt = 1) {
+  const maxAttempts = 6; // ~30s total at a 5s interval
+  const intervalMs = 5000;
+
+  console.log(`[purchase] Polling attempt ${attempt}/${maxAttempts}`, {
+    quizId,
+    txRef: response.tx_ref,
+  });
+
+  const stopLoading = showLoadingOverlay(
+    document.getElementById("purchaseDialogBox"),
+    [
+      "Confirming your bank transfer...",
+      "This can take a moment...",
+      "Almost there...",
+    ],
+    { subtitle: "Please don't close this window" },
+  );
+
+  let result;
+  try {
+    result = await confirmFlutterwavePurchase(
+      currentUserId,
+      quizId,
+      response.tx_ref,
+      response.transaction_id,
+    );
+  } finally {
+    stopLoading();
+  }
+
+  console.log(`[purchase] Poll attempt ${attempt} result`, result);
+
+  if (result.success) {
+    console.log("[purchase] Confirmed during polling. Finalizing.");
+    isPurchasing = false;
+
+    const freshUserData = await getUserData(currentUserId);
+    if (freshUserData) {
+      currentUserData = freshUserData;
+    }
+
+    closePurchaseDialog();
+    await renderMarketplacePage(currentUserData);
+    return;
+  }
+
+  if (attempt >= maxAttempts) {
+    console.warn(
+      "[purchase] Gave up polling after max attempts",
+      result.message,
+    );
+    isPurchasing = false;
+    const confirmBtn = document.getElementById("confirmPurchaseBtn");
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Purchase";
+    }
+    alert(
+      "We're still confirming your bank transfer. This can take a few minutes — please check back on the Marketplace shortly, or contact support with your reference if this persists.",
+    );
+    return;
+  }
+
+  setTimeout(
+    () => pollForConfirmation(response, quizId, attempt + 1),
+    intervalMs,
+  );
 }
