@@ -634,8 +634,14 @@ async function handleConfirmPurchase() {
     callback: async (response) => {
       console.log("[purchase] Flutterwave callback fired", response);
 
-      if (response.status === "successful") {
-        console.log("[purchase] Status successful — finalizing immediately");
+      // Flutterwave's inline checkout widget (FlutterwaveCheckout) reports
+      // success as "completed" — NOT "successful". "successful" is what the
+      // newer Standard/redirect flow uses. Accept both so a real successful
+      // payment doesn't get treated as failed.
+      if (response.status === "successful" || response.status === "completed") {
+        console.log(
+          `[purchase] Status ${response.status} — finalizing immediately`,
+        );
         await finalizePurchase(response, quiz.id);
         return;
       }
