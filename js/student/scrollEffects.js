@@ -2,15 +2,22 @@
    SCROLL EFFECTS (shared)
 
    Reusable across any page in the app — currently used by the
-   landing page and the student dashboard. Two pages needing the
-   same reveal/parallax/count-up behavior is what justified
-   pulling this out of landing.js rather than duplicating it.
+   landing page, the student dashboard, and the admin dashboard.
+   Three pages needing the same reveal/parallax/count-up behavior
+   is what justified pulling this out rather than duplicating it
+   (or, worse, each page shipping its own slightly-different copy
+   with its own animation-class names that could collide with
+   another page's CSS — see admin.css's .admin-wrap scoping notes
+   for why that matters here).
 
    All of this respects prefers-reduced-motion, and parallax
    skips its per-frame work entirely on mobile widths (see
    initParallax) rather than just hiding the result with CSS —
    scroll-linked JS work has a real battery/CPU cost, and most
-   users here are on phones.
+   users here are on phones. 768px is the shared mobile/desktop
+   line across the app's CSS (dashboard.css's own layout switch,
+   and the breakpoint admin.css's tab bar unsticks at) — keep
+   this in sync with those if either changes.
 ========================================================= */
 
 let parallaxInitialized = false;
