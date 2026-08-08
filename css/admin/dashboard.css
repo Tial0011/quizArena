@@ -72,11 +72,27 @@
   left: 30%;
 }
 
+/* Brand mark. Sized to match the row's compact height; the
+   translucent rounded backing keeps a light/transparent PNG
+   readable against the gradient regardless of the icon's own
+   colors. */
+.admin-wrap .admin-logo {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  object-fit: contain;
+  padding: 5px;
+}
+
 /* min-width: 0 is what actually lets the text below truncate
    instead of forcing the row to grow/wrap and re-tall-en the
    header — a flex child's default min-width is auto (its content
    size), which silently defeats text-overflow: ellipsis. */
-.admin-wrap .admin-header > div:first-child {
+.admin-wrap .admin-header-text {
   position: relative;
   min-width: 0;
   flex: 1 1 auto;
