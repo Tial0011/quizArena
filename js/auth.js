@@ -1,5 +1,6 @@
 import { auth, db } from "./firebase/config.js";
 import { stopSessionManager } from "./sessionManager.js";
+import { sendWelcomeNotification } from "./notificationsService.js";
 
 import {
   createUserWithEmailAndPassword,
@@ -43,6 +44,10 @@ export async function registerUser(name, email, password) {
       createdAt: serverTimestamp(),
     });
 
+    // Fire-and-forget: a welcome ping failing to send should never
+    // hold up registration or surface as a signup error.
+    sendWelcomeNotification(user.uid, name);
+
     return { success: true, user, role: "student" };
   } catch (error) {
     console.error(error);
@@ -74,6 +79,8 @@ export async function loginUser(email, password) {
         purchasedQuizzes: [],
         createdAt: serverTimestamp(),
       });
+
+      sendWelcomeNotification(user.uid, user.email);
     } else {
       role = snap.data().role || "student";
     }
@@ -109,6 +116,8 @@ export async function signInWithGoogle() {
         purchasedQuizzes: [],
         createdAt: serverTimestamp(),
       });
+
+      sendWelcomeNotification(user.uid, user.displayName);
     } else {
       role = snap.data().role || "student";
     }

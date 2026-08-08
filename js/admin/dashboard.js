@@ -1,6 +1,7 @@
 import { renderSubjects } from "./subjects.js";
 import { renderQuizzes } from "./quizzes.js";
 import { renderQuestions } from "./questions.js";
+import { renderNotifications } from "./notifications.js";
 import { logoutUser } from "../auth.js";
 import { db } from "../firebase/config.js";
 import { initParallax, initScrollReveal } from "../student/scrollEffects.js";
@@ -81,6 +82,13 @@ export function renderAdminDashboard() {
           data-tab="questions"
         >
           Questions
+        </button>
+
+        <button
+          class="tab-btn ${activeTab === "notifications" ? "active" : ""}"
+          data-tab="notifications"
+        >
+          Notifications
         </button>
 
       </nav>
@@ -221,6 +229,10 @@ async function renderTabContent() {
     case "questions":
       renderQuestions(content);
       break;
+
+    case "notifications":
+      renderNotifications(content);
+      break;
   }
 }
 
@@ -241,8 +253,9 @@ async function loadDashboardStats() {
 
   // If the admin switched to a different tab while these reads were
   // in flight, #adminContent no longer contains the dashboard markup
-  // (it now holds Subjects/Quizzes/Questions instead). Bail out here
-  // instead of trying to write into elements that don't exist anymore.
+  // (it now holds Subjects/Quizzes/Questions/Notifications instead).
+  // Bail out here instead of trying to write into elements that
+  // don't exist anymore.
   if (activeTab !== "dashboard") return;
 
   setStatText("subjectCount", subjectSnap.size);

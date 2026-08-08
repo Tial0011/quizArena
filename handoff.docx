@@ -1,11 +1,16 @@
 # Admin Dashboard — Recent Activity & Quizzes Page Handoff Notes
 
 **Scope:** Wire up the Dashboard tab's "Recent Activity" placeholder, fix a
-crash on the Quizzes tab, add search/filter tooling to the Quizzes tab, and
-reorganize + relabel that page for a non-technical admin.
+crash on the Quizzes tab, add search/filter tooling to the Quizzes tab,
+reorganize + relabel that page for a non-technical admin, apply the same
+fixes and visual pass to the Subjects tab, then add cascade delete (with
+a hard-to-click-through-by-accident confirmation) so deleting a subject
+or quiz also cleans up everything under it.
 
 **Files touched:** `admin.js` (aka `dashboard.js` — updated), `admin.css`
-(updated), `quizzes.js` (updated), `quizzes.css` (updated).
+(updated), `quizzes.js` (updated), `quizzes.css` (updated), `subjects.js`
+(updated), `subjects.css` (updated), `questions.js` (reviewed only, no
+changes needed), `cascadeDelete.js` (new), `dangerDialog.js` (new).
 
 ---
 
@@ -164,12 +169,172 @@ one.
   width instead of added on top of it, and that they actually fill their
   (now-correctly-sized) column.
 
+## 6. Subjects tab — two bugs fixed
+
+Reviewed per the §2 note above (flagged as likely sharing the Quizzes
+crash). Found that plus one worse bug.
+
+### Bug: delete was completely broken
+
+**Cause:** the delete button's markup never set `data-id="${docSnap.id}"`.
+`deleteSubject(e)` read `e.target.dataset.id`, which was always
+`undefined`, so every delete click called
+`deleteDoc(doc(db, "subjects", undefined))` — a malformed path that
+throws rather than deleting anything. This wasn't a race condition or
+edge case; delete was non-functional for every subject, every time.
+
+**Fix:** added `data-id="${docSnap.id}"` to the button, and switched the
+handler to read `e.currentTarget.dataset.id` (safer than `e.target` if
+markup inside the button ever changes) with a defensive check that logs
+clearly instead of letting Firestore throw a confusing error if the id is
+ever missing again.
+
+### Bug: same tab-switch race as Quizzes (§2)
+
+`loadSubjects()` captured `#subjectsList` via `document.getElementById`
+*before* its `await getDocs(...)`, then did a fresh global
+`document.getElementById("subjectCount")` lookup *after* the await —
+exactly the pattern that crashed `quizzes.js`. If the admin switched tabs
+while that fetch was in flight, `#subjectCount` would be null post-await
+and `.textContent = ...` would throw.
+
+**Fix:** same `currentContainer`-scoped pattern as `quizzes.js` — all DOM
+access goes through `container.querySelector(...)`, with
+`currentContainer !== container` / `container.isConnected` guards after
+every `await`.
+
+### Smaller fix: `renderSubjects()` wasn't actually async
+
+It was declared `async` but never `await`ed `loadSubjects()`, so a caller
+awaiting `renderSubjects(container)` would resolve before data actually
+loaded. Now properly `await`s it.
+
+**`questions.js` still not reviewed** — carried forward in Outstanding.
+
+## 7. Subjects tab — visual pass to match Dashboard/Quizzes
+
+Per request, brought Subjects' look in line with the quieter,
+labeled, institutional style already applied to Dashboard and Quizzes.
+
+- **Split into two labeled sections**, same pattern as Quizzes: "Add a
+  New Subject" (form) on top, a `border-top` divider, "All Subjects"
+  (count badge + list) below.
+- **Form fields now have labels** above each input/select in a proper
+  grid (`subject-form-grid` / `subject-form-field`), replacing the
+  original bare unlabeled row of controls.
+- **Card hover toned down** — was `translateY(-3px)` with a heavy
+  `0 10px 30px` shadow; now matches `quiz-card`'s subtler
+  `translateY(-2px)` + lighter shadow.
+- **Delete button restyled** from a solid red button to the same quiet
+  light-red-background/dark-red-text treatment `quizzes.css` uses for its
+  own delete button.
+- Dropped the "📚" emoji from the page heading to match the plain
+  "Add a New Quiz" / "All Quizzes" heading style (no emoji) used on the
+  Quizzes page.
+- Removed dead CSS: the original file had a `.subject-meta-grid` /
+  `.subject-meta-field` block that was never referenced by the markup —
+  replaced by the actually-used `subject-form-grid` / `subject-form-field`.
+- **New classes are Subjects-specific** (`subject-form-grid`,
+  `subject-form-field`, `subject-form-field-wide`, `subject-add-btn`) —
+  deliberately *not* reusing `quizzes.css`'s bare `.form-field` /
+  `.form-field-wide`, since both stylesheets load together in the SPA and
+  identical bare names would recreate the exact cross-page collision
+  problem documented in the original handoff notes (§3/§8).
+
+**Note for later:** `quizzes.css` itself still defines `.form-field` /
+`.form-field-wide` as *bare, unprefixed* classes — a latent collision
+risk for any future page that reuses those names, same shape as the bug
+already fixed once elsewhere. Flagged, not fixed — out of scope for this
+round.
+
+## 8. `questions.js` reviewed — already fixed, no changes needed
+
+Followed up on the §2/§6 flag. Turns out `questions.js` had already been
+brought up to the same `currentContainer`-scoped, tab-switch-race-guarded
+pattern used in `quizzes.js` and `subjects.js` — every DOM read/write
+already goes through `container.querySelector(...)` with guards after
+every `await`. Nothing to fix here.
+
+Confirmed while reviewing: the `questions` collection links back to its
+quiz via a **`quizId`** field (`where("quizId", "==", quizId)`), which is
+what made §9 below possible without guessing at the schema.
+
+## 9. Cascade delete — deleting a subject/quiz now cleans up what's under it
+
+Per request: previously, deleting a subject left its quizzes behind
+(pointing at a subject that no longer exists), and deleting a quiz left
+its questions behind — both silently orphaned in Firestore, forever.
+Now both cascade properly, with a deliberately-hard-to-click-through
+confirmation first.
+
+- **Delete a subject** → deletes every quiz under it (which in turn
+  deletes every question under *those* quizzes) → then the subject
+  itself. Three levels: Subject → Quizzes → Questions.
+- **Delete a quiz** → deletes every question under it → then the quiz
+  itself. Two levels: Quiz → Questions. Used both directly (Quizzes tab)
+  and as the building block for each quiz when a subject cascades.
+- **Deleting a single question** is unchanged — a question has no
+  children, so it still just uses a plain `confirm()`.
+
+### New shared modules
+
+- **`cascadeDelete.js`** — the count/delete logic. `countSubjectCascade()`
+  / `countQuizCascade()` are read-only, used to put real numbers in the
+  warning dialog. `deleteSubjectCascade()` / `deleteQuizCascade()` do the
+  actual deletes. Counts are re-fetched fresh right before deleting
+  (not reused from the earlier count call), so a quiz/question added in
+  the few seconds the dialog was open can't cause a mismatch between what
+  was shown and what gets deleted. Deletes are plain `deleteDoc()` calls,
+  not batched writes — fine at this app's scale; if a subject/quiz ever
+  has hundreds of descendants, Firestore's 500-operation batch limit
+  would matter and this would need `writeBatch()`.
+
+- **`dangerDialog.js`** — the confirmation UI, shared by `subjects.js`
+  and `quizzes.js`. Per request, this isn't a plain `confirm()`: it shows
+  the exact counts of what will also be deleted, says "This cannot be
+  undone," and **requires typing the exact subject/quiz name** before the
+  "Delete Permanently" button enables — deliberately more friction than a
+  single click, so it's hard to get through on autopilot. Renders as an
+  overlay appended directly to `document.body` (not into any tab's own
+  container), specifically so it's unaffected by the tab-switch DOM
+  replacement race documented in §2 — it's an independent element until
+  it explicitly closes itself.
+
+### Bug caught while wiring this up: missing `.btn-secondary` style
+
+`dangerDialog.js`'s Cancel button uses `.btn-secondary`, but that class
+is normally only defined in `quizzes.css`. Since the dialog is shared by
+both `subjects.js` and `quizzes.js` and renders outside any one tab's
+markup, it shouldn't depend on `quizzes.css` specifically being loaded
+for its Cancel button to look right — the same cross-file dependency
+problem flagged earlier with the Marketplace classes (§3/§7). Fixed by
+duplicating a `.btn-secondary` definition directly into `admin.css`
+(where the rest of the dialog's styles and `.btn-danger` already live),
+matching this project's existing convention of each stylesheet owning
+its own copy of shared button styles rather than depending on another
+file's.
+
+### Known limitation: Cloudinary images aren't cleaned up
+
+`deleteQuizCascade()` deletes question *documents* but not the
+Cloudinary images those questions reference (`question.image` URLs).
+Deleting from Cloudinary needs a signed admin-API call, which this
+client-side code has no credentials for — only the unsigned upload
+preset used to *create* images. Orphaned images will remain in
+Cloudinary storage after a cascade delete runs. Flagged, not solved.
+
 ---
 
 ## Outstanding / not yet done
 
-- **`subjects.js` / `questions.js`** — likely share the exact tab-switch
-  race bug fixed in §2 for `quizzes.js`. Not reviewed yet.
+- **`questions.js` cascade delete** — deleting a single question stays a
+  plain `confirm()` since it has no children; no change needed there.
+  See §8.
+- **Cloudinary orphaned images** on cascade delete — see §9's "Known
+  limitation." Would need a signed admin API call (e.g. a Cloud
+  Function) to actually clean these up.
+- **`quizzes.css`'s bare `.form-field` / `.form-field-wide` classes** —
+  latent cross-page collision risk. See §7.
 - **Recent Activity fetch limit** — 5-per-collection fetch could
   theoretically undercount the top-6 display if one content type
   dominates. Not fixed; flagged in §1.
@@ -189,3 +354,7 @@ one.
 - `admin.css`
 - `quizzes.js`
 - `quizzes.css`
+- `subjects.js`
+- `subjects.css`
+- `cascadeDelete.js` (new)
+- `dangerDialog.js` (new)

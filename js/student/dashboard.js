@@ -3,7 +3,13 @@ import { renderPracticeArena } from "./practice.js";
 import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
 import { renderFriendGroups } from "./friendGroups.js";
-import { getRecentAttempts } from "./attemptsService.js";
+import { getRecentAttempts, getStreakCount } from "./attemptsService.js";
+import {
+  getRecentNotificationsForUser,
+  markNotificationsSeen,
+  countUnread,
+  formatNotificationTime,
+} from "../notificationsService.js";
 import {
   renderRecentAttemptsMarkup,
   renderScoreTrendChartMarkup,
@@ -20,6 +26,12 @@ const app = document.getElementById("app");
 const DEFAULT_HERO_MESSAGE =
   "Master one quiz today and keep your streak alive.";
 
+// Re-bound on every render (see setupNotifBell) so a student
+// bouncing back to the dashboard a few times in one session never
+// ends up with duplicate listeners stacked on document/window.
+let outsideClickHandler = null;
+let notifCloseHandler = null;
+
 export function renderStudentDashboard(userData = {}) {
   const purchasedCount = userData.purchasedQuizzes?.length || 0;
 
@@ -33,9 +45,24 @@ export function renderStudentDashboard(userData = {}) {
 
         <div class="hero-text">
 
-          <h1>
-            👋 Welcome Back${userData.name ? `, ${userData.name}` : ""}
-          </h1>
+          <div class="hero-top">
+
+            <h1>
+              👋 Welcome Back${userData.name ? `, ${userData.name}` : ""}
+            </h1>
+
+            <div class="notif-bell-wrap">
+              <button
+                id="notifBell"
+                class="notif-bell"
+                aria-label="Notifications"
+              >
+                🔔
+                <span id="notifBadge" class="notif-badge" hidden></span>
+              </button>
+            </div>
+
+          </div>
 
           <p id="heroMessage">
             ${DEFAULT_HERO_MESSAGE}
@@ -162,15 +189,15 @@ export function renderStudentDashboard(userData = {}) {
         <div class="stat-card load-in">
 
           <span class="stat-icon">
-            🏆
+            🔥
           </span>
 
-          <h2>
+          <h2 id="streakValue">
             --
           </h2>
 
           <p>
-            Best Score
+            Day Streak
           </p>
 
         </div>
@@ -234,11 +261,16 @@ export function renderStudentDashboard(userData = {}) {
    already been replaced.
 ========================================================= */
 async function loadAnalytics(userData) {
-  const attempts = await getRecentAttempts(userData.id, 5);
+  const [attempts, streakCount, notifications] = await Promise.all([
+    getRecentAttempts(userData.id, 5),
+    getStreakCount(userData.id),
+    getRecentNotificationsForUser(userData.id),
+  ]);
 
   const trendContainer = document.getElementById("scoreTrendContainer");
   const activityContainer = document.getElementById("recentActivityContainer");
   const heroMessage = document.getElementById("heroMessage");
+  const streakEl = document.getElementById("streakValue");
 
   if (trendContainer) {
     trendContainer.innerHTML = renderScoreTrendChartMarkup(attempts);
@@ -251,6 +283,12 @@ async function loadAnalytics(userData) {
   if (heroMessage) {
     updateHeroMessage(heroMessage, attempts);
   }
+
+  if (streakEl) {
+    updateStreakCard(streakEl, streakCount);
+  }
+
+  updateNotifications(userData, notifications);
 }
 
 /**
@@ -297,6 +335,68 @@ function pickHeroMessage(attempts) {
   return "Every attempt makes you sharper — let's practice more 💪";
 }
 
+/**
+ * Fills in the Day Streak stat card once the count is known, with
+ * the same count-up treatment as the Purchased Quizzes card, plus
+ * a looping flame pulse (CSS: .streak-active) while the streak is
+ * alive. Nothing to animate for a 0 streak, so it just settles.
+ */
+function updateStreakCard(streakEl, streakCount) {
+  const card = streakEl.closest(".stat-card");
+
+  if (prefersReducedMotion()) {
+    streakEl.textContent = String(streakCount);
+  } else {
+    streakEl.textContent = "0";
+    animateCountUp(streakEl, streakCount);
+  }
+
+  if (card) {
+    card.classList.toggle("streak-active", streakCount > 0);
+  }
+}
+
+/**
+ * Fills the bell panel with the latest notifications and lights up
+ * the unread badge based on this student's lastNotificationsSeenAt.
+ */
+function updateNotifications(userData, notifications) {
+  const listEl = document.getElementById("notifList");
+  const badge = document.getElementById("notifBadge");
+
+  if (listEl) {
+    listEl.innerHTML = renderNotificationsMarkup(notifications);
+  }
+
+  if (badge) {
+    const unread = countUnread(notifications, userData.lastNotificationsSeenAt);
+
+    if (unread > 0) {
+      badge.textContent = unread > 9 ? "9+" : String(unread);
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+  }
+}
+
+function renderNotificationsMarkup(notifications) {
+  if (!notifications || notifications.length === 0) {
+    return `<p class="notif-empty">No notifications yet.</p>`;
+  }
+
+  return notifications
+    .map(
+      (n) => `
+        <div class="notif-item">
+          <p class="notif-message">${escapeHtml(n.message)}</p>
+          <span class="notif-time">${formatNotificationTime(n.createdAt)}</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
 function setupDashboardEvents(userData) {
   document.getElementById("practiceBtn")?.addEventListener("click", () => {
     renderPracticeArena(userData);
@@ -321,6 +421,116 @@ function setupDashboardEvents(userData) {
 
     await logoutUser();
   });
+
+  setupNotifBell(userData);
+}
+
+/* =========================================================
+   NOTIFICATION BELL
+
+   The panel is deliberately NOT nested inside .dashboard-hero in
+   the markup above — that box has overflow:hidden (needed to clip
+   the decorative purple parallax shapes at its rounded edges), so
+   an absolutely-positioned dropdown inside it gets clipped too and
+   is invisible below a certain height. Instead the panel is built
+   here and appended straight to document.body, then positioned
+   with fixed coordinates computed from the bell's on-screen
+   position — same "escape the parent so it can't get clipped/
+   trapped" idea as dangerDialog.js appending its overlay to
+   document.body instead of the admin tab content.
+========================================================= */
+function setupNotifBell(userData) {
+  // This page fully rebuilds on every renderStudentDashboard()
+  // call (app.innerHTML is replaced), but a body-appended panel
+  // from a previous render wouldn't be — remove any leftover one
+  // before building a fresh one.
+  document.getElementById("notifPanel")?.remove();
+
+  const panel = document.createElement("div");
+  panel.id = "notifPanel";
+  panel.className = "notif-panel";
+  panel.hidden = true;
+  panel.innerHTML = `
+    <div class="notif-panel-header">Notifications</div>
+    <div id="notifList" class="notif-list">
+      <p class="notif-empty">Loading...</p>
+    </div>
+  `;
+  document.body.appendChild(panel);
+
+  const bell = document.getElementById("notifBell");
+
+  bell?.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    const opening = panel.hidden;
+
+    if (opening) {
+      positionNotifPanel(panel, bell);
+    }
+
+    panel.hidden = !opening;
+
+    if (opening) {
+      document.getElementById("notifBadge")?.setAttribute("hidden", "");
+      markNotificationsSeen(userData.id);
+    }
+  });
+
+  if (outsideClickHandler) {
+    document.removeEventListener("click", outsideClickHandler);
+  }
+
+  outsideClickHandler = (e) => {
+    const currentPanel = document.getElementById("notifPanel");
+    const currentBell = document.getElementById("notifBell");
+
+    if (!currentPanel || currentPanel.hidden) return;
+    if (currentPanel.contains(e.target) || currentBell?.contains(e.target)) {
+      return;
+    }
+
+    currentPanel.hidden = true;
+  };
+
+  document.addEventListener("click", outsideClickHandler);
+
+  // A fixed-position panel would otherwise drift out of place under
+  // the bell as soon as the page scrolls or resizes — simplest fix
+  // is to just close it, same as clicking outside.
+  if (notifCloseHandler) {
+    window.removeEventListener("scroll", notifCloseHandler, true);
+    window.removeEventListener("resize", notifCloseHandler);
+  }
+
+  notifCloseHandler = () => {
+    const currentPanel = document.getElementById("notifPanel");
+    if (currentPanel && !currentPanel.hidden) {
+      currentPanel.hidden = true;
+    }
+  };
+
+  window.addEventListener("scroll", notifCloseHandler, true);
+  window.addEventListener("resize", notifCloseHandler);
+}
+
+function positionNotifPanel(panel, bell) {
+  const rect = bell.getBoundingClientRect();
+  const width = Math.min(300, window.innerWidth * 0.8);
+  const gap = 8;
+  const margin = 12;
+
+  let left = rect.right - width;
+  left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+
+  panel.style.top = `${rect.bottom + gap}px`;
+  panel.style.left = `${left}px`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 /* =========================================================

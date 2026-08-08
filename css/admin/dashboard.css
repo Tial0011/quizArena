@@ -361,6 +361,89 @@
 }
 
 /* =========================================================
+   NOTIFICATIONS TAB
+
+   Reuses subjects.js's form/list scaffolding classes
+   (.subjects-subtitle, .subject-form-actions, .subject-add-btn,
+   .page-header, .empty-state) which live in subjects.css, not
+   here — this block only adds the pieces unique to the
+   notifications tab: the compose textarea and the sent-message
+   row layout.
+========================================================= */
+
+.admin-wrap .notification-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 14px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.admin-wrap .notification-textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.admin-wrap .notification-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px;
+  border-radius: 12px;
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.admin-wrap .notification-row-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.admin-wrap .notification-row-message {
+  color: #111827;
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+
+.admin-wrap .notification-row-meta {
+  display: flex;
+  gap: 6px;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.admin-wrap .delete-notification {
+  flex: 0 0 auto;
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #dc2626;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-wrap .delete-notification:hover {
+    background: #fef2f2;
+  }
+}
+
+/* =========================================================
    ENTRANCE ANIMATIONS — calm fade-and-rise
    Deliberately no scale/overshoot: a small opacity+translateY
    move reads as "the page settled in", not "the page bounced".

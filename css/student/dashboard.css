@@ -54,20 +54,181 @@
   position: relative;
 }
 
-.hero-text h1 {
+/* Title row: welcome heading + notification bell side by side.
+   Split out from .hero-text (which still wraps the whole block,
+   including the subtitle line below) so the bell can sit flush
+   with the heading instead of being centered against the taller
+   two-line hero. */
+.hero-top {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hero-top h1 {
   font-size: 2rem;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .hero-text p {
   opacity: 0.9;
   line-height: 1.7;
   max-width: 600px;
+  margin-top: 12px;
   transition: opacity 0.3s ease;
 }
 
 .hero-text p.message-updating {
   opacity: 0;
+}
+
+/* =========================
+   NOTIFICATION BELL
+========================= */
+
+.notif-bell-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.notif-bell {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notif-bell:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.notif-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  border: 2px solid #7c3aed;
+}
+
+/* A little wiggle to draw the eye when there's something unread —
+   same "make it feel alive" language as the trend-line draw and
+   count-up elsewhere on this page. Only plays while the badge is
+   actually showing, via :has() (Baseline-widely-available as of
+   2024); browsers without :has() just get a still bell instead of
+   a broken one. */
+@supports selector(:has(a)) {
+  .notif-bell:has(.notif-badge:not([hidden])) {
+    animation: notif-bell-wiggle 2.2s ease-in-out infinite;
+  }
+}
+
+@keyframes notif-bell-wiggle {
+  0%,
+  75%,
+  100% {
+    transform: rotate(0deg);
+  }
+  78% {
+    transform: rotate(-12deg);
+  }
+  81% {
+    transform: rotate(10deg);
+  }
+  84% {
+    transform: rotate(-8deg);
+  }
+  87% {
+    transform: rotate(4deg);
+  }
+  90% {
+    transform: rotate(0deg);
+  }
+}
+
+.notif-panel {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: 300px;
+  max-width: 80vw;
+  max-height: 360px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  z-index: 20;
+  color: #111827;
+}
+
+.notif-panel-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 14px 16px 10px;
+  font-weight: 700;
+  font-size: 14px;
+  border-bottom: 1px solid #ececec;
+}
+
+.notif-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notif-item {
+  padding: 10px;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notif-item:hover {
+    background: #f3f0fb;
+  }
+}
+
+.notif-message {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.notif-time {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.notif-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
 }
 
 /* =========================
@@ -154,6 +315,7 @@
 
 .stat-icon {
   font-size: 30px;
+  display: inline-block;
 }
 
 .stat-card h2 {
@@ -164,6 +326,25 @@
 
 .stat-card p {
   color: #6b7280;
+}
+
+/* Day Streak card (replaces the old static Best Score card): the
+   flame icon gets a slow pulse for as long as the streak is alive
+   (JS toggles this class once the count is known — see
+   updateStreakCard() in dashboard.js). A 0-day streak just sits
+   still, same as any other stat. */
+.stat-card.streak-active .stat-icon {
+  animation: streak-flame-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes streak-flame-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
 }
 
 /* =========================
@@ -401,7 +582,9 @@
 @media (prefers-reduced-motion: reduce) {
   .load-in,
   .trend-line,
-  .trend-dot {
+  .trend-dot,
+  .notif-bell,
+  .stat-card.streak-active .stat-icon {
     animation: none;
   }
 
