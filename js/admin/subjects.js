@@ -5,9 +5,9 @@ import {
   addDoc,
   getDocs,
   serverTimestamp,
-  deleteDoc,
-  doc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { confirmDangerousDelete } from "./dangerDialog.js";
+import { countSubjectCascade, deleteSubjectCascade } from "./cascadeDelete.js";
 
 /* =========================================================
    MODULE STATE
@@ -189,7 +189,7 @@ async function loadSubjects() {
 
     </div>
 
-    <button class="delete-subject" data-id="${docSnap.id}">
+    <button class="delete-subject" data-id="${docSnap.id}" data-name="${escapeHtml(subject.name)}">
         Delete
     </button>
 
@@ -207,6 +207,8 @@ async function loadSubjects() {
 
 async function deleteSubject(e) {
   const id = e.currentTarget.dataset.id;
+  const name = e.currentTarget.dataset.name;
+
   if (!id) {
     // Defensive: shouldn't happen now that data-id is always set,
     // but deleteDoc() with an undefined id throws a confusing
@@ -215,13 +217,41 @@ async function deleteSubject(e) {
     return;
   }
 
-  if (!confirm("Delete this subject?")) return;
+  // Find out what this delete would actually take down before
+  // asking the admin to confirm anything.
+  const { quizCount, questionCount } = await countSubjectCascade(id);
+
+  const warningLines = [];
+  if (quizCount > 0) {
+    warningLines.push(
+      `This will also permanently delete ${quizCount} quiz${quizCount === 1 ? "" : "zes"}.`,
+    );
+  }
+  if (questionCount > 0) {
+    warningLines.push(
+      `This will also permanently delete ${questionCount} question${questionCount === 1 ? "" : "s"}.`,
+    );
+  }
+
+  const confirmed = await confirmDangerousDelete({
+    title: `Delete "${name}"?`,
+    itemName: name,
+    warningLines,
+  });
+
+  if (!confirmed) return;
 
   const container = currentContainer;
 
-  await deleteDoc(doc(db, "subjects", id));
+  await deleteSubjectCascade(id);
 
   if (currentContainer !== container || !container.isConnected) return;
 
   await loadSubjects();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }

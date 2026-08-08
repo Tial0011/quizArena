@@ -4,10 +4,11 @@ import {
   getDocs,
   addDoc,
   updateDoc,
-  deleteDoc,
   doc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { confirmDangerousDelete } from "./dangerDialog.js";
+import { countQuizCascade, deleteQuizCascade } from "./cascadeDelete.js";
 
 /* =========================================================
    MODULE STATE
@@ -642,11 +643,31 @@ function handleEditClick(id) {
 }
 
 async function handleDeleteClick(id) {
-  if (!confirm("Delete this quiz?")) return;
+  const quiz = quizzesCache.find((q) => q.id === id);
+  if (!quiz) return;
+
+  // Find out what this delete would actually take down before
+  // asking the admin to confirm anything.
+  const { questionCount } = await countQuizCascade(id);
+
+  const warningLines = [];
+  if (questionCount > 0) {
+    warningLines.push(
+      `This will also permanently delete ${questionCount} question${questionCount === 1 ? "" : "s"}.`,
+    );
+  }
+
+  const confirmed = await confirmDangerousDelete({
+    title: `Delete "${quiz.title}"?`,
+    itemName: quiz.title,
+    warningLines,
+  });
+
+  if (!confirmed) return;
 
   const container = currentContainer;
 
-  await deleteDoc(doc(db, "quizzes", id));
+  await deleteQuizCascade(id);
 
   if (currentContainer !== container || !container.isConnected) return;
 

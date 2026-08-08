@@ -234,7 +234,7 @@ export function renderStudentDashboard(userData = {}) {
    already been replaced.
 ========================================================= */
 async function loadAnalytics(userData) {
-  const attempts = await getRecentAttempts(userData.id, 10);
+  const attempts = await getRecentAttempts(userData.id, 5);
 
   const trendContainer = document.getElementById("scoreTrendContainer");
   const activityContainer = document.getElementById("recentActivityContainer");

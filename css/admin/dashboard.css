@@ -478,7 +478,21 @@
     text-align: center;
   }
 }
-danger-dialog-overlay {
+
+/* =========================================================
+   DANGER CONFIRMATION DIALOG (dangerDialog.js)
+
+   Deliberately NOT scoped under .admin-wrap, unlike everything
+   above. dangerDialog.js appends this overlay directly to
+   document.body — outside .admin-wrap entirely — specifically so
+   it survives a tab switch underneath it without being torn down.
+   Scoping these rules under .admin-wrap would just make them not
+   apply at all. Class names are unique enough (danger-dialog-*)
+   that this doesn't reopen the bare-class-name collision problem
+   documented elsewhere in this project.
+========================================================= */
+
+.danger-dialog-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -561,6 +575,31 @@ danger-dialog-overlay {
 
 .danger-dialog-actions button {
   flex: 1;
+}
+
+/* .btn-danger lives here (defined below) but .btn-secondary is
+   normally defined in quizzes.css. This dialog is shared by both
+   subjects.js and quizzes.js and renders on document.body outside
+   any one tab's markup, so it shouldn't depend on quizzes.css
+   happening to be loaded for its Cancel button to be styled — same
+   reasoning as why this whole block isn't scoped under .admin-wrap.
+   Duplicated here (not imported) to match this project's existing
+   convention of each stylesheet owning its own copy of shared
+   button styles rather than depending on another file's. */
+.btn-secondary {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #444;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: #f3f3f3;
 }
 
 .btn-danger {
