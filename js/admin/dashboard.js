@@ -26,6 +26,7 @@ export function renderAdminDashboard() {
         <div class="admin-header-shape admin-header-shape-2" data-parallax-speed="0.18"></div>
 
         <div>
+          <span class="admin-eyebrow">Administration Console</span>
           <h1>Quiz Arena Admin</h1>
           <p>Manage quizzes, subjects and students.</p>
         </div>

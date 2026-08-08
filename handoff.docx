@@ -1,0 +1,119 @@
+# Admin Dashboard Styling — Handoff Notes
+
+**Scope:** Bring the admin dashboard's visual design in line with the existing
+student dashboard (`dashboard.js` / `dashboard.css`), mobile-first, sharing
+the app's existing `scrollEffects.js` utility rather than duplicating it.
+
+**Files touched:** `admin.css` (new), `admin.js` (updated), `scrollEffects.js`
+(comment + one breakpoint fix only — logic untouched).
+
+---
+
+## 1. Design reference
+
+The student dashboard (`dashboard.css`) was used as the source of truth for
+the visual language:
+
+- Purple gradient hero: `linear-gradient(135deg, #7c3aed, #5b21b6)`
+- Card radii: 20–24px, `box-shadow: 0 8px 30px rgba(0,0,0,0.05)`, `1px solid
+  #ececec` borders
+- Entrance motion: `.load-in` (pop-in on mount) and `.reveal` /
+  `.reveal-visible` (scroll-triggered), both driven by `scrollEffects.js`
+
+## 2. `admin.css` — what was built
+
+- Gradient hero header (`.admin-header`), tab bar (`.tab-btn` / `.active`),
+  overview stat cards (`.overview-grid` / `.overview-card`), and activity
+  list — styled to match the student dashboard's card/shadow/radius language.
+- Own `admin-pop-in` `@keyframes` (kept distinct from the student dashboard's
+  `dashboard-pop-in`, even though the class name applying it — `.load-in` —
+  is the same).
+
+## 3. `admin.js` — what changed
+
+- Added `.admin-wrap`, `data-reveal`, and `data-parallax-speed` hooks to the
+  markup.
+- Imports `initParallax` / `initScrollReveal` from `scrollEffects.js` and
+  calls them after every tab render.
+- Re-runs those on each dashboard-tab render specifically, since that tab
+  injects its own `.reveal` / `data-parallax-speed` nodes into the DOM.
+- Reuses the existing stale-async guard pattern (`if (activeTab !==
+  "dashboard") return;` in `loadDashboardStats`) — nothing new here, just
+  confirming it's still in place and still correct.
+
+## 4. Bug caught and fixed: cross-page class collision
+
+**Problem:** `.load-in`, `.reveal`, and `.reveal-visible` were identical
+class *names* in both `admin.css` and `dashboard.css`. Since both
+stylesheets load together in the SPA, whichever one loaded last would
+silently win for **every** `.load-in`/`.reveal` element on **either** page —
+not just its own.
+
+**Fix:** Every rule in `admin.css` is scoped under `.admin-wrap` (e.g.
+`.admin-wrap .load-in`, `.admin-wrap .reveal`), which raises specificity
+enough to keep the two pages isolated regardless of load order. No changes
+were needed to `scrollEffects.js`'s `data-reveal` / `reveal-visible`
+contract — it still just toggles a class name, and now each page's own CSS
+governs what that class means.
+
+## 5. Mobile-first rebuild
+
+Given most users are on phones, phone is the *default* layout, not a
+shrink-to-fit fallback:
+
+- Tab bar (`.admin-tabs`) is `position: sticky` and scrolls horizontally
+  (scrollbar hidden) instead of wrapping into cramped multi-line labels.
+- Logout button is full-width, 44px min-height (thumb-friendly tap target)
+  on phone; becomes an inline button at `600px+`.
+- Overview stats stay a 2-column grid even on the smallest phones (legible
+  at a glance, not one long scrolling column) — 3 columns at `600px+`, 6 at
+  `768px+`.
+- Padding, font sizes, and radii are all trimmed by default and stepped up
+  via `min-width: 600px` and `min-width: 768px` queries.
+
+## 6. `scrollEffects.js` — reviewed, not duplicated
+
+It's intentionally page-agnostic (re-queries the DOM fresh every scroll
+tick, one shared listener, selector-driven via `data-reveal` /
+`data-parallax-speed`) — so admin didn't need its own copy. A dedicated
+admin version would've reintroduced the same class-collision risk described
+in §4.
+
+Two small edits only:
+
+- Header comment now lists the admin dashboard as a third consumer
+  (previously said "landing page and student dashboard" only).
+- `initParallax()` turns parallax off below `768px`, but `admin.css` was
+  originally switching to desktop tab layout at `900px` — a mismatch where
+  hero shapes could start drifting while the tab bar was still in mobile
+  mode. Both are now aligned to `768px`.
+
+## 7. Current file location
+
+The shared utility lives at `student/scrollEffects.js` and `admin.js`
+imports it from there directly (`../student/scrollEffects.js`) — this is
+correct and works fine functionally.
+
+**Open suggestion (not urgent):** since landing, student, and admin all
+depend on it equally, consider relocating it to a neutral path like
+`shared/scrollEffects.js` at some point, so the folder name doesn't imply
+student ownership of a cross-app utility. Purely organizational — no
+behavior change.
+
+---
+
+## Outstanding / not yet done
+
+- **`animateCountUp` on overview stats** — the student dashboard count-up's
+  its purchased-quiz number on load; the admin overview stats (`Subjects`,
+  `Weekly Quizzes`, `Questions`, `Students`, `Total Revenue`, `Top Selling
+  Quiz`) currently just snap from `--` to their final value once
+  `loadDashboardStats()` resolves. Wiring `animateCountUp` in would bring
+  parity, and the piece it needs (`animateCountUp` export) already exists in
+  `scrollEffects.js` — not yet done, flagged for whoever picks this up next.
+
+## Files in this handoff
+
+- `admin.css`
+- `admin.js`
+- `scrollEffects.js` (comment + breakpoint fix)

@@ -1,26 +1,28 @@
 /* =========================
-   ADMIN DASHBOARD (mobile-first)
+   ADMIN DASHBOARD (formal, mobile-first)
 
-   Same visual language as dashboard.css (gradient hero, 22/20px
-   radii, soft shadows, pop-in / reveal motion) but every rule is
-   scoped under .admin-wrap. dashboard.css and this file both
-   load in the same SPA, and .load-in / .reveal / .reveal-visible
-   are shared utility class *names* used by scrollEffects.js on
-   both pages — without scoping, whichever stylesheet loads last
-   silently wins for every .load-in/.reveal element app-wide.
-   Scoping under .admin-wrap raises specificity just enough that
-   admin pages keep their own animation regardless of load order,
-   with zero changes needed to scrollEffects.js or the
-   data-reveal/data-parallax-speed contract it reads.
+   Same brand as dashboard.css (gradient, color values, radii
+   family) but dialed toward an institutional/school-board feel:
+   underline tabs instead of filled pills, quieter card surfaces,
+   calmer fade-and-rise motion instead of bounce/overshoot. Emoji
+   icons are kept (per brief) but their surrounding chrome is
+   toned down so they read as labels, not game badges.
 
-   Layout is mobile-first: base rules target phones (this is the
-   primary use case), min-width queries layer on tablet/desktop.
+   Scoped under .admin-wrap (see prior handoff notes) so its
+   .load-in / .reveal class names can't collide with
+   dashboard.css's identically-named, differently-behaved rules
+   when both stylesheets are loaded in the same SPA.
+
+   Mobile-first: base rules target phones, min-width queries layer
+   on tablet/desktop. 768px matches scrollEffects.js's parallax
+   cutoff — keep in sync if either changes.
 ========================= */
 
 .admin-wrap {
   max-width: 1150px;
   margin: 0 auto;
   padding: 16px 14px 100px;
+  font-feature-settings: "tnum" 1; /* tabular figures for stat numbers */
 }
 
 /* =========================
@@ -31,92 +33,131 @@
   position: relative;
   overflow: hidden;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   background: linear-gradient(135deg, #7c3aed, #5b21b6);
   color: white;
-  border-radius: 20px;
-  padding: 22px 20px;
+  border-radius: 14px;
+  padding: 14px 16px;
   margin-bottom: 18px;
-  box-shadow: 0 14px 30px rgba(124, 58, 237, 0.18);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.16);
 }
 
+/* Toned down considerably from the original — smaller, lower
+   opacity, less blur "glow". Present for brand continuity with
+   the student dashboard's hero shapes, not as a focal decoration. */
 .admin-wrap .admin-header-shape {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(2px);
+  filter: blur(1px);
   will-change: transform;
 }
 
 .admin-wrap .admin-header-shape-1 {
-  width: 140px;
-  height: 140px;
-  background: rgba(255, 255, 255, 0.06);
-  top: -50px;
-  right: -30px;
+  width: 90px;
+  height: 90px;
+  background: rgba(255, 255, 255, 0.045);
+  top: -30px;
+  right: -20px;
 }
 
 .admin-wrap .admin-header-shape-2 {
-  width: 70px;
-  height: 70px;
-  background: rgba(192, 132, 252, 0.16);
-  bottom: -20px;
-  left: 15%;
+  width: 44px;
+  height: 44px;
+  background: rgba(192, 132, 252, 0.1);
+  bottom: -14px;
+  left: 30%;
 }
 
-.admin-wrap .admin-header > div {
+/* min-width: 0 is what actually lets the text below truncate
+   instead of forcing the row to grow/wrap and re-tall-en the
+   header — a flex child's default min-width is auto (its content
+   size), which silently defeats text-overflow: ellipsis. */
+.admin-wrap .admin-header > div:first-child {
   position: relative;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
+/* Small institutional label above the title — "Administration
+   Console" rather than jumping straight to a big playful h1,
+   the way a letterhead or a board portal names the section
+   before the document title. */
+.admin-wrap .admin-eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin: 0 0 2px;
+}
+
+/* Title and description are single-line + truncated so the
+   header stays a fixed, slim height at any content length or
+   screen width, instead of wrapping and growing tall. */
 .admin-wrap .admin-header h1 {
-  font-size: 1.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
   line-height: 1.3;
-  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-wrap .admin-header p {
-  opacity: 0.9;
-  line-height: 1.6;
-  font-size: 14px;
-  max-width: 600px;
+  display: block;
+  opacity: 0.8;
+  line-height: 1.4;
+  font-size: 11.5px;
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Full-width on phone so it's an easy, unambiguous thumb target
-   rather than a small button off to the side. */
 .admin-wrap .admin-logout-btn {
   position: relative;
-  align-self: stretch;
-  border: none;
-  padding: 13px 20px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.14);
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  padding: 9px 16px;
+  border-radius: 9px;
+  background: transparent;
   color: white;
-  font-weight: 700;
-  font-size: 14px;
-  min-height: 44px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  min-height: 38px;
   cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: background 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .admin-wrap .admin-logout-btn:active {
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .admin-wrap .admin-logout-btn:hover {
-    background: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.45);
   }
 }
 
 /* =========================
-   TABS
-   Sticky + horizontally scrollable: phone screens can't fit 4
-   tab labels comfortably, so they scroll sideways instead of
-   wrapping/shrinking to illegible text. Sticky keeps navigation
-   reachable without scrolling back up on a long Questions/Quizzes
-   list.
+   TABS — underline style
+   Filled/pill tabs read as playful app chrome; an underline
+   indicator with quiet text reads as a formal section switcher
+   (the pattern used by most institutional admin consoles).
+   Horizontal scroll + sticky behavior on phone is kept from the
+   prior version — a real UX need, not a style choice — just the
+   visual skin changed.
 ========================= */
 
 .admin-wrap .admin-tabs {
@@ -124,15 +165,14 @@
   top: 0;
   z-index: 5;
   display: flex;
-  gap: 8px;
+  gap: 4px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 10px 2px;
-  margin: 0 -14px 16px;
-  padding-left: 14px;
-  padding-right: 14px;
-  background: #f7f6fb;
+  margin: 0 -14px 18px;
+  padding: 0 14px;
+  background: #faf9fc;
+  border-bottom: 1px solid #e5e2ec;
 }
 
 .admin-wrap .admin-tabs::-webkit-scrollbar {
@@ -141,112 +181,119 @@
 
 .admin-wrap .tab-btn {
   flex: 0 0 auto;
-  scroll-snap-align: start;
-  border: 1px solid #ececec;
-  background: white;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
   color: #6b7280;
-  padding: 11px 18px;
+  padding: 13px 14px 11px;
   min-height: 44px;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
   transition:
-    background 0.2s ease,
     color 0.2s ease,
-    box-shadow 0.25s ease;
+    border-color 0.2s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .admin-wrap .tab-btn:hover {
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+    color: #4c1d95;
   }
 }
 
 .admin-wrap .tab-btn.active {
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.25);
+  color: #5b21b6;
+  border-bottom-color: #7c3aed;
 }
 
 /* =========================
    CARDS
+   Flatter surface than before: thin visible border does most of
+   the work, shadow is present but restrained — a report/panel
+   feel rather than a floating "app card".
 ========================= */
 
 .admin-wrap .admin-card {
   background: white;
-  border-radius: 20px;
+  border-radius: 14px;
   padding: 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-  border: 1px solid #ececec;
-  margin-bottom: 18px;
+  box-shadow: 0 3px 10px rgba(17, 24, 39, 0.04);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 16px;
 }
 
 .admin-wrap .admin-card h2 {
-  font-size: 1.1rem;
-  margin-bottom: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  margin-bottom: 4px;
   color: #111827;
 }
 
 .admin-wrap .admin-card > p {
   color: #6b7280;
   line-height: 1.6;
-  font-size: 14px;
+  font-size: 13.5px;
   margin-bottom: 16px;
 }
 
 /* =========================
    OVERVIEW STATS
-   Two columns even on the smallest phones — legible at a glance
-   without forcing a single tall scrolling column of six stats.
+   Icon badge is smaller and neutral-toned (light gray, not a
+   bright purple pill) so the emoji reads as a label glyph rather
+   than a gamified achievement icon. Numeric label above the
+   description, in the institutional caps-small-tracking style
+   used across the header.
 ========================= */
 
 .admin-wrap .overview-grid {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: repeat(2, 1fr);
 }
 
 .admin-wrap .overview-card {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
   gap: 10px;
   background: #fafafa;
-  border: 1px solid #ececec;
-  border-radius: 16px;
-  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 13px;
 }
 
 .admin-wrap .overview-icon {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
-  border-radius: 12px;
-  background: #ede9fe;
+  border-radius: 8px;
+  background: #f1f0f4;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .admin-wrap .overview-info h3 {
-  font-size: 1.15rem;
-  color: #7c3aed;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
   margin-bottom: 2px;
   word-break: break-word;
 }
 
 .admin-wrap .overview-info-topquiz {
-  font-size: 0.9rem !important;
+  font-size: 0.85rem !important;
 }
 
 .admin-wrap .overview-info p {
   color: #6b7280;
-  font-size: 12.5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 /* =========================
@@ -256,76 +303,75 @@
 .admin-wrap .activity-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .admin-wrap .activity-item {
-  padding: 13px 14px;
-  border-radius: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
   background: #fafafa;
-  border: 1px solid #ececec;
-  color: #6b7280;
-  font-size: 13.5px;
-  line-height: 1.5;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid #ddd6fe;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 /* =========================================================
-   ENTRANCE ANIMATIONS
-   Scoped to .admin-wrap and using its own admin-pop-in keyframe
-   so it can't be silently overwritten by dashboard.css's
-   .load-in / .reveal rules (or vice versa) when both stylesheets
-   are loaded together in the SPA.
+   ENTRANCE ANIMATIONS — calm fade-and-rise
+   Deliberately no scale/overshoot: a small opacity+translateY
+   move reads as "the page settled in", not "the page bounced".
+   Kept (not removed) per brief — just re-tuned for a formal feel.
+   Own admin-fade-in keyframe, scoped under .admin-wrap, so it
+   can't be overridden by dashboard.css's .load-in rule (or
+   override it) regardless of stylesheet load order.
 ========================================================= */
 
-@keyframes admin-pop-in {
-  0% {
+@keyframes admin-fade-in {
+  from {
     opacity: 0;
-    transform: scale(0.85) translateY(14px);
+    transform: translateY(8px);
   }
-  60% {
+  to {
     opacity: 1;
-    transform: scale(1.03) translateY(-2px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateY(0);
   }
 }
 
 .admin-wrap .load-in {
-  animation: admin-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: admin-fade-in 0.38s ease-out both;
 }
 
 .admin-wrap .overview-grid .overview-card:nth-child(1) {
   animation-delay: 0s;
 }
 .admin-wrap .overview-grid .overview-card:nth-child(2) {
-  animation-delay: 0.05s;
+  animation-delay: 0.03s;
 }
 .admin-wrap .overview-grid .overview-card:nth-child(3) {
-  animation-delay: 0.1s;
+  animation-delay: 0.06s;
 }
 .admin-wrap .overview-grid .overview-card:nth-child(4) {
-  animation-delay: 0.15s;
+  animation-delay: 0.09s;
 }
 .admin-wrap .overview-grid .overview-card:nth-child(5) {
-  animation-delay: 0.2s;
+  animation-delay: 0.12s;
 }
 .admin-wrap .overview-grid .overview-card:nth-child(6) {
-  animation-delay: 0.25s;
+  animation-delay: 0.15s;
 }
 
 .admin-wrap .reveal {
   opacity: 0;
-  transform: scale(0.94) translateY(16px);
+  transform: translateY(10px);
   transition:
-    opacity 0.5s ease,
-    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity 0.4s ease,
+    transform 0.4s ease-out;
 }
 
 .admin-wrap .reveal-visible {
   opacity: 1;
-  transform: scale(1) translateY(0);
+  transform: translateY(0);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -342,8 +388,6 @@
 
 /* =========================
    TABLET / DESKTOP
-   Progressive enhancement only — phone layout above is the
-   default, not a fallback.
 ========================= */
 
 @media (min-width: 600px) {
@@ -352,19 +396,15 @@
   }
 
   .admin-wrap .admin-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 34px;
+    padding: 20px 26px;
   }
 
   .admin-wrap .admin-header h1 {
-    font-size: 1.8rem;
+    font-size: 1.3rem;
   }
 
-  .admin-wrap .admin-logout-btn {
-    align-self: auto;
-    flex-shrink: 0;
+  .admin-wrap .admin-header p {
+    font-size: 13px;
   }
 
   .admin-wrap .overview-grid {
@@ -373,9 +413,8 @@
 }
 
 /* 768px matches scrollEffects.js's initParallax() cutoff and
-   dashboard.css's own layout switch — keep this in sync with
-   those if either changes, so "mobile layout" and "parallax off"
-   flip at the same width everywhere in the app. */
+   dashboard.css's own layout switch — keep in sync if either
+   changes. */
 @media (min-width: 768px) {
   .admin-wrap .admin-tabs {
     position: static;
@@ -383,6 +422,7 @@
     margin: 0 0 24px;
     padding: 0;
     background: transparent;
+    gap: 22px;
   }
 
   .admin-wrap .overview-grid {
@@ -390,7 +430,8 @@
   }
 
   .admin-wrap .overview-card {
-    text-align: center;
+    flex-direction: column;
     align-items: center;
+    text-align: center;
   }
 }
