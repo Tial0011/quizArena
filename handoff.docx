@@ -1,197 +1,191 @@
-# Admin Dashboard Styling — Handoff Notes
+# Admin Dashboard — Recent Activity & Quizzes Page Handoff Notes
 
-**Scope:** Bring the admin dashboard's visual design in line with the existing
-student dashboard (`dashboard.js` / `dashboard.css`), mobile-first, sharing
-the app's existing `scrollEffects.js` utility rather than duplicating it —
-then formalized the tone (school/board-console feel) and compacted the
-header into a slim row with a logo slot.
+**Scope:** Wire up the Dashboard tab's "Recent Activity" placeholder, fix a
+crash on the Quizzes tab, add search/filter tooling to the Quizzes tab, and
+reorganize + relabel that page for a non-technical admin.
 
-**Files touched:** `admin.css` (new), `admin.js` (updated), `scrollEffects.js`
-(comment + one breakpoint fix only — logic untouched).
+**Files touched:** `admin.js` (aka `dashboard.js` — updated), `admin.css`
+(updated), `quizzes.js` (updated), `quizzes.css` (updated).
 
 ---
 
-## 1. Design reference
+## 1. Dashboard tab — "Recent Activity" made functional
 
-The student dashboard (`dashboard.css`) was used as the source of truth for
-the brand: purple gradient `linear-gradient(135deg, #7c3aed, #5b21b6)`,
-card radius/shadow family, and the `.load-in` / `.reveal` /
-`.reveal-visible` entrance-motion classes driven by `scrollEffects.js`.
+Previously a static placeholder (`🚀 Quiz Arena Admin is ready.` /
+`Create subjects, quizzes and questions to get started.`). Now pulls real
+data.
 
-## 2. First pass — game-app-style admin dashboard
+- **Source:** most recent 5 docs each from `subjects`, `quizzes`, and
+  `questions`, ordered by `createdAt` (all three collections confirmed to
+  have this field). No dedicated activity-log collection — this is a
+  fan-out read across the three content collections, merged and sorted
+  client-side, top 6 shown. Cheap at current scale; if it ever needs to
+  scale up, a written activity-log collection would be the next step
+  instead of widening the per-type fetch limit.
+- **Display:** icon + `"New <type> added/created: <title>"` + relative
+  timestamp (`"5m ago"` → `"2h ago"` → `"3d ago"` → falls back to a plain
+  date past a week).
+- **Field lookups are defensive**, not hard-coded to one field name: tries
+  `title` then `name` for subjects, `title` for quizzes, `text` then
+  `question` for questions, so a naming difference doesn't silently render
+  `undefined`.
+- **Race-condition guard:** if the admin switches tabs while the fetch is
+  in flight, bails instead of writing into DOM nodes that no longer exist
+  (same pattern as the existing `loadDashboardStats()` guard).
+- Wrapped in try/catch — a failed query shows "Couldn't load recent
+  activity right now." instead of breaking the dashboard.
+- Output is escaped (`escapeHtml`) before being injected via `innerHTML`,
+  since subject/quiz/question titles are admin-authored but still get
+  rendered as raw text.
 
-Built `admin.css` to match the student dashboard's playful visual language
-directly: filled gradient tab pills, bouncy pop-in animation
-(`admin-pop-in`, distinct keyframe but same `.load-in` class name), floating
-hero shapes, soft glowing card shadows.
+**Fetch limit vs. display limit:** fetches 5 most recent per collection
+(15 total), displays top 6 after merging/sorting. Worth noting: if a
+single type dominates recent activity (e.g. 6 quizzes created back-to-back
+with nothing else happening), the 5-per-type fetch limit could theoretically
+undercount that one type in the top-6 display. Not fixed yet — flagged as
+outstanding below.
 
-## 3. Bug caught and fixed: cross-page class collision
+## 2. Quizzes tab — crash fixed: tab-switch race condition
 
-**Problem:** `.load-in`, `.reveal`, and `.reveal-visible` were identical
-class *names* in both `admin.css` and `dashboard.css`. Both stylesheets
-load together in the SPA, so whichever one loaded last would silently win
-for **every** `.load-in`/`.reveal` element on **either** page — not just
-its own.
-
-**Fix:** Every rule in `admin.css` is scoped under `.admin-wrap` (e.g.
-`.admin-wrap .load-in`), which raises specificity enough to keep the two
-pages isolated regardless of load order. No changes were needed to
-`scrollEffects.js`'s `data-reveal` / `reveal-visible` contract — it just
-toggles a class name; each page's own CSS governs what that class means.
-**Any new admin CSS must follow this pattern** — never add a bare
-`.foo { }` rule to `admin.css`.
-
-## 4. Mobile-first rebuild
-
-Phone is the *default* layout, not a shrink-to-fit fallback: sticky
-horizontally-scrolling tab bar instead of wrapping labels, 2-column stat
-grid even on the smallest phones (3 cols at `600px+`, 6 at `768px+`), all
-padding/type/radii scaled up via `min-width` queries rather than down.
-
-## 5. `scrollEffects.js` — reviewed, not duplicated
-
-It's intentionally page-agnostic (re-queries the DOM fresh every scroll
-tick, one shared listener, selector-driven via `data-reveal` /
-`data-parallax-speed`) — admin didn't need its own copy; a dedicated
-version would've reintroduced the collision risk from §3. **Don't fork
-this file per page.**
-
-Two small edits only:
-- Header comment now lists the admin dashboard as a third consumer.
-- `initParallax()` disables below `768px`; `admin.css`'s own layout
-  breakpoint is also aligned to `768px` so "mobile layout" and "parallax
-  on" flip at the same width everywhere.
-
-Current location: `student/scrollEffects.js`, imported by admin as
-`../student/scrollEffects.js` — works correctly. **Open suggestion (not
-urgent):** since landing/student/admin all depend on it equally, a path
-like `shared/scrollEffects.js` would better reflect its actual scope if
-it's ever moved.
-
-## 6. Second pass — formalized to a "school board" tone
-
-Per request, reworked the *tone* (not the brand) toward an institutional
-admin console: kept the request's three explicit calls —
-top tab bar (not a sidebar), emoji icons kept, entrance animation kept but
-calmer.
-
-- **Tabs** — switched from filled gradient pills to an underline-indicator
-  style (quiet text, purple bottom-border on active).
-- **Cards** — flatter: thin visible border doing the work instead of a
-  soft floating shadow, smaller radius (14px).
-- **Stats** — icon badges shrunk and turned neutral gray, so the emoji
-  reads as a label glyph rather than a game-achievement badge; labels in
-  small-caps with letter-spacing.
-- **Motion** — replaced the bounce/overshoot keyframe with a calm
-  `admin-fade-in` (opacity + 8px rise, no scale) for both `.load-in` and
-  `.reveal`.
-- **Header** — added an "Administration Console" eyebrow label above the
-  title, muted the decorative hero shapes, outlined (not filled) logout
-  button.
-
-## 7. Bug: large empty space at top of the header
-
-**Symptom (reported with screenshot):** a big gap of purple space above
-"ADMINISTRATION CONSOLE" inside the hero box.
-
-**Root cause:** a leftover *duplicate* `.admin-header h1` / `.admin-header
-p` rule further down the file (same specificity, defined later, so it was
-winning) that never had its margin fully reset — only `margin-bottom` was
-set on the first (correct) rule, so the browser default top margin was
-still in effect. (Initially suspected a missing CSS reset, but the
-project's actual `reset.css` already zeroes `margin`/`padding` globally on
-`*` — confirmed once that file was shared — so the real cause was purely
-the duplicate rule, not a missing reset.)
-
-**Fix:** removed the duplicate block, explicitly set `margin: 0` (not just
-`margin-bottom`) on the eyebrow/h1/p, and trimmed header padding slightly.
-
-## 8. `responsive.css` reviewed — no conflict found
-
-A separate `responsive.css` (loaded last, overrides `dashboard.css` and
-`auth.css` at `max-width: 768px`) was checked against admin's styles.
-**No overlap** — every selector in it targets student-dashboard or
-auth/landing classes (`.dashboard-hero`, `.action-grid`, `.hero`,
-`.auth-card`, etc.), nothing `.admin-*`. Confirmed it wasn't the cause of
-the padding bug in §7.
-
-**Flag for later:** that file's existing overrides use bare selectors
-(e.g. `.dashboard-hero { }`), which works because `dashboard.css` also
-uses bare selectors — same specificity, last-loaded wins. If an admin
-section is ever added to `responsive.css` following that same pattern
-(e.g. `.admin-header { }`), it will **silently lose** to `admin.css`'s
-more specific `.admin-wrap .admin-header` rule regardless of load order.
-Any future admin override there needs the `.admin-wrap` prefix too.
-
-## 9. Header rebuilt as a compact row (was a tall stacked block)
-
-Per request, converted `.admin-header` from a tall `flex-direction: column`
-block (eyebrow → title → description → full-width button, each on its own
-line) into a slim horizontal row at **every** screen size — logo · title
-block · logout button, side-by-side, all still present:
-
-- Title and description now truncate with `text-overflow: ellipsis`
-  (`white-space: nowrap; overflow: hidden`) instead of wrapping, so the bar
-  stays a fixed short height regardless of text length or screen width.
-- This requires `min-width: 0` on the flex child holding the text — a
-  flex item's default `min-width` is `auto` (its content size), which
-  silently defeats `text-overflow: ellipsis` if left unset.
-- Logout button changed from `align-self: stretch` (full width/height) to
-  `flex: 0 0 auto` (sized to its own content, right-aligned, vertically
-  centered).
-- Decorative hero shapes scaled down proportionally to match the shorter
-  box.
-- Removed now-dead desktop overrides that used to switch the header from
-  column → row and stretch → auto on the logout button — both are the
-  default at every width now, so those rules were deleted rather than left
-  as unreachable code.
-
-## 10. Logo slot added
-
-Added a brand-mark slot to the header, left of the title block:
-
-```html
-<img
-  src="../../icon/icon-192.png"
-  alt="Quiz Arena"
-  class="admin-logo"
-/>
+**Symptom:**
+```
+quizzes.js:79 Uncaught (in promise) TypeError: Cannot read properties of
+null (reading 'addEventListener')
 ```
 
-- 34px square, translucent rounded badge (`rgba(255,255,255,0.14)`
-  background + border) so a light/transparent PNG stays readable against
-  the gradient regardless of the icon's own colors.
-- `object-fit: contain` + small padding so the image is never stretched or
-  cropped inside the badge.
-- **Path is relative to wherever `admin.js` lives** — `../../icon/icon-192.png`
-  assumes two directories up from `admin.js` into an `icon/` folder.
-  **Re-check this path against the actual project structure** — if
-  `admin.js` moves, or if the icon actually lives somewhere like
-  `public/icon/`, the `../../` count needs adjusting.
-- The title block was given an explicit `.admin-header-text` class rather
-  than relying on `:first-child`, since the logo is now the first child of
-  the header and a positional selector would have silently pointed at the
-  wrong element.
+**Root cause:** `renderQuizzes(container)` awaits `loadSubjects()` then
+`loadQuizzes()` before wiring up form/button listeners. If the admin
+switches tabs while either await is in flight, `renderAdminDashboard()`
+replaces the entire `app.innerHTML` — including a brand-new
+`#adminContent` — so the **old** `container` node is now detached from the
+live document. When the pending call resumed and did
+`document.getElementById("cancelEditBtn")`, that's a *global* document
+lookup that no longer finds the (detached) element, so it returned `null`.
+
+Same class of bug as the tab-switch guards already in `admin.js`'s
+`loadDashboardStats()`/`loadRecentActivity()` — just not yet applied to
+`quizzes.js`.
+
+**Fix:** every DOM read/write in `quizzes.js` now goes through a
+module-level `currentContainer` reference (captured at the top of
+`renderQuizzes()`) via `container.querySelector(...)`, instead of the
+global `document.getElementById(...)`. Writing into a detached subtree is
+harmless (invisible, wasted work) instead of a crash. Added explicit
+`currentContainer !== container` / `container.isConnected` bail-outs after
+every `await` that's followed by a DOM write (form submit, delete, load).
+
+**Note for later:** `subjects.js` and `questions.js` were *not* reviewed —
+they likely have the identical bug shape (await inside a render function,
+then `document.getElementById`). Flagged, not yet fixed.
+
+## 3. Quizzes tab — search/filter toolbar added
+
+Per request, gave the admin Quizzes page the same kind of toolbar
+Marketplace has: search box, subject filter pills, Level/Semester
+dropdowns.
+
+- **First pass** reused Marketplace's actual CSS classes
+  (`marketplace-header`, `marketplace-toolbar`, etc.) directly in
+  `quizzes.js`'s markup, on the assumption `marketplace.css` is loaded
+  globally in the SPA (same as `admin.css`/`dashboard.css` were shown to
+  be, per the original handoff notes' §3 collision writeup).
+- **Reworked per request** — Quizzes now has **its own classes**
+  (`quiz-toolbar`, `quiz-search`, `quiz-filters`, `quiz-filter-btn`,
+  `quiz-level-semester-filters`, `quiz-level-filter`,
+  `quiz-semester-filter`) with matching rules added to `quizzes.css`
+  itself. This page no longer depends on `marketplace.css` being loaded
+  at all — avoids the kind of cross-file organization problem the
+  original handoff notes were explicitly trying to prevent with the
+  `.admin-wrap` scoping pattern.
+- **Filtering is entirely client-side** against the already-fetched
+  `quizzesCache` (no extra Firestore reads on filter change) — same
+  pattern as `marketplace.js`.
+- Picking a Level or Semester resets the subject filter and narrows which
+  subject pills are shown, mirroring Marketplace's UX.
+- Admin's dropdowns default to **"All Levels" / "All Semesters"**
+  (Marketplace defaults to a specific level/semester since it's scoped to
+  one student; the admin view needs to see everything by default). This
+  was a judgment call, not confirmed with the client — flagged below.
+- Empty state now distinguishes "no quizzes exist yet" from "no quizzes
+  match your filters."
+
+### Bug: "undefined" showing in Level/Semester dropdowns
+
+**Cause:** some quiz docs predate the `level`/`semester` fields. Without a
+fallback, `String(undefined)` becomes the literal text `"undefined"`,
+which is exactly what rendered as a dropdown option.
+
+**Fix:** applied the same backward-compatibility default
+`marketplace.js`'s `loadActiveQuizzes()` already uses for this exact
+situation — `level ?? 100`, `semester ?? 2` — when building
+`quizzesCache`. Consistent with existing convention rather than a new
+guess, but worth confirming this default (100 Level / Semester 2) is
+right for the admin view specifically, vs. e.g. showing those as an
+explicit "Unspecified" bucket instead of silently folding them into 100/2.
+
+## 4. Quizzes tab — reordered and relabeled for a non-technical admin
+
+Previous order: header+toolbar → Create Quiz form → quiz list. Per
+request, reordered and gave each section its own heading so someone who
+isn't a web developer can tell at a glance what each part does:
+
+1. **"Add a New Quiz"** (moved to the top) — the create/edit form, with a
+   plain-English subtitle: *"Fill in the details below, then press
+   'Create Quiz' to publish it."*
+2. A visible divider (`border-top`) separates the two sections.
+3. **"All Quizzes"** (moved below the form) — search box, filter pills,
+   Level/Semester dropdowns, and the quiz list, with its own subtitle:
+   *"Search, filter, edit or delete the quizzes you've already created."*
+
+No functional/JS logic changed here — purely markup order, headings, and
+the CSS divider.
+
+## 5. Bug: form inputs overflowing their box in "Add a New Quiz"
+
+**Symptom (reported):** input/select boxes in the create-quiz form
+stretched out past the edge of their card.
+
+**Root cause:** `.quiz-form-grid` is a 4-column CSS Grid
+(`repeat(4, 1fr)`). Grid items default to `min-width: auto`, which
+resolves to the item's *intrinsic content size* — for the Subject
+`<select>`, that's driven by its longest `<option>` text (e.g. `"Physics
+• 100 Level • First Semester"`). Once that intrinsic width exceeds the
+column's `1fr` share, the column — and the input inside it — gets pushed
+wider than the grid track, overflowing the form. Same root cause as the
+header-truncation fix in the original handoff notes (§9), just the CSS
+Grid version of the flexbox `min-width: auto` gotcha instead of the flex
+one.
+
+**Fix:**
+- `.form-field { min-width: 0; }` — lets the grid column shrink below its
+  content's intrinsic width instead of forcing the track wider.
+- `.quiz-form select, .quiz-form input { width: 100%; box-sizing:
+  border-box; }` — makes sure padding/border are included in the declared
+  width instead of added on top of it, and that they actually fill their
+  (now-correctly-sized) column.
 
 ---
 
 ## Outstanding / not yet done
 
-- **`animateCountUp` on overview stats** — the student dashboard count-up's
-  its purchased-quiz number on load; the admin overview stats (`Subjects`,
-  `Weekly Quizzes`, `Questions`, `Students`, `Total Revenue`, `Top Selling
-  Quiz`) currently just snap from `--` to their final value once
-  `loadDashboardStats()` resolves. `animateCountUp` already exists in
-  `scrollEffects.js` — just not wired in yet.
-- **Logo path** — confirm `../../icon/icon-192.png` resolves correctly once
-  tested in the real project structure (see §10).
-- Revenue/top-quiz figures join each paid purchase to the quiz's *current*
-  price — if a quiz's price changes after a sale, past revenue reflects the
-  new price, not what was actually paid. Accurate historical revenue would
-  require storing the amount on the purchase doc at write time.
+- **`subjects.js` / `questions.js`** — likely share the exact tab-switch
+  race bug fixed in §2 for `quizzes.js`. Not reviewed yet.
+- **Recent Activity fetch limit** — 5-per-collection fetch could
+  theoretically undercount the top-6 display if one content type
+  dominates. Not fixed; flagged in §1.
+- **Admin Level/Semester default ("All")** and the **100 Level / Semester
+  2 fallback for legacy quizzes** — both judgment calls made to keep
+  things moving; not explicitly confirmed with the client. See §3.
+- Carried over from the original handoff notes, still open:
+  - `animateCountUp` not wired into the overview stats.
+  - Logo path (`../../icons/icon-192.png` per the actual `admin.js`) not
+    re-confirmed against the live project structure.
+  - Revenue/top-quiz figures still join purchases to a quiz's *current*
+    price, not the price actually paid at purchase time.
 
 ## Files in this handoff
 
-- `admin.css`
 - `admin.js`
-- `scrollEffects.js` (comment + breakpoint fix)
+- `admin.css`
+- `quizzes.js`
+- `quizzes.css`

@@ -478,3 +478,116 @@
     text-align: center;
   }
 }
+danger-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+.danger-dialog {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.danger-dialog-title {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.danger-dialog-warning {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.danger-dialog-warning p {
+  margin: 0;
+  font-size: 13px;
+  color: #7f1d1d;
+  line-height: 1.5;
+}
+
+.danger-dialog-warning p + p {
+  margin-top: 4px;
+}
+
+.danger-dialog-cannot-undo {
+  font-weight: 700;
+}
+
+.danger-dialog-confirm-label {
+  display: block;
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.danger-dialog-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 18px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.danger-dialog-input:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.danger-dialog-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.danger-dialog-actions button {
+  flex: 1;
+}
+
+.btn-danger {
+  border: none;
+  background: #ef4444;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .danger-dialog-actions {
+    flex-direction: column;
+  }
+}

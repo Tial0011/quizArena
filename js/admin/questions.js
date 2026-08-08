@@ -20,6 +20,18 @@ import {
    subjectsCache / quizzesCache are loaded once and reused
    everywhere (dropdowns, card labels, search) to avoid
    refetching Firestore on every interaction.
+
+   currentContainer follows the same pattern used in quizzes.js
+   and subjects.js: every DOM read/write goes through
+   currentContainer.querySelector(...) instead of the global
+   document.getElementById(...), and every post-await write is
+   guarded against the admin having switched tabs while a fetch
+   was in flight. This file previously mixed the two — most
+   functions used raw document.getElementById() after an await
+   (the exact pattern that crashed quizzes.js), while
+   renderQuestionList() alone had a defensive null-check comment
+   acknowledging the risk without the rest of the file following
+   suit. This pass makes the guard consistent everywhere.
 ========================================================= */
 let subjectsCache = [];
 let quizzesCache = [];
@@ -29,6 +41,7 @@ let currentSubjectId = "";
 let currentQuizId = "";
 let editingQuestionId = null;
 let searchTerm = "";
+let currentContainer = null;
 
 // Image state for the create/edit form. Kept separate from
 // getFormValues() because resolving the final image URL is
@@ -42,6 +55,8 @@ let removeImageFlag = false; // true if editing and the user chose to remove the
    PUBLIC ENTRY POINT
 ========================================================= */
 export async function renderQuestions(container) {
+  currentContainer = container;
+
   container.innerHTML = `
     <div class="admin-card">
       <div class="questions-header">
@@ -162,6 +177,10 @@ export async function renderQuestions(container) {
   `;
 
   await loadInitialData();
+
+  // Bail if a later renderQuestions()/tab switch has already moved on.
+  if (currentContainer !== container || !container.isConnected) return;
+
   attachStaticEventListeners();
 }
 
@@ -174,8 +193,13 @@ async function loadInitialData() {
 }
 
 async function loadSubjects() {
-  const select = document.getElementById("subjectFilterSelect");
+  const container = currentContainer;
   const snapshot = await getDocs(collection(db, "subjects"));
+
+  if (currentContainer !== container) return;
+
+  const select = container.querySelector("#subjectFilterSelect");
+  if (!select) return;
 
   subjectsCache = [];
   snapshot.forEach((docSnap) => {
@@ -191,7 +215,10 @@ async function loadSubjects() {
 }
 
 async function loadAllQuizzes() {
+  const container = currentContainer;
   const snapshot = await getDocs(collection(db, "quizzes"));
+
+  if (currentContainer !== container) return;
 
   quizzesCache = [];
   snapshot.forEach((docSnap) => {
@@ -203,41 +230,43 @@ async function loadAllQuizzes() {
    STATIC EVENT LISTENERS
 ========================================================= */
 function attachStaticEventListeners() {
-  document
-    .getElementById("subjectFilterSelect")
-    .addEventListener("change", handleSubjectChange);
+  const container = currentContainer;
 
-  document
-    .getElementById("quizFilterSelect")
-    .addEventListener("change", handleQuizChange);
+  container
+    .querySelector("#subjectFilterSelect")
+    ?.addEventListener("change", handleSubjectChange);
 
-  document
-    .getElementById("questionForm")
-    .addEventListener("submit", handleFormSubmit);
+  container
+    .querySelector("#quizFilterSelect")
+    ?.addEventListener("change", handleQuizChange);
 
-  document
-    .getElementById("cancelEditBtn")
-    .addEventListener("click", exitEditMode);
+  container
+    .querySelector("#questionForm")
+    ?.addEventListener("submit", handleFormSubmit);
 
-  document
-    .getElementById("questionImageInput")
-    .addEventListener("change", handleImageFileSelected);
+  container
+    .querySelector("#cancelEditBtn")
+    ?.addEventListener("click", exitEditMode);
 
-  document
-    .getElementById("removeImageBtn")
-    .addEventListener("click", handleRemoveImageClick);
+  container
+    .querySelector("#questionImageInput")
+    ?.addEventListener("change", handleImageFileSelected);
 
-  document
-    .getElementById("importBtn")
-    .addEventListener("click", handleImportClick);
+  container
+    .querySelector("#removeImageBtn")
+    ?.addEventListener("click", handleRemoveImageClick);
 
-  document
-    .getElementById("exportBtn")
-    .addEventListener("click", handleExportClick);
+  container
+    .querySelector("#importBtn")
+    ?.addEventListener("click", handleImportClick);
 
-  document
-    .getElementById("searchInput")
-    .addEventListener("input", handleSearchInput);
+  container
+    .querySelector("#exportBtn")
+    ?.addEventListener("click", handleExportClick);
+
+  container
+    .querySelector("#searchInput")
+    ?.addEventListener("input", handleSearchInput);
 }
 
 /* =========================================================
@@ -254,7 +283,9 @@ function handleSubjectChange(e) {
 }
 
 function populateQuizSelect(subjectId) {
-  const quizSelect = document.getElementById("quizFilterSelect");
+  const quizSelect = currentContainer?.querySelector("#quizFilterSelect");
+  if (!quizSelect) return;
+
   quizSelect.innerHTML = '<option value="">Select Quiz</option>';
 
   if (!subjectId) {
@@ -289,13 +320,17 @@ async function handleQuizChange(e) {
 }
 
 async function loadQuestionsForQuiz(quizId) {
-  const list = document.getElementById("questionList");
+  const container = currentContainer;
+
+  const list = container?.querySelector("#questionList");
   if (list) {
     list.innerHTML = "<p>Loading...</p>";
   }
 
   const q = query(collection(db, "questions"), where("quizId", "==", quizId));
   const snapshot = await getDocs(q);
+
+  if (currentContainer !== container) return;
 
   questionsCache = [];
   snapshot.forEach((docSnap) => {
@@ -307,15 +342,17 @@ async function loadQuestionsForQuiz(quizId) {
    FORM HELPERS
 ========================================================= */
 function getFormValues() {
+  const container = currentContainer;
+
   return {
-    question: document.getElementById("questionInput").value.trim(),
+    question: container.querySelector("#questionInput").value.trim(),
     options: [
-      document.getElementById("optionA").value.trim(),
-      document.getElementById("optionB").value.trim(),
-      document.getElementById("optionC").value.trim(),
-      document.getElementById("optionD").value.trim(),
+      container.querySelector("#optionA").value.trim(),
+      container.querySelector("#optionB").value.trim(),
+      container.querySelector("#optionC").value.trim(),
+      container.querySelector("#optionD").value.trim(),
     ],
-    answer: document.getElementById("answerSelect").value,
+    answer: container.querySelector("#answerSelect").value,
   };
 }
 
@@ -340,19 +377,32 @@ function validateForm(values) {
 }
 
 function resetForm() {
-  document.getElementById("questionForm").reset();
+  currentContainer?.querySelector("#questionForm")?.reset();
   resetImageState();
 }
 
 function enterEditMode(question) {
   editingQuestionId = question.id;
 
-  document.getElementById("questionInput").value = question.question;
-  document.getElementById("optionA").value = question.options[0];
-  document.getElementById("optionB").value = question.options[1];
-  document.getElementById("optionC").value = question.options[2];
-  document.getElementById("optionD").value = question.options[3];
-  document.getElementById("answerSelect").value = question.answer;
+  const container = currentContainer;
+
+  const questionInput = container.querySelector("#questionInput");
+  if (questionInput) questionInput.value = question.question;
+
+  const optionA = container.querySelector("#optionA");
+  if (optionA) optionA.value = question.options[0];
+
+  const optionB = container.querySelector("#optionB");
+  if (optionB) optionB.value = question.options[1];
+
+  const optionC = container.querySelector("#optionC");
+  if (optionC) optionC.value = question.options[2];
+
+  const optionD = container.querySelector("#optionD");
+  if (optionD) optionD.value = question.options[3];
+
+  const answerSelect = container.querySelector("#answerSelect");
+  if (answerSelect) answerSelect.value = question.answer;
 
   resetImageState();
   existingImageUrl = question.image || "";
@@ -360,20 +410,27 @@ function enterEditMode(question) {
     showImagePreview(existingImageUrl);
   }
 
-  document.getElementById("saveQuestionBtn").textContent = "Update Question";
-  document.getElementById("cancelEditBtn").hidden = false;
+  const saveBtn = container.querySelector("#saveQuestionBtn");
+  if (saveBtn) saveBtn.textContent = "Update Question";
 
-  document
-    .getElementById("questionForm")
-    .scrollIntoView({ behavior: "smooth", block: "start" });
+  const cancelBtn = container.querySelector("#cancelEditBtn");
+  if (cancelBtn) cancelBtn.hidden = false;
+
+  container
+    .querySelector("#questionForm")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function exitEditMode() {
   editingQuestionId = null;
   resetForm();
 
-  document.getElementById("saveQuestionBtn").textContent = "Add Question";
-  document.getElementById("cancelEditBtn").hidden = true;
+  const container = currentContainer;
+  const saveBtn = container?.querySelector("#saveQuestionBtn");
+  if (saveBtn) saveBtn.textContent = "Add Question";
+
+  const cancelBtn = container?.querySelector("#cancelEditBtn");
+  if (cancelBtn) cancelBtn.hidden = true;
 }
 
 /* =========================================================
@@ -395,21 +452,25 @@ function handleRemoveImageClick() {
   removeImageFlag = true;
   existingImageUrl = "";
 
-  document.getElementById("questionImageInput").value = "";
+  const fileInput = currentContainer?.querySelector("#questionImageInput");
+  if (fileInput) fileInput.value = "";
+
   hideImagePreview();
 }
 
 function showImagePreview(url) {
-  const wrapper = document.getElementById("imagePreviewWrapper");
-  const img = document.getElementById("imagePreview");
+  const wrapper = currentContainer?.querySelector("#imagePreviewWrapper");
+  const img = currentContainer?.querySelector("#imagePreview");
+  if (!wrapper || !img) return;
 
   img.src = url;
   wrapper.hidden = false;
 }
 
 function hideImagePreview() {
-  const wrapper = document.getElementById("imagePreviewWrapper");
-  const img = document.getElementById("imagePreview");
+  const wrapper = currentContainer?.querySelector("#imagePreviewWrapper");
+  const img = currentContainer?.querySelector("#imagePreview");
+  if (!wrapper || !img) return;
 
   img.src = "";
   wrapper.hidden = true;
@@ -474,14 +535,18 @@ async function uploadQuestionImage(file) {
    FORM STATUS MESSAGE (upload/save progress + errors)
 ========================================================= */
 function showFormStatus(message, type = "info") {
-  const statusEl = document.getElementById("formStatus");
+  const statusEl = currentContainer?.querySelector("#formStatus");
+  if (!statusEl) return;
+
   statusEl.textContent = message;
   statusEl.className = `form-status status-${type}`;
   statusEl.hidden = false;
 }
 
 function clearFormStatus() {
-  const statusEl = document.getElementById("formStatus");
+  const statusEl = currentContainer?.querySelector("#formStatus");
+  if (!statusEl) return;
+
   statusEl.textContent = "";
   statusEl.hidden = true;
 }
@@ -492,10 +557,11 @@ function clearFormStatus() {
 async function handleFormSubmit(e) {
   e.preventDefault();
 
+  const container = currentContainer;
   const values = getFormValues();
   if (!validateForm(values)) return;
 
-  const saveBtn = document.getElementById("saveQuestionBtn");
+  const saveBtn = container.querySelector("#saveQuestionBtn");
   const originalLabel = saveBtn.textContent;
   const isUploadingNewImage = Boolean(selectedImageFile);
 
@@ -513,6 +579,9 @@ async function handleFormSubmit(e) {
     imageUrl = await resolveImageUrl();
   } catch (err) {
     console.error("Image upload failed:", err);
+
+    if (currentContainer !== container || !container.isConnected) return;
+
     showFormStatus(
       "Image upload failed. Please check your connection and try again.",
       "error",
@@ -521,6 +590,8 @@ async function handleFormSubmit(e) {
     saveBtn.textContent = originalLabel;
     return; // Firestore is never touched if the upload failed
   }
+
+  if (currentContainer !== container || !container.isConnected) return;
 
   // --- Step 2: save the question document ---
   try {
@@ -535,6 +606,8 @@ async function handleFormSubmit(e) {
       await createQuestion(values, imageUrl);
     }
 
+    if (currentContainer !== container || !container.isConnected) return;
+
     showFormStatus("Question saved successfully!", "success");
     setTimeout(clearFormStatus, 3000);
 
@@ -543,10 +616,15 @@ async function handleFormSubmit(e) {
     renderQuestionList();
   } catch (err) {
     console.error("Failed to save question:", err);
+
+    if (currentContainer !== container || !container.isConnected) return;
+
     showFormStatus("Failed to save the question. Please try again.", "error");
     saveBtn.textContent = originalLabel;
   } finally {
-    saveBtn.disabled = false;
+    if (currentContainer === container && container.isConnected) {
+      saveBtn.disabled = false;
+    }
   }
 }
 
@@ -600,8 +678,11 @@ function getQuizById(quizId) {
 }
 
 function renderQuestionList() {
-  const list = document.getElementById("questionList");
-  const counter = document.getElementById("questionCounter");
+  const container = currentContainer;
+  if (!container?.isConnected) return;
+
+  const list = container.querySelector("#questionList");
+  const counter = container.querySelector("#questionCounter");
 
   // If the admin switched to a different tab (or a different quiz
   // context) while a prior async load was still in flight, these
@@ -723,10 +804,17 @@ function handleEditClick(id) {
   enterEditMode(question);
 }
 
+// A single question has no children under it — deleting one doesn't
+// cascade into anything else, so this stays a plain confirm() rather
+// than the "type to confirm" dialog used for subjects/quizzes.
 async function handleDeleteClick(id) {
   if (!confirm("Delete this question?")) return;
 
+  const container = currentContainer;
+
   await deleteDoc(doc(db, "questions", id));
+
+  if (currentContainer !== container || !container.isConnected) return;
 
   if (editingQuestionId === id) {
     exitEditMode();
@@ -757,7 +845,9 @@ async function handleImportClick() {
     return;
   }
 
-  const fileInput = document.getElementById("importFileInput");
+  const container = currentContainer;
+
+  const fileInput = container.querySelector("#importFileInput");
   const file = fileInput.files[0];
 
   if (!file) {
@@ -765,33 +855,47 @@ async function handleImportClick() {
     return;
   }
 
-  const resultBox = document.getElementById("importResult");
-  resultBox.textContent = "Importing...";
+  const resultBox = container.querySelector("#importResult");
+  if (resultBox) resultBox.textContent = "Importing...";
 
   try {
     const rawText = await file.text();
     const parsed = JSON.parse(rawText);
 
+    if (currentContainer !== container || !container.isConnected) return;
+
     if (!Array.isArray(parsed)) {
-      resultBox.textContent =
-        "Import failed: JSON must be an array of questions.";
+      if (resultBox) {
+        resultBox.textContent =
+          "Import failed: JSON must be an array of questions.";
+      }
       return;
     }
 
     const { valid, invalidCount } = validateImportedQuestions(parsed);
     const { successCount, failedCount } = await saveImportedQuestions(valid);
 
-    resultBox.textContent =
-      `Imported ${successCount} question(s). ` +
-      `Skipped ${invalidCount} invalid. ` +
-      `Failed ${failedCount} upload(s).`;
+    if (currentContainer !== container || !container.isConnected) return;
+
+    if (resultBox) {
+      resultBox.textContent =
+        `Imported ${successCount} question(s). ` +
+        `Skipped ${invalidCount} invalid. ` +
+        `Failed ${failedCount} upload(s).`;
+    }
 
     fileInput.value = "";
     await loadQuestionsForQuiz(currentQuizId);
     renderQuestionList();
   } catch (err) {
     console.error(err);
-    resultBox.textContent = "Import failed: could not read or parse the file.";
+
+    if (currentContainer !== container || !container.isConnected) return;
+
+    if (resultBox) {
+      resultBox.textContent =
+        "Import failed: could not read or parse the file.";
+    }
   }
 }
 
