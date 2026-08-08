@@ -36,10 +36,19 @@ import {
      or not that subtree is still attached to the page. Writing
      into a detached subtree is harmless (just wasted, invisible
      work) instead of a crash.
+   - searchTerm / selectedSubject / selectedLevel / selectedSemester
+     are the toolbar's filter state, mirroring marketplace.js's
+     pattern. Filtering only ever touches the cached quizzesCache
+     client-side — it never refetches, same as Marketplace.
 ========================================================= */
 let quizzesCache = [];
 let editingQuizId = null;
 let currentContainer = null;
+
+let searchTerm = "";
+let selectedSubject = "All";
+let selectedLevel = "All";
+let selectedSemester = "All";
 
 /* =========================================================
    PUBLIC ENTRY POINT
@@ -49,45 +58,67 @@ export async function renderQuizzes(container) {
 
   container.innerHTML = `
     <div class="admin-card">
-      <div class="quizzes-header">
-        <h2>Quizzes</h2>
-        <p class="quizzes-subtitle">Create, edit and manage your quizzes</p>
+      <div class="quiz-create-section">
+        <h2>Add a New Quiz</h2>
+        <p class="quizzes-subtitle">
+          Fill in the details below, then press "Create Quiz" to publish it.
+        </p>
+
+        <form id="quizForm" class="quiz-form">
+          <div class="quiz-form-grid">
+            <div class="form-field">
+              <label for="subjectSelect">Subject</label>
+              <select id="subjectSelect">
+                <option value="">Select Subject</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="weekInput">Week</label>
+              <input id="weekInput" type="number" min="1" placeholder="e.g. 3" />
+            </div>
+
+            <div class="form-field form-field-wide">
+              <label for="titleInput">Quiz Topic</label>
+              <input id="titleInput" placeholder="e.g. Magnetic Force" />
+            </div>
+
+            <div class="form-field">
+              <label for="priceInput">Price (₦)</label>
+              <input id="priceInput" type="number" min="0" placeholder="e.g. 500" />
+            </div>
+          </div>
+
+          <div class="quiz-form-actions">
+            <button type="submit" id="submitQuizBtn" class="btn-primary">
+              Create Quiz
+            </button>
+            <button type="button" id="cancelEditBtn" class="btn-secondary" hidden>
+              Cancel Edit
+            </button>
+          </div>
+        </form>
       </div>
 
-      <form id="quizForm" class="quiz-form">
-        <div class="quiz-form-grid">
-          <div class="form-field">
-            <label for="subjectSelect">Subject</label>
-            <select id="subjectSelect">
-              <option value="">Select Subject</option>
-            </select>
-          </div>
+      <div class="quizzes-header">
+        <h2>All Quizzes</h2>
+        <p class="quizzes-subtitle">
+          Search, filter, edit or delete the quizzes you've already created.
+        </p>
 
-          <div class="form-field">
-            <label for="weekInput">Week</label>
-            <input id="weekInput" type="number" min="1" placeholder="e.g. 3" />
-          </div>
+        <div id="quizLevelSemesterFilters" class="quiz-level-semester-filters"></div>
 
-          <div class="form-field form-field-wide">
-            <label for="titleInput">Quiz Topic</label>
-            <input id="titleInput" placeholder="e.g. Magnetic Force" />
-          </div>
+        <div class="quiz-toolbar">
+          <input
+            type="text"
+            id="quizSearch"
+            class="quiz-search"
+            placeholder="Search by title, subject or week..."
+          />
 
-          <div class="form-field">
-            <label for="priceInput">Price (₦)</label>
-            <input id="priceInput" type="number" min="0" placeholder="e.g. 500" />
-          </div>
+          <div id="quizFilters" class="quiz-filters"></div>
         </div>
-
-        <div class="quiz-form-actions">
-          <button type="submit" id="submitQuizBtn" class="btn-primary">
-            Create Quiz
-          </button>
-          <button type="button" id="cancelEditBtn" class="btn-secondary" hidden>
-            Cancel Edit
-          </button>
-        </div>
-      </form>
+      </div>
 
       <div id="quizList" class="quiz-list-wrapper">
         <p>Loading...</p>
@@ -99,9 +130,9 @@ export async function renderQuizzes(container) {
   await loadQuizzes();
 
   // Bail if a later renderQuizzes()/tab switch has already moved on.
-  // (loadSubjects/loadQuizzes below guard their own writes the same
-  // way, but the listeners below are the specific ones that crashed.)
   if (currentContainer !== container || !container.isConnected) return;
+
+  attachSearchListener();
 
   container
     .querySelector("#quizForm")
@@ -112,14 +143,12 @@ export async function renderQuizzes(container) {
 }
 
 /* =========================================================
-   SUBJECTS
+   SUBJECTS (for the create/edit form's dropdown)
 ========================================================= */
 async function loadSubjects() {
   const container = currentContainer;
   const snapshot = await getDocs(collection(db, "subjects"));
 
-  // Container moved on (different tab, or renderQuizzes called again)
-  // while this fetch was in flight — nothing left to safely update.
   if (currentContainer !== container) return;
 
   const select = container.querySelector("#subjectSelect");
@@ -292,7 +321,11 @@ async function updateQuiz(id, values) {
 }
 
 /* =========================================================
-   LOAD + RENDER QUIZ LIST
+   LOAD (fetch) + FILTER + RENDER
+   loadQuizzes() only fetches and rebuilds the toolbar's option
+   lists (levels/semesters/subjects come from whatever's actually
+   in the cache). renderQuizList() is the part that re-runs on
+   every filter change — it never refetches, same as Marketplace.
 ========================================================= */
 async function loadQuizzes() {
   const container = currentContainer;
@@ -300,22 +333,228 @@ async function loadQuizzes() {
 
   if (currentContainer !== container) return;
 
+  quizzesCache = [];
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+
+    // Some quizzes predate the level/semester fields. Without a
+    // fallback, String(undefined) becomes the literal text
+    // "undefined" in the Level/Semester dropdown options — this
+    // matches the same backward-compatibility default marketplace.js
+    // already uses for these older docs (100 Level, Semester 2).
+    quizzesCache.push({
+      id: docSnap.id,
+      ...data,
+      level: data.level ?? 100,
+      semester: data.semester ?? 2,
+    });
+  });
+
+  renderQuizToolbar();
+  renderQuizList();
+}
+
+function getLevelSemesterFilteredQuizzes() {
+  return quizzesCache.filter((quiz) => {
+    const matchesLevel =
+      selectedLevel === "All" || String(quiz.level) === selectedLevel;
+    const matchesSemester =
+      selectedSemester === "All" || String(quiz.semester) === selectedSemester;
+    return matchesLevel && matchesSemester;
+  });
+}
+
+function getFilteredQuizzes() {
+  const term = searchTerm;
+
+  return quizzesCache.filter((quiz) => {
+    const title = (quiz.title ?? "").toLowerCase();
+    const subjectName = (quiz.subjectName ?? "").toLowerCase();
+    const week = `week ${quiz.week}`;
+
+    const matchesSearch =
+      !term ||
+      title.includes(term) ||
+      subjectName.includes(term) ||
+      week.includes(term);
+
+    const matchesSubject =
+      selectedSubject === "All" || quiz.subjectName === selectedSubject;
+
+    const matchesLevel =
+      selectedLevel === "All" || String(quiz.level) === selectedLevel;
+    const matchesSemester =
+      selectedSemester === "All" || String(quiz.semester) === selectedSemester;
+
+    return matchesSearch && matchesSubject && matchesLevel && matchesSemester;
+  });
+}
+
+// Numeric values sort ascending; non-numeric values sort
+// alphabetically after all numeric ones. ("All" is handled by the
+// caller, not passed in here.)
+function sortDropdownValues(values) {
+  return values.sort((a, b) => {
+    const numA = Number(a);
+    const numB = Number(b);
+    const aIsNum = !Number.isNaN(numA);
+    const bIsNum = !Number.isNaN(numB);
+
+    if (aIsNum && bIsNum) return numA - numB;
+    if (aIsNum) return -1;
+    if (bIsNum) return 1;
+    return a.localeCompare(b);
+  });
+}
+
+function renderQuizToolbar() {
+  const container = currentContainer;
+  if (!container?.isConnected) return;
+
+  renderLevelSemesterFilters(container);
+  renderSubjectFilters(container);
+}
+
+function renderLevelSemesterFilters(container) {
+  const filtersEl = container.querySelector("#quizLevelSemesterFilters");
+  if (!filtersEl) return;
+
+  const levels = [
+    "All",
+    ...sortDropdownValues([
+      ...new Set(quizzesCache.map((quiz) => String(quiz.level))),
+    ]),
+  ];
+  const semesters = [
+    "All",
+    ...sortDropdownValues([
+      ...new Set(quizzesCache.map((quiz) => String(quiz.semester))),
+    ]),
+  ];
+
+  filtersEl.innerHTML = `
+    <div class="quiz-level-filter">
+      <label for="quizLevelSelect">Level</label>
+      <select id="quizLevelSelect">
+        ${levels
+          .map(
+            (level) => `
+              <option value="${level}" ${level === selectedLevel ? "selected" : ""}>
+                ${
+                  level === "All"
+                    ? "All Levels"
+                    : Number.isFinite(Number(level))
+                      ? `${level} Level`
+                      : level
+                }
+              </option>
+            `,
+          )
+          .join("")}
+      </select>
+    </div>
+
+    <div class="quiz-semester-filter">
+      <label for="quizSemesterSelect">Semester</label>
+      <select id="quizSemesterSelect">
+        ${semesters
+          .map(
+            (semester) => `
+              <option value="${semester}" ${semester === selectedSemester ? "selected" : ""}>
+                ${
+                  semester === "All"
+                    ? "All Semesters"
+                    : semester === "1"
+                      ? "First Semester"
+                      : semester === "2"
+                        ? "Second Semester"
+                        : `Semester ${semester}`
+                }
+              </option>
+            `,
+          )
+          .join("")}
+      </select>
+    </div>
+  `;
+
+  filtersEl
+    .querySelector("#quizLevelSelect")
+    ?.addEventListener("change", (e) => {
+      selectedLevel = e.target.value;
+      selectedSubject = "All"; // available subjects may differ per level/semester
+      renderSubjectFilters(currentContainer);
+      renderQuizList();
+    });
+
+  filtersEl
+    .querySelector("#quizSemesterSelect")
+    ?.addEventListener("change", (e) => {
+      selectedSemester = e.target.value;
+      selectedSubject = "All";
+      renderSubjectFilters(currentContainer);
+      renderQuizList();
+    });
+}
+
+function renderSubjectFilters(container) {
+  const filtersContainer = container?.querySelector("#quizFilters");
+  if (!filtersContainer) return;
+
+  const scoped = getLevelSemesterFilteredQuizzes();
+  const subjects = [
+    "All",
+    ...new Set(scoped.map((quiz) => quiz.subjectName)),
+  ].sort((a, b) => (a === "All" ? -1 : b === "All" ? 1 : a.localeCompare(b)));
+
+  filtersContainer.innerHTML = subjects
+    .map(
+      (subject) => `
+        <button
+          type="button"
+          class="quiz-filter-btn${subject === selectedSubject ? " active" : ""}"
+          data-subject="${subject}"
+        >
+          ${subject}
+        </button>
+      `,
+    )
+    .join("");
+
+  filtersContainer.querySelectorAll("[data-subject]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedSubject = btn.dataset.subject;
+      renderSubjectFilters(container);
+      renderQuizList();
+    });
+  });
+}
+
+function attachSearchListener() {
+  const search = currentContainer?.querySelector("#quizSearch");
+  search?.addEventListener("input", () => {
+    searchTerm = search.value.trim().toLowerCase();
+    renderQuizList();
+  });
+}
+
+function renderQuizList() {
+  const container = currentContainer;
+  if (!container?.isConnected) return;
+
   const list = container.querySelector("#quizList");
   if (!list) return;
 
-  quizzesCache = [];
-  snapshot.forEach((docSnap) => {
-    quizzesCache.push({ id: docSnap.id, ...docSnap.data() });
-  });
+  const filtered = getFilteredQuizzes();
 
-  if (quizzesCache.length === 0) {
+  if (filtered.length === 0) {
     list.innerHTML = renderEmptyState();
     return;
   }
 
   list.innerHTML = `
     <div class="quiz-grid">
-      ${quizzesCache.map(renderQuizCard).join("")}
+      ${filtered.map(renderQuizCard).join("")}
     </div>
   `;
 
@@ -323,9 +562,11 @@ async function loadQuizzes() {
 }
 
 function renderEmptyState() {
+  const hasAnyQuizzes = quizzesCache.length > 0;
+
   return `
     <div class="quiz-empty-state">
-      <p>No quizzes created yet</p>
+      <p>${hasAnyQuizzes ? "No quizzes match your filters." : "No quizzes created yet"}</p>
     </div>
   `;
 }
