@@ -323,6 +323,9 @@
 }
 
 .admin-wrap .activity-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   padding: 12px 14px;
   border-radius: 10px;
   background: #fafafa;
@@ -331,6 +334,30 @@
   color: #4b5563;
   font-size: 13px;
   line-height: 1.55;
+}
+
+.admin-wrap .activity-icon {
+  flex: 0 0 auto;
+  font-size: 14px;
+}
+
+.admin-wrap .activity-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-wrap .activity-time {
+  flex: 0 0 auto;
+  color: #9ca3af;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.admin-wrap .activity-item-loading {
+  color: #9ca3af;
+  font-style: italic;
+  border-left-color: #e5e7eb;
 }
 
 /* =========================================================

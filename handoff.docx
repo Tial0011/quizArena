@@ -2,7 +2,9 @@
 
 **Scope:** Bring the admin dashboard's visual design in line with the existing
 student dashboard (`dashboard.js` / `dashboard.css`), mobile-first, sharing
-the app's existing `scrollEffects.js` utility rather than duplicating it.
+the app's existing `scrollEffects.js` utility rather than duplicating it —
+then formalized the tone (school/board-console feel) and compacted the
+header into a slim row with a logo slot.
 
 **Files touched:** `admin.css` (new), `admin.js` (updated), `scrollEffects.js`
 (comment + one breakpoint fix only — logic untouched).
@@ -12,93 +14,164 @@ the app's existing `scrollEffects.js` utility rather than duplicating it.
 ## 1. Design reference
 
 The student dashboard (`dashboard.css`) was used as the source of truth for
-the visual language:
+the brand: purple gradient `linear-gradient(135deg, #7c3aed, #5b21b6)`,
+card radius/shadow family, and the `.load-in` / `.reveal` /
+`.reveal-visible` entrance-motion classes driven by `scrollEffects.js`.
 
-- Purple gradient hero: `linear-gradient(135deg, #7c3aed, #5b21b6)`
-- Card radii: 20–24px, `box-shadow: 0 8px 30px rgba(0,0,0,0.05)`, `1px solid
-  #ececec` borders
-- Entrance motion: `.load-in` (pop-in on mount) and `.reveal` /
-  `.reveal-visible` (scroll-triggered), both driven by `scrollEffects.js`
+## 2. First pass — game-app-style admin dashboard
 
-## 2. `admin.css` — what was built
+Built `admin.css` to match the student dashboard's playful visual language
+directly: filled gradient tab pills, bouncy pop-in animation
+(`admin-pop-in`, distinct keyframe but same `.load-in` class name), floating
+hero shapes, soft glowing card shadows.
 
-- Gradient hero header (`.admin-header`), tab bar (`.tab-btn` / `.active`),
-  overview stat cards (`.overview-grid` / `.overview-card`), and activity
-  list — styled to match the student dashboard's card/shadow/radius language.
-- Own `admin-pop-in` `@keyframes` (kept distinct from the student dashboard's
-  `dashboard-pop-in`, even though the class name applying it — `.load-in` —
-  is the same).
-
-## 3. `admin.js` — what changed
-
-- Added `.admin-wrap`, `data-reveal`, and `data-parallax-speed` hooks to the
-  markup.
-- Imports `initParallax` / `initScrollReveal` from `scrollEffects.js` and
-  calls them after every tab render.
-- Re-runs those on each dashboard-tab render specifically, since that tab
-  injects its own `.reveal` / `data-parallax-speed` nodes into the DOM.
-- Reuses the existing stale-async guard pattern (`if (activeTab !==
-  "dashboard") return;` in `loadDashboardStats`) — nothing new here, just
-  confirming it's still in place and still correct.
-
-## 4. Bug caught and fixed: cross-page class collision
+## 3. Bug caught and fixed: cross-page class collision
 
 **Problem:** `.load-in`, `.reveal`, and `.reveal-visible` were identical
-class *names* in both `admin.css` and `dashboard.css`. Since both
-stylesheets load together in the SPA, whichever one loaded last would
-silently win for **every** `.load-in`/`.reveal` element on **either** page —
-not just its own.
+class *names* in both `admin.css` and `dashboard.css`. Both stylesheets
+load together in the SPA, so whichever one loaded last would silently win
+for **every** `.load-in`/`.reveal` element on **either** page — not just
+its own.
 
 **Fix:** Every rule in `admin.css` is scoped under `.admin-wrap` (e.g.
-`.admin-wrap .load-in`, `.admin-wrap .reveal`), which raises specificity
-enough to keep the two pages isolated regardless of load order. No changes
-were needed to `scrollEffects.js`'s `data-reveal` / `reveal-visible`
-contract — it still just toggles a class name, and now each page's own CSS
-governs what that class means.
+`.admin-wrap .load-in`), which raises specificity enough to keep the two
+pages isolated regardless of load order. No changes were needed to
+`scrollEffects.js`'s `data-reveal` / `reveal-visible` contract — it just
+toggles a class name; each page's own CSS governs what that class means.
+**Any new admin CSS must follow this pattern** — never add a bare
+`.foo { }` rule to `admin.css`.
 
-## 5. Mobile-first rebuild
+## 4. Mobile-first rebuild
 
-Given most users are on phones, phone is the *default* layout, not a
-shrink-to-fit fallback:
+Phone is the *default* layout, not a shrink-to-fit fallback: sticky
+horizontally-scrolling tab bar instead of wrapping labels, 2-column stat
+grid even on the smallest phones (3 cols at `600px+`, 6 at `768px+`), all
+padding/type/radii scaled up via `min-width` queries rather than down.
 
-- Tab bar (`.admin-tabs`) is `position: sticky` and scrolls horizontally
-  (scrollbar hidden) instead of wrapping into cramped multi-line labels.
-- Logout button is full-width, 44px min-height (thumb-friendly tap target)
-  on phone; becomes an inline button at `600px+`.
-- Overview stats stay a 2-column grid even on the smallest phones (legible
-  at a glance, not one long scrolling column) — 3 columns at `600px+`, 6 at
-  `768px+`.
-- Padding, font sizes, and radii are all trimmed by default and stepped up
-  via `min-width: 600px` and `min-width: 768px` queries.
-
-## 6. `scrollEffects.js` — reviewed, not duplicated
+## 5. `scrollEffects.js` — reviewed, not duplicated
 
 It's intentionally page-agnostic (re-queries the DOM fresh every scroll
 tick, one shared listener, selector-driven via `data-reveal` /
-`data-parallax-speed`) — so admin didn't need its own copy. A dedicated
-admin version would've reintroduced the same class-collision risk described
-in §4.
+`data-parallax-speed`) — admin didn't need its own copy; a dedicated
+version would've reintroduced the collision risk from §3. **Don't fork
+this file per page.**
 
 Two small edits only:
+- Header comment now lists the admin dashboard as a third consumer.
+- `initParallax()` disables below `768px`; `admin.css`'s own layout
+  breakpoint is also aligned to `768px` so "mobile layout" and "parallax
+  on" flip at the same width everywhere.
 
-- Header comment now lists the admin dashboard as a third consumer
-  (previously said "landing page and student dashboard" only).
-- `initParallax()` turns parallax off below `768px`, but `admin.css` was
-  originally switching to desktop tab layout at `900px` — a mismatch where
-  hero shapes could start drifting while the tab bar was still in mobile
-  mode. Both are now aligned to `768px`.
+Current location: `student/scrollEffects.js`, imported by admin as
+`../student/scrollEffects.js` — works correctly. **Open suggestion (not
+urgent):** since landing/student/admin all depend on it equally, a path
+like `shared/scrollEffects.js` would better reflect its actual scope if
+it's ever moved.
 
-## 7. Current file location
+## 6. Second pass — formalized to a "school board" tone
 
-The shared utility lives at `student/scrollEffects.js` and `admin.js`
-imports it from there directly (`../student/scrollEffects.js`) — this is
-correct and works fine functionally.
+Per request, reworked the *tone* (not the brand) toward an institutional
+admin console: kept the request's three explicit calls —
+top tab bar (not a sidebar), emoji icons kept, entrance animation kept but
+calmer.
 
-**Open suggestion (not urgent):** since landing, student, and admin all
-depend on it equally, consider relocating it to a neutral path like
-`shared/scrollEffects.js` at some point, so the folder name doesn't imply
-student ownership of a cross-app utility. Purely organizational — no
-behavior change.
+- **Tabs** — switched from filled gradient pills to an underline-indicator
+  style (quiet text, purple bottom-border on active).
+- **Cards** — flatter: thin visible border doing the work instead of a
+  soft floating shadow, smaller radius (14px).
+- **Stats** — icon badges shrunk and turned neutral gray, so the emoji
+  reads as a label glyph rather than a game-achievement badge; labels in
+  small-caps with letter-spacing.
+- **Motion** — replaced the bounce/overshoot keyframe with a calm
+  `admin-fade-in` (opacity + 8px rise, no scale) for both `.load-in` and
+  `.reveal`.
+- **Header** — added an "Administration Console" eyebrow label above the
+  title, muted the decorative hero shapes, outlined (not filled) logout
+  button.
+
+## 7. Bug: large empty space at top of the header
+
+**Symptom (reported with screenshot):** a big gap of purple space above
+"ADMINISTRATION CONSOLE" inside the hero box.
+
+**Root cause:** a leftover *duplicate* `.admin-header h1` / `.admin-header
+p` rule further down the file (same specificity, defined later, so it was
+winning) that never had its margin fully reset — only `margin-bottom` was
+set on the first (correct) rule, so the browser default top margin was
+still in effect. (Initially suspected a missing CSS reset, but the
+project's actual `reset.css` already zeroes `margin`/`padding` globally on
+`*` — confirmed once that file was shared — so the real cause was purely
+the duplicate rule, not a missing reset.)
+
+**Fix:** removed the duplicate block, explicitly set `margin: 0` (not just
+`margin-bottom`) on the eyebrow/h1/p, and trimmed header padding slightly.
+
+## 8. `responsive.css` reviewed — no conflict found
+
+A separate `responsive.css` (loaded last, overrides `dashboard.css` and
+`auth.css` at `max-width: 768px`) was checked against admin's styles.
+**No overlap** — every selector in it targets student-dashboard or
+auth/landing classes (`.dashboard-hero`, `.action-grid`, `.hero`,
+`.auth-card`, etc.), nothing `.admin-*`. Confirmed it wasn't the cause of
+the padding bug in §7.
+
+**Flag for later:** that file's existing overrides use bare selectors
+(e.g. `.dashboard-hero { }`), which works because `dashboard.css` also
+uses bare selectors — same specificity, last-loaded wins. If an admin
+section is ever added to `responsive.css` following that same pattern
+(e.g. `.admin-header { }`), it will **silently lose** to `admin.css`'s
+more specific `.admin-wrap .admin-header` rule regardless of load order.
+Any future admin override there needs the `.admin-wrap` prefix too.
+
+## 9. Header rebuilt as a compact row (was a tall stacked block)
+
+Per request, converted `.admin-header` from a tall `flex-direction: column`
+block (eyebrow → title → description → full-width button, each on its own
+line) into a slim horizontal row at **every** screen size — logo · title
+block · logout button, side-by-side, all still present:
+
+- Title and description now truncate with `text-overflow: ellipsis`
+  (`white-space: nowrap; overflow: hidden`) instead of wrapping, so the bar
+  stays a fixed short height regardless of text length or screen width.
+- This requires `min-width: 0` on the flex child holding the text — a
+  flex item's default `min-width` is `auto` (its content size), which
+  silently defeats `text-overflow: ellipsis` if left unset.
+- Logout button changed from `align-self: stretch` (full width/height) to
+  `flex: 0 0 auto` (sized to its own content, right-aligned, vertically
+  centered).
+- Decorative hero shapes scaled down proportionally to match the shorter
+  box.
+- Removed now-dead desktop overrides that used to switch the header from
+  column → row and stretch → auto on the logout button — both are the
+  default at every width now, so those rules were deleted rather than left
+  as unreachable code.
+
+## 10. Logo slot added
+
+Added a brand-mark slot to the header, left of the title block:
+
+```html
+<img
+  src="../../icon/icon-192.png"
+  alt="Quiz Arena"
+  class="admin-logo"
+/>
+```
+
+- 34px square, translucent rounded badge (`rgba(255,255,255,0.14)`
+  background + border) so a light/transparent PNG stays readable against
+  the gradient regardless of the icon's own colors.
+- `object-fit: contain` + small padding so the image is never stretched or
+  cropped inside the badge.
+- **Path is relative to wherever `admin.js` lives** — `../../icon/icon-192.png`
+  assumes two directories up from `admin.js` into an `icon/` folder.
+  **Re-check this path against the actual project structure** — if
+  `admin.js` moves, or if the icon actually lives somewhere like
+  `public/icon/`, the `../../` count needs adjusting.
+- The title block was given an explicit `.admin-header-text` class rather
+  than relying on `:first-child`, since the logo is now the first child of
+  the header and a positional selector would have silently pointed at the
+  wrong element.
 
 ---
 
@@ -108,9 +181,14 @@ behavior change.
   its purchased-quiz number on load; the admin overview stats (`Subjects`,
   `Weekly Quizzes`, `Questions`, `Students`, `Total Revenue`, `Top Selling
   Quiz`) currently just snap from `--` to their final value once
-  `loadDashboardStats()` resolves. Wiring `animateCountUp` in would bring
-  parity, and the piece it needs (`animateCountUp` export) already exists in
-  `scrollEffects.js` — not yet done, flagged for whoever picks this up next.
+  `loadDashboardStats()` resolves. `animateCountUp` already exists in
+  `scrollEffects.js` — just not wired in yet.
+- **Logo path** — confirm `../../icon/icon-192.png` resolves correctly once
+  tested in the real project structure (see §10).
+- Revenue/top-quiz figures join each paid purchase to the quiz's *current*
+  price — if a quiz's price changes after a sale, past revenue reflects the
+  new price, not what was actually paid. Accurate historical revenue would
+  require storing the amount on the purchase doc at write time.
 
 ## Files in this handoff
 

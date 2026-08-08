@@ -10,11 +10,21 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = document.getElementById("app");
 
 let activeTab = "dashboard";
+
+// Icon + copy for each activity source. Keyed by the same "type"
+// tag pushed onto events in loadRecentActivity() below.
+const ACTIVITY_META = {
+  subject: { icon: "📚", verb: "New subject added" },
+  quiz: { icon: "📝", verb: "New quiz created" },
+  question: { icon: "❓", verb: "New question added" },
+};
 
 export function renderAdminDashboard() {
   app.innerHTML = `
@@ -183,16 +193,10 @@ async function renderTabContent() {
 
           <h2>Recent Activity</h2>
 
-          <div class="activity-list">
-
-            <div class="activity-item">
-              🚀 Quiz Arena Admin is ready.
+          <div class="activity-list" id="activityList">
+            <div class="activity-item activity-item-loading">
+              Loading recent activity…
             </div>
-
-            <div class="activity-item">
-              Create subjects, quizzes and questions to get started.
-            </div>
-
           </div>
 
         </div>
@@ -202,7 +206,7 @@ async function renderTabContent() {
       // own .reveal / data-parallax-speed nodes) exists in the DOM.
       initAdminEffects();
 
-      await loadDashboardStats();
+      await Promise.all([loadDashboardStats(), loadRecentActivity()]);
 
       break;
 
@@ -281,6 +285,144 @@ async function loadDashboardStats() {
       ? (quizById[topEntry[0]]?.title ?? "Unknown quiz")
       : "No sales yet";
   }
+}
+
+// Pulls the most recent few subjects/quizzes/questions (by createdAt)
+// and merges them into a single feed. There's no dedicated "activity
+// log" collection — this is a fan-out read across the three content
+// collections rather than a stored event stream, so it costs 3 reads
+// (well, 3 queries of `limit` docs each) per dashboard visit. Fine at
+// current scale; if it ever needs to scale up, a written activity-log
+// collection would be the next step instead of widening these limits.
+async function loadRecentActivity() {
+  const FETCH_LIMIT = 5;
+  const DISPLAY_LIMIT = 6;
+
+  let subjectSnap, quizSnap, questionSnap;
+
+  try {
+    [subjectSnap, quizSnap, questionSnap] = await Promise.all([
+      getDocs(
+        query(
+          collection(db, "subjects"),
+          orderBy("createdAt", "desc"),
+          limit(FETCH_LIMIT),
+        ),
+      ),
+      getDocs(
+        query(
+          collection(db, "quizzes"),
+          orderBy("createdAt", "desc"),
+          limit(FETCH_LIMIT),
+        ),
+      ),
+      getDocs(
+        query(
+          collection(db, "questions"),
+          orderBy("createdAt", "desc"),
+          limit(FETCH_LIMIT),
+        ),
+      ),
+    ]);
+  } catch (err) {
+    console.error("Failed to load recent activity:", err);
+
+    if (activeTab === "dashboard") {
+      renderActivityList([], "Couldn't load recent activity right now.");
+    }
+
+    return;
+  }
+
+  // Same tab-switch race as loadDashboardStats() above — bail if
+  // #activityList no longer exists.
+  if (activeTab !== "dashboard") return;
+
+  const events = [
+    ...subjectSnap.docs.map((docSnap) =>
+      toActivityEvent("subject", docSnap.data()),
+    ),
+    ...quizSnap.docs.map((docSnap) => toActivityEvent("quiz", docSnap.data())),
+    ...questionSnap.docs.map((docSnap) =>
+      toActivityEvent("question", docSnap.data()),
+    ),
+  ];
+
+  events.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+
+  renderActivityList(events.slice(0, DISPLAY_LIMIT));
+}
+
+function toActivityEvent(type, data) {
+  const meta = ACTIVITY_META[type];
+
+  const label =
+    type === "question"
+      ? truncate(data.text ?? data.question ?? "Untitled question", 60)
+      : (data.title ?? data.name ?? `Untitled ${type}`);
+
+  return {
+    type,
+    createdAt: data.createdAt,
+    text: `${meta.verb}: ${label}`,
+  };
+}
+
+function renderActivityList(events, emptyMessage) {
+  const listEl = document.getElementById("activityList");
+  if (!listEl) return;
+
+  if (events.length === 0) {
+    listEl.innerHTML = `<div class="activity-item">${
+      emptyMessage ??
+      "No activity yet — create a subject, quiz or question to get started."
+    }</div>`;
+    return;
+  }
+
+  listEl.innerHTML = events
+    .map(
+      (event) => `
+        <div class="activity-item">
+          <span class="activity-icon">${ACTIVITY_META[event.type].icon}</span>
+          <span class="activity-text">${escapeHtml(event.text)}</span>
+          <span class="activity-time">${formatRelativeTime(event.createdAt)}</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function toMillis(timestamp) {
+  return timestamp?.toMillis ? timestamp.toMillis() : 0;
+}
+
+function formatRelativeTime(timestamp) {
+  if (!timestamp?.toDate) return "";
+
+  const diffMs = Date.now() - timestamp.toDate().getTime();
+  const diffMin = Math.round(diffMs / 60000);
+
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+
+  const diffDay = Math.round(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+
+  return timestamp.toDate().toLocaleDateString();
+}
+
+function truncate(str, max) {
+  return str.length > max ? `${str.slice(0, max - 1)}…` : str;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function setStatText(elementId, value) {

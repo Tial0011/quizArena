@@ -15,14 +15,38 @@ import {
      populate the edit form.
    - editingQuizId tracks whether the form is in
      "create" mode (null) or "edit" mode (quiz id).
+   - currentContainer is the DOM node this module is currently
+     rendering into. Every DOM read/write below goes through
+     currentContainer.querySelector(...) instead of the global
+     document.getElementById(...).
+
+     Why: renderQuizzes() awaits network calls (loadSubjects,
+     loadQuizzes) before touching the DOM again. If the admin
+     switches tabs while one of those awaits is in flight,
+     dashboard.js's renderAdminDashboard() replaces the *entire*
+     app.innerHTML, including a brand-new #adminContent — the
+     old container node (and everything inside it) is detached
+     from the live document. A global document.getElementById()
+     call made after that point searches the live document, finds
+     nothing, and returns null — which is what caused
+     "Cannot read properties of null (reading 'addEventListener')".
+
+     Querying the captured container instead always finds the
+     elements that were actually rendered by *this* call, whether
+     or not that subtree is still attached to the page. Writing
+     into a detached subtree is harmless (just wasted, invisible
+     work) instead of a crash.
 ========================================================= */
 let quizzesCache = [];
 let editingQuizId = null;
+let currentContainer = null;
 
 /* =========================================================
    PUBLIC ENTRY POINT
 ========================================================= */
 export async function renderQuizzes(container) {
+  currentContainer = container;
+
   container.innerHTML = `
     <div class="admin-card">
       <div class="quizzes-header">
@@ -74,24 +98,35 @@ export async function renderQuizzes(container) {
   await loadSubjects();
   await loadQuizzes();
 
-  document
-    .getElementById("quizForm")
-    .addEventListener("submit", handleFormSubmit);
-  document
-    .getElementById("cancelEditBtn")
-    .addEventListener("click", exitEditMode);
+  // Bail if a later renderQuizzes()/tab switch has already moved on.
+  // (loadSubjects/loadQuizzes below guard their own writes the same
+  // way, but the listeners below are the specific ones that crashed.)
+  if (currentContainer !== container || !container.isConnected) return;
+
+  container
+    .querySelector("#quizForm")
+    ?.addEventListener("submit", handleFormSubmit);
+  container
+    .querySelector("#cancelEditBtn")
+    ?.addEventListener("click", exitEditMode);
 }
 
 /* =========================================================
    SUBJECTS
 ========================================================= */
 async function loadSubjects() {
-  const select = document.getElementById("subjectSelect");
+  const container = currentContainer;
+  const snapshot = await getDocs(collection(db, "subjects"));
+
+  // Container moved on (different tab, or renderQuizzes called again)
+  // while this fetch was in flight — nothing left to safely update.
+  if (currentContainer !== container) return;
+
+  const select = container.querySelector("#subjectSelect");
+  if (!select) return;
 
   // Clear old options (important if this page is rendered again)
   select.innerHTML = `<option value="">Select Subject</option>`;
-
-  const snapshot = await getDocs(collection(db, "subjects"));
 
   snapshot.forEach((docSnap) => {
     const subject = docSnap.data();
@@ -121,7 +156,7 @@ async function loadSubjects() {
    FORM HELPERS
 ========================================================= */
 function getFormValues() {
-  const subjectSelect = document.getElementById("subjectSelect");
+  const subjectSelect = currentContainer.querySelector("#subjectSelect");
   const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
 
   return {
@@ -131,9 +166,9 @@ function getFormValues() {
     level: Number(selectedOption.dataset.level),
     semester: Number(selectedOption.dataset.semester),
 
-    week: document.getElementById("weekInput").value,
-    title: document.getElementById("titleInput").value.trim(),
-    price: document.getElementById("priceInput").value,
+    week: currentContainer.querySelector("#weekInput").value,
+    title: currentContainer.querySelector("#titleInput").value.trim(),
+    price: currentContainer.querySelector("#priceInput").value,
   };
 }
 
@@ -158,33 +193,47 @@ function validateForm(values) {
 }
 
 function resetForm() {
-  document.getElementById("quizForm").reset();
+  currentContainer.querySelector("#quizForm")?.reset();
 }
 
 function enterEditMode(quiz, id) {
   editingQuizId = id;
 
-  document.getElementById("subjectSelect").value = quiz.subjectId;
-  document.getElementById("weekInput").value = quiz.week;
-  document.getElementById("titleInput").value = quiz.title;
-  document.getElementById("priceInput").value = quiz.price;
+  const container = currentContainer;
 
-  const submitBtn = document.getElementById("submitQuizBtn");
-  submitBtn.textContent = "Save Changes";
+  const subjectSelect = container.querySelector("#subjectSelect");
+  if (subjectSelect) subjectSelect.value = quiz.subjectId;
 
-  document.getElementById("cancelEditBtn").hidden = false;
+  const weekInput = container.querySelector("#weekInput");
+  if (weekInput) weekInput.value = quiz.week;
 
-  document
-    .getElementById("quizForm")
-    .scrollIntoView({ behavior: "smooth", block: "start" });
+  const titleInput = container.querySelector("#titleInput");
+  if (titleInput) titleInput.value = quiz.title;
+
+  const priceInput = container.querySelector("#priceInput");
+  if (priceInput) priceInput.value = quiz.price;
+
+  const submitBtn = container.querySelector("#submitQuizBtn");
+  if (submitBtn) submitBtn.textContent = "Save Changes";
+
+  const cancelBtn = container.querySelector("#cancelEditBtn");
+  if (cancelBtn) cancelBtn.hidden = false;
+
+  container
+    .querySelector("#quizForm")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function exitEditMode() {
   editingQuizId = null;
   resetForm();
 
-  document.getElementById("submitQuizBtn").textContent = "Create Quiz";
-  document.getElementById("cancelEditBtn").hidden = true;
+  const container = currentContainer;
+  const submitBtn = container?.querySelector("#submitQuizBtn");
+  if (submitBtn) submitBtn.textContent = "Create Quiz";
+
+  const cancelBtn = container?.querySelector("#cancelEditBtn");
+  if (cancelBtn) cancelBtn.hidden = true;
 }
 
 /* =========================================================
@@ -193,6 +242,7 @@ function exitEditMode() {
 async function handleFormSubmit(e) {
   e.preventDefault();
 
+  const container = currentContainer;
   const values = getFormValues();
   if (!validateForm(values)) return;
 
@@ -201,6 +251,10 @@ async function handleFormSubmit(e) {
   } else {
     await createQuiz(values);
   }
+
+  // Tab changed while the write was in flight — don't touch a form
+  // that's no longer on screen.
+  if (currentContainer !== container || !container.isConnected) return;
 
   exitEditMode();
   await loadQuizzes();
@@ -241,8 +295,13 @@ async function updateQuiz(id, values) {
    LOAD + RENDER QUIZ LIST
 ========================================================= */
 async function loadQuizzes() {
-  const list = document.getElementById("quizList");
+  const container = currentContainer;
   const snapshot = await getDocs(collection(db, "quizzes"));
+
+  if (currentContainer !== container) return;
+
+  const list = container.querySelector("#quizList");
+  if (!list) return;
 
   quizzesCache = [];
   snapshot.forEach((docSnap) => {
@@ -344,7 +403,11 @@ function handleEditClick(id) {
 async function handleDeleteClick(id) {
   if (!confirm("Delete this quiz?")) return;
 
+  const container = currentContainer;
+
   await deleteDoc(doc(db, "quizzes", id));
+
+  if (currentContainer !== container || !container.isConnected) return;
 
   if (editingQuizId === id) {
     exitEditMode();
