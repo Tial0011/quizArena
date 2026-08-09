@@ -242,7 +242,7 @@ function registerMarkup() {
     <p class="auth-subtitle">Set up your details to get started</p>
 
     <div class="form-group">
-      <label for="name">Full Name</label>
+      <label for="name">User Name</label>
       <div class="input-with-icon">
         <span class="input-icon">👤</span>
         <input
@@ -271,7 +271,7 @@ function registerMarkup() {
         <input
           id="password"
           type="password"
-          placeholder="Create a password"
+          placeholder="Create your quiz arena password"
         >
       </div>
     </div>
