@@ -56,9 +56,9 @@
 
 /* Title row: welcome heading + notification bell side by side.
    Split out from .hero-text (which still wraps the whole block,
-   including the subtitle line below) so the bell can sit flush
-   with the heading instead of being centered against the taller
-   two-line hero. */
+   including the subtitle line below) so the bell sits flush with
+   the heading instead of centered against the taller two-line
+   hero. */
 .hero-top {
   position: relative;
   display: flex;
@@ -89,7 +89,6 @@
 ========================= */
 
 .notif-bell-wrap {
-  position: relative;
   flex: 0 0 auto;
 }
 
@@ -168,18 +167,23 @@
   }
 }
 
+/* The panel itself is appended straight to document.body by
+   dashboard.js (see setupNotifBell / positionNotifPanel), not
+   nested under .dashboard-hero — that box has overflow:hidden to
+   clip its decorative parallax shapes at the rounded corners,
+   which was also silently clipping the dropdown. Being on body
+   with position:fixed and JS-computed top/left sidesteps that
+   entirely, the same way dangerDialog.js's overlay lives on body
+   instead of inside whichever admin tab happened to be open. */
 .notif-panel {
-  position: absolute;
-  top: 52px;
-  right: 0;
-  width: 300px;
-  max-width: 80vw;
+  position: fixed;
+  width: min(300px, 80vw);
   max-height: 360px;
   overflow-y: auto;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
-  z-index: 20;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  z-index: 1000;
   color: #111827;
 }
 

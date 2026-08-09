@@ -1,10 +1,14 @@
 const functions = require("firebase-functions");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
 admin.initializeApp();
 const db = admin.firestore();
 
+/* =========================================================
+   PAYMENTS — Flutterwave purchase verification
+========================================================= */
 exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
   const { userId, quizId, txRef, transactionId } = request.data;
 
@@ -123,3 +127,134 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
     message: "Purchase successful.",
   };
 });
+
+/* =========================================================
+   NOTIFICATIONS — push dispatch
+
+   Fires whenever a doc is added to "notifications" — from the
+   admin Notifications tab, or automatically via
+   sendNewQuizNotification() / sendWelcomeNotification() (both in
+   notificationsService.js on the client). This is the ONE place
+   that actually talks to FCM; the client only ever writes the
+   Firestore doc and saves device tokens onto the user doc, it
+   never sends a push directly.
+
+   targetUserId on the doc decides who gets it:
+   - "all"          → every student's saved tokens
+   - a specific uid → just that student's saved tokens
+
+   Reuses the same admin.initializeApp()/db already set up above
+   for the payments function — Cloud Functions in the same
+   deployment share one Admin SDK instance, no need for a second
+   initializeApp() call (that would actually throw).
+========================================================= */
+const BROADCAST_TARGET = "all";
+
+exports.sendNotificationPush = onDocumentCreated(
+  "notifications/{notificationId}",
+  async (event) => {
+    const data = event.data?.data();
+    if (!data?.message) return;
+
+    const { message, targetUserId } = data;
+
+    const tokens = await collectTokens(targetUserId);
+    if (tokens.length === 0) return;
+
+    const response = await admin.messaging().sendEachForMulticast({
+      tokens,
+      notification: {
+        title: "Quiz Arena",
+        body: message,
+      },
+      webpush: {
+        fcmOptions: {
+          link: "/",
+        },
+      },
+    });
+
+    await cleanupInvalidTokens(tokens, response, targetUserId);
+  },
+);
+
+async function collectTokens(targetUserId) {
+  if (targetUserId && targetUserId !== BROADCAST_TARGET) {
+    const snap = await db.collection("users").doc(targetUserId).get();
+    return snap.exists ? snap.data().fcmTokens || [] : [];
+  }
+
+  // Broadcast: every student's tokens, deduped (a student signed in
+  // on multiple devices has one token per device).
+  const snap = await db
+    .collection("users")
+    .where("role", "==", "student")
+    .get();
+
+  const tokens = [];
+  snap.forEach((docSnap) => {
+    const docTokens = docSnap.data().fcmTokens;
+    if (Array.isArray(docTokens)) tokens.push(...docTokens);
+  });
+
+  return [...new Set(tokens)];
+}
+
+/**
+ * Stale tokens (app uninstalled, permission revoked, browser data
+ * cleared, etc.) get pruned from whichever user doc(s) they belong
+ * to, so future sends stop retrying dead tokens.
+ */
+async function cleanupInvalidTokens(tokens, response, targetUserId) {
+  const invalidTokens = [];
+
+  response.responses.forEach((res, i) => {
+    if (!res.success) {
+      const code = res.error?.code;
+      if (
+        code === "messaging/invalid-registration-token" ||
+        code === "messaging/registration-token-not-registered"
+      ) {
+        invalidTokens.push(tokens[i]);
+      }
+    }
+  });
+
+  if (invalidTokens.length === 0) return;
+
+  if (targetUserId && targetUserId !== BROADCAST_TARGET) {
+    await db
+      .collection("users")
+      .doc(targetUserId)
+      .update({
+        fcmTokens: admin.firestore.FieldValue.arrayRemove(...invalidTokens),
+      });
+    return;
+  }
+
+  // Broadcast case: don't know upfront which student doc each dead
+  // token belongs to, so scan student docs and strip out any of the
+  // invalid ones each one happens to hold.
+  const snap = await db
+    .collection("users")
+    .where("role", "==", "student")
+    .get();
+
+  const batch = db.batch();
+  let hasWrites = false;
+
+  snap.forEach((docSnap) => {
+    const owned = (docSnap.data().fcmTokens || []).filter((t) =>
+      invalidTokens.includes(t),
+    );
+
+    if (owned.length > 0) {
+      batch.update(docSnap.ref, {
+        fcmTokens: admin.firestore.FieldValue.arrayRemove(...owned),
+      });
+      hasWrites = true;
+    }
+  });
+
+  if (hasWrites) await batch.commit();
+}

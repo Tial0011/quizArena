@@ -11,6 +11,10 @@ import {
   formatNotificationTime,
 } from "../notificationsService.js";
 import {
+  initPushNotifications,
+  requestPushPermission,
+} from "../pushNotifications.js";
+import {
   renderRecentAttemptsMarkup,
   renderScoreTrendChartMarkup,
 } from "./analyticsWidgets.js";
@@ -249,6 +253,7 @@ export function renderStudentDashboard(userData = {}) {
   setupDashboardEvents(userData);
   initDashboardEffects();
   loadAnalytics(userData);
+  initPushNotifications(userData.id);
 }
 
 /* =========================================================
@@ -264,7 +269,7 @@ async function loadAnalytics(userData) {
   const [attempts, streakCount, notifications] = await Promise.all([
     getRecentAttempts(userData.id, 5),
     getStreakCount(userData.id),
-    getRecentNotificationsForUser(userData.id),
+    getRecentNotificationsForUser(userData.id, userData.createdAt),
   ]);
 
   const trendContainer = document.getElementById("scoreTrendContainer");
@@ -467,6 +472,13 @@ function setupNotifBell(userData) {
 
     if (opening) {
       positionNotifPanel(panel, bell);
+
+      // Only ask if the student has never answered the permission
+      // prompt — this click is the real user gesture some browsers
+      // (Safari especially) require for that prompt to fire at all.
+      if (window.Notification && Notification.permission === "default") {
+        requestPushPermission(userData.id);
+      }
     }
 
     panel.hidden = !opening;

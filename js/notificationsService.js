@@ -114,20 +114,38 @@ export async function getRecentNotifications(count = FETCH_LIMIT) {
 }
 
 /**
- * Fetches a student's notification feed: every broadcast, plus any
- * personal pings sent just to them. This is what the bell panel
- * shows. Same composite-index note as getRecentNotifications()
- * applies here (targetUserId "in" [...] + orderBy createdAt).
+ * Fetches a student's notification feed: every broadcast sent since
+ * their account existed, plus any personal pings sent just to them
+ * (which are always after signup anyway — e.g. the welcome message).
+ * This is what the bell panel shows.
+ *
+ * `accountCreatedAt` is the student's own `createdAt` off their user
+ * doc — without it, a brand-new signup would see every broadcast
+ * ever sent, including ones from months before they existed. If it's
+ * missing for some reason, this falls back to showing everything
+ * rather than silently returning nothing.
+ *
+ * NOTE: combines an "in" filter (targetUserId) with a range filter
+ * (createdAt >) ordered on that same range field — valid, but
+ * Firestore will still want a composite index for it, same one-click
+ * deal as the other queries in this project.
  */
 export async function getRecentNotificationsForUser(
   userId,
+  accountCreatedAt = null,
   count = FETCH_LIMIT,
 ) {
   if (!userId) return [];
 
+  const filters = [where("targetUserId", "in", [BROADCAST_TARGET, userId])];
+
+  if (accountCreatedAt) {
+    filters.push(where("createdAt", ">", accountCreatedAt));
+  }
+
   const q = query(
     collection(db, "notifications"),
-    where("targetUserId", "in", [BROADCAST_TARGET, userId]),
+    ...filters,
     orderBy("createdAt", "desc"),
     limit(count),
   );
