@@ -5,7 +5,7 @@ import { renderMyQuizzes } from "./myQuizzes.js";
 import { renderFriendGroups } from "./friendGroups.js";
 import { getRecentAttempts, getStreakCount } from "./attemptsService.js";
 import {
-  getRecentNotificationsForUser,
+  listenToNotificationsForUser,
   markNotificationsSeen,
   dismissNotificationForUser,
   countUnread,
@@ -14,7 +14,6 @@ import {
 import {
   initPushNotifications,
   requestPushPermission,
-  onForegroundPush,
 } from "../pushNotifications.js";
 import {
   renderRecentAttemptsMarkup,
@@ -32,15 +31,23 @@ const app = document.getElementById("app");
 const DEFAULT_HERO_MESSAGE =
   "Master one quiz today and keep your streak alive.";
 
-// How many notifications the bell panel shows at once. Fetches a
-// larger batch than this (see refreshNotifications) since some of
-// what comes back may already be dismissed and get filtered out.
+// How many notifications the bell panel shows at once. The live
+// listener (see startNotificationsListener) fetches a larger batch
+// than this since some of what comes back may already be dismissed
+// and get filtered out.
 const NOTIF_DISPLAY_LIMIT = 7;
 
 // The notifications currently rendered in the panel — kept around
-// so dismissing one can update the badge/list in place without a
-// full refetch.
+// so dismissing one can update the badge/list in place without
+// waiting on the listener to fire again (dismissal doesn't touch
+// the notifications collection, so the listener wouldn't re-fire
+// from it anyway).
 let renderedNotifications = [];
+
+// Unsubscribes the previous live listener before starting a new one
+// — same leak-prevention idea as outsideClickHandler/notifCloseHandler
+// below, just for a Firestore subscription instead of a DOM listener.
+let unsubscribeNotifications = null;
 
 // Re-bound on every render (see setupNotifBell) so a student
 // bouncing back to the dashboard a few times in one session never
@@ -266,9 +273,7 @@ export function renderStudentDashboard(userData = {}) {
   initDashboardEffects();
   loadAnalytics(userData);
 
-  // Must be set before push registration — a foreground push could
-  // otherwise arrive before there's anything listening for it.
-  onForegroundPush(() => refreshNotifications(userData));
+  startNotificationsListener(userData);
   initPushNotifications(userData.id);
 }
 
@@ -307,11 +312,6 @@ async function loadAnalytics(userData) {
   if (streakEl) {
     updateStreakCard(streakEl, streakCount);
   }
-
-  // Not awaited alongside the above — runs concurrently and updates
-  // the bell whenever it resolves, same "guarded, never blocks the
-  // rest of the page" pattern as everything else in this function.
-  refreshNotifications(userData);
 }
 
 /**
@@ -380,25 +380,31 @@ function updateStreakCard(streakEl, streakCount) {
 }
 
 /**
- * Fetches the student's notification feed, filters out anything
- * they've already dismissed, caps it to NOTIF_DISPLAY_LIMIT, and
- * renders it. Called on initial load and again whenever a
- * foreground push arrives (see onForegroundPush in
- * renderStudentDashboard).
+ * Subscribes to the student's notification feed in real time — the
+ * panel now updates the instant a matching notification is written
+ * to Firestore, same as a chat app's message list, no reload or
+ * push needed for the open-tab case. Unsubscribes any previous
+ * listener first, so repeat visits to the dashboard in one session
+ * don't stack up multiple live connections.
  */
-async function refreshNotifications(userData) {
-  const fetched = await getRecentNotificationsForUser(
+function startNotificationsListener(userData) {
+  if (unsubscribeNotifications) {
+    unsubscribeNotifications();
+  }
+
+  unsubscribeNotifications = listenToNotificationsForUser(
     userData.id,
     userData.createdAt,
+    (notifications) => {
+      const dismissed = userData.dismissedNotificationIds || [];
+      const visible = notifications
+        .filter((n) => !dismissed.includes(n.id))
+        .slice(0, NOTIF_DISPLAY_LIMIT);
+
+      renderedNotifications = visible;
+      renderNotifications(userData, visible);
+    },
   );
-
-  const dismissed = userData.dismissedNotificationIds || [];
-  const visible = fetched
-    .filter((n) => !dismissed.includes(n.id))
-    .slice(0, NOTIF_DISPLAY_LIMIT);
-
-  renderedNotifications = visible;
-  renderNotifications(userData, visible);
 }
 
 /**

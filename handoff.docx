@@ -368,9 +368,9 @@ Cloudinary storage after a cascade delete runs. Flagged, not solved.
 **Student side:**
 - Notification bell next to "Welcome Back" — unread badge, wiggles while unread, opens a dropdown panel.
 - Panel shows up to 7 notifications; each has its own dismiss (✕) button — dismissing hides it from that student only, doesn't touch it for anyone else.
-- Bell panel updates live if a push arrives while the tab's already open, not just on next reload.
+- **Bell is now real-time** — a Firestore `onSnapshot` listener, not a one-time fetch. A new notification appears in the panel the instant it's written, same as a chat app, no refresh needed and no dependence on push/FCM for the open-tab case.
 - Best Score stat card replaced with an animated Day Streak card (flame pulses while streak > 0).
-- Real OS/phone push notifications, on top of the in-app bell.
+- Real OS/phone push notifications, on top of the in-app bell (still needed for the app-fully-closed case, which real-time listeners can't cover).
 
 **Admin side:**
 - "Notifications" tab — compose a broadcast, see sent history, delete one.
@@ -385,8 +385,8 @@ Cloudinary storage after a cascade delete runs. Flagged, not solved.
 
 | File | Destination | Status |
 |---|---|---|
-| `notificationsService.js` | root, next to `auth.js` | updated — added `dismissNotificationForUser()` |
-| `pushNotifications.js` | root, next to `auth.js` | updated — added `onForegroundPush()` |
+| `notificationsService.js` | root, next to `auth.js` | updated — added `listenToNotificationsForUser()` (real-time), `dismissNotificationForUser()` |
+| `pushNotifications.js` | root, next to `auth.js` | updated — removed `onForegroundPush()` (superseded by the real-time listener) |
 | `firebase-messaging-sw.js` | **site root**, same level as `index.html` | unchanged |
 | `functions/index.js` | replaces your existing `functions/index.js` | unchanged — your Flutterwave function untouched, `sendNotificationPush` alongside it |
 | `notifications.js` | admin folder, next to `subjects.js` | unchanged |
@@ -423,6 +423,16 @@ Cloudinary storage after a cascade delete runs. Flagged, not solved.
 5. **Foreground pushes never updated the bell** — a push arriving while the tab was already open would attempt to show an OS notification via `onMessage()`, but the in-app bell panel/badge had no way to know anything happened — it was a one-time fetch on page load. Fixed by adding `onForegroundPush(callback)` in `pushNotifications.js`; `dashboard.js` now re-fetches and repaints the bell the moment a foreground push arrives, no reload needed.
 
 6. **Empty-token-array crash risk** — guarded in the Cloud Function before calling `sendEachForMulticast`.
+
+7. **Bell required a manual refresh to show new notifications** — was a one-time `getDocs` fetch, only re-run on page load or (as a workaround) when a foreground push happened to arrive. Replaced entirely with `listenToNotificationsForUser()`, a Firestore `onSnapshot` real-time listener — the bell now updates the moment a matching notification document is written, independent of push/FCM. This is a more fundamental fix than the earlier foreground-push workaround, which has been removed since it's now redundant.
+
+## Investigate: closed-PWA push regression
+
+You confirmed push worked with the app fully closed in an earlier test, but reported it's not showing anymore. Nothing in this round of changes touched `firebase-messaging-sw.js` or `functions/index.js` — the client changes above (real-time listener, dismiss) don't affect the closed-app delivery path at all, so this needs its own investigation rather than being explained by anything just changed. Worth checking, in order:
+- Is this consistent every time now, or intermittent? (Android's battery optimization/Doze mode can delay — not drop — background push delivery by minutes on some devices, which can look like "not working" if you're testing and checking immediately.)
+- Same device/browser as the earlier successful test, or a different one?
+- Cloud Function logs (Firebase Console → Functions → `sendNotificationPush` → Logs) for the specific broadcast you just sent — did it log a send attempt, and did that attempt report success or a token error?
+- Whether the token in that student's `fcmTokens` array is still the same one from the working test, or would've changed (reinstalling the PWA, clearing site data, or a token refresh can invalidate the old one silently until a new one's saved).
 
 ## Known limitations (not bugs)
 

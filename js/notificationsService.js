@@ -8,6 +8,7 @@ import {
   updateDoc,
   arrayUnion,
   getDocs,
+  onSnapshot,
   query,
   where,
   orderBy,
@@ -52,6 +53,13 @@ import {
    {
      message, createdBy, targetUserId, createdAt
    }
+
+   Two ways to read a student's feed:
+   - getRecentNotificationsForUser(): one-time fetch.
+   - listenToNotificationsForUser(): real-time subscription (same
+     query, via onSnapshot). The student bell uses the live version
+     so it updates instantly like a chat app, without needing a
+     reload or relying on a push arriving.
 ========================================================= */
 
 const FETCH_LIMIT = 20;
@@ -166,6 +174,55 @@ export async function getRecentNotificationsForUser(
     console.error("Failed to load notifications:", err);
     return [];
   }
+}
+
+/**
+ * Real-time version of getRecentNotificationsForUser() — same
+ * query, but subscribes instead of fetching once. `callback` fires
+ * immediately with the current list, then again every time a
+ * matching notification is added/changed, live, no reload or
+ * manual refresh needed — same idea as a chat app's message list.
+ *
+ * Returns an unsubscribe function. IMPORTANT: the caller owns
+ * cleanup — this keeps an open connection until unsubscribe() is
+ * called, so dashboard.js unsubscribes the previous listener before
+ * starting a new one on every render (see unsubscribeNotifications
+ * in dashboard.js), the same leak-prevention pattern already used
+ * there for the outside-click/scroll listeners.
+ */
+export function listenToNotificationsForUser(
+  userId,
+  accountCreatedAt = null,
+  callback,
+) {
+  if (!userId) return () => {};
+
+  const filters = [where("targetUserId", "in", [BROADCAST_TARGET, userId])];
+
+  if (accountCreatedAt) {
+    filters.push(where("createdAt", ">", accountCreatedAt));
+  }
+
+  const q = query(
+    collection(db, "notifications"),
+    ...filters,
+    orderBy("createdAt", "desc"),
+    limit(FETCH_LIMIT),
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const notifications = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+      callback(notifications);
+    },
+    (err) => {
+      console.error("Notifications listener failed:", err);
+    },
+  );
 }
 
 /**
