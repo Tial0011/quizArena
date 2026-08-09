@@ -9,6 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { confirmDangerousDelete } from "./dangerDialog.js";
 import { countQuizCascade, deleteQuizCascade } from "./cascadeDelete.js";
+import { sendNewQuizNotification } from "../notificationsService.js";
 
 /* =========================================================
    MODULE STATE
@@ -305,6 +306,10 @@ async function createQuiz(values) {
     active: true,
     createdAt: serverTimestamp(),
   });
+
+  // Broadcast only on creation, not on updateQuiz() — editing an
+  // existing quiz shouldn't re-announce it to every student.
+  sendNewQuizNotification(values.title);
 }
 
 async function updateQuiz(id, values) {

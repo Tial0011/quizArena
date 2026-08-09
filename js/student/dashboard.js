@@ -7,12 +7,14 @@ import { getRecentAttempts, getStreakCount } from "./attemptsService.js";
 import {
   getRecentNotificationsForUser,
   markNotificationsSeen,
+  dismissNotificationForUser,
   countUnread,
   formatNotificationTime,
 } from "../notificationsService.js";
 import {
   initPushNotifications,
   requestPushPermission,
+  onForegroundPush,
 } from "../pushNotifications.js";
 import {
   renderRecentAttemptsMarkup,
@@ -29,6 +31,16 @@ const app = document.getElementById("app");
 
 const DEFAULT_HERO_MESSAGE =
   "Master one quiz today and keep your streak alive.";
+
+// How many notifications the bell panel shows at once. Fetches a
+// larger batch than this (see refreshNotifications) since some of
+// what comes back may already be dismissed and get filtered out.
+const NOTIF_DISPLAY_LIMIT = 7;
+
+// The notifications currently rendered in the panel — kept around
+// so dismissing one can update the badge/list in place without a
+// full refetch.
+let renderedNotifications = [];
 
 // Re-bound on every render (see setupNotifBell) so a student
 // bouncing back to the dashboard a few times in one session never
@@ -253,6 +265,10 @@ export function renderStudentDashboard(userData = {}) {
   setupDashboardEvents(userData);
   initDashboardEffects();
   loadAnalytics(userData);
+
+  // Must be set before push registration — a foreground push could
+  // otherwise arrive before there's anything listening for it.
+  onForegroundPush(() => refreshNotifications(userData));
   initPushNotifications(userData.id);
 }
 
@@ -266,10 +282,9 @@ export function renderStudentDashboard(userData = {}) {
    already been replaced.
 ========================================================= */
 async function loadAnalytics(userData) {
-  const [attempts, streakCount, notifications] = await Promise.all([
+  const [attempts, streakCount] = await Promise.all([
     getRecentAttempts(userData.id, 5),
     getStreakCount(userData.id),
-    getRecentNotificationsForUser(userData.id, userData.createdAt),
   ]);
 
   const trendContainer = document.getElementById("scoreTrendContainer");
@@ -293,7 +308,10 @@ async function loadAnalytics(userData) {
     updateStreakCard(streakEl, streakCount);
   }
 
-  updateNotifications(userData, notifications);
+  // Not awaited alongside the above — runs concurrently and updates
+  // the bell whenever it resolves, same "guarded, never blocks the
+  // rest of the page" pattern as everything else in this function.
+  refreshNotifications(userData);
 }
 
 /**
@@ -362,15 +380,40 @@ function updateStreakCard(streakEl, streakCount) {
 }
 
 /**
- * Fills the bell panel with the latest notifications and lights up
- * the unread badge based on this student's lastNotificationsSeenAt.
+ * Fetches the student's notification feed, filters out anything
+ * they've already dismissed, caps it to NOTIF_DISPLAY_LIMIT, and
+ * renders it. Called on initial load and again whenever a
+ * foreground push arrives (see onForegroundPush in
+ * renderStudentDashboard).
  */
-function updateNotifications(userData, notifications) {
+async function refreshNotifications(userData) {
+  const fetched = await getRecentNotificationsForUser(
+    userData.id,
+    userData.createdAt,
+  );
+
+  const dismissed = userData.dismissedNotificationIds || [];
+  const visible = fetched
+    .filter((n) => !dismissed.includes(n.id))
+    .slice(0, NOTIF_DISPLAY_LIMIT);
+
+  renderedNotifications = visible;
+  renderNotifications(userData, visible);
+}
+
+/**
+ * Paints the bell panel + unread badge from whatever's currently in
+ * renderedNotifications. Separate from refreshNotifications() so a
+ * dismiss can repaint instantly from local state, without waiting
+ * on a refetch.
+ */
+function renderNotifications(userData, notifications) {
   const listEl = document.getElementById("notifList");
   const badge = document.getElementById("notifBadge");
 
   if (listEl) {
     listEl.innerHTML = renderNotificationsMarkup(notifications);
+    wireNotifDeleteButtons(userData, listEl);
   }
 
   if (badge) {
@@ -394,12 +437,51 @@ function renderNotificationsMarkup(notifications) {
     .map(
       (n) => `
         <div class="notif-item">
-          <p class="notif-message">${escapeHtml(n.message)}</p>
-          <span class="notif-time">${formatNotificationTime(n.createdAt)}</span>
+          <div class="notif-item-main">
+            <p class="notif-message">${escapeHtml(n.message)}</p>
+            <span class="notif-time">${formatNotificationTime(n.createdAt)}</span>
+          </div>
+          <button
+            class="notif-item-delete"
+            data-id="${n.id}"
+            aria-label="Dismiss notification"
+          >
+            ✕
+          </button>
         </div>
       `,
     )
     .join("");
+}
+
+function wireNotifDeleteButtons(userData, listEl) {
+  listEl.querySelectorAll(".notif-item-delete").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      handleDismiss(userData, btn.dataset.id);
+    });
+  });
+}
+
+/**
+ * Optimistic dismiss: updates the panel immediately from local
+ * state (both the in-memory list and userData's own
+ * dismissedNotificationIds, so it stays hidden even if
+ * refreshNotifications() runs again later in this session), then
+ * writes the dismissal to Firestore in the background.
+ */
+function handleDismiss(userData, id) {
+  if (!id) return;
+
+  renderedNotifications = renderedNotifications.filter((n) => n.id !== id);
+  userData.dismissedNotificationIds = [
+    ...(userData.dismissedNotificationIds || []),
+    id,
+  ];
+
+  renderNotifications(userData, renderedNotifications);
+
+  dismissNotificationForUser(userData.id, id);
 }
 
 function setupDashboardEvents(userData) {
@@ -515,11 +597,18 @@ function setupNotifBell(userData) {
     window.removeEventListener("resize", notifCloseHandler);
   }
 
-  notifCloseHandler = () => {
+  notifCloseHandler = (e) => {
     const currentPanel = document.getElementById("notifPanel");
-    if (currentPanel && !currentPanel.hidden) {
-      currentPanel.hidden = true;
-    }
+    if (!currentPanel || currentPanel.hidden) return;
+
+    // capture:true on window sees EVERY scroll event on the page,
+    // including the .notif-list scrolling inside its own
+    // overflow-y:auto — not just the page scrolling behind it.
+    // Without this check, scrolling the list itself closed the
+    // panel on the very first pixel of scroll.
+    if (currentPanel.contains(e.target)) return;
+
+    currentPanel.hidden = true;
   };
 
   window.addEventListener("scroll", notifCloseHandler, true);

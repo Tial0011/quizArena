@@ -6,6 +6,7 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  arrayUnion,
   getDocs,
   query,
   where,
@@ -41,6 +42,11 @@ import {
    instead each user doc gets a single `lastNotificationsSeenAt`
    timestamp, stamped when they open the bell panel. A notification
    counts as unread if it was created after that timestamp.
+
+   "Dismissed" state works the same way, but per-notification: each
+   user doc also gets a `dismissedNotificationIds` array. Dismissing
+   is personal (hides it from just that student's bell, doesn't
+   touch the notification doc itself) — see dismissNotificationForUser().
 
    Each notification document:
    {
@@ -190,6 +196,28 @@ export async function markNotificationsSeen(userId) {
     });
   } catch (err) {
     console.error("Failed to mark notifications seen:", err);
+  }
+}
+
+/**
+ * Hides a notification from ONE student's bell — a personal
+ * "dismiss", not a delete. The notification document itself is
+ * untouched (other students, or the admin's sent-list, are
+ * unaffected); this just appends the id to that student's own
+ * `dismissedNotificationIds` array, which getRecentNotificationsForUser()
+ * callers filter against client-side. Doesn't throw, same
+ * "supplementary" rule as the rest of this file — a failed dismiss
+ * write just means it may reappear next load, not a broken UI.
+ */
+export async function dismissNotificationForUser(userId, notificationId) {
+  if (!userId || !notificationId) return;
+
+  try {
+    await updateDoc(doc(db, "users", userId), {
+      dismissedNotificationIds: arrayUnion(notificationId),
+    });
+  } catch (err) {
+    console.error("Failed to dismiss notification:", err);
   }
 }
 

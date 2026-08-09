@@ -47,6 +47,19 @@ const VAPID_KEY =
 
 let messagingInstance = null;
 let foregroundListenerBound = false;
+let foregroundCallback = null;
+
+/**
+ * Registers a callback to run whenever a push arrives while the
+ * student already has the tab open (a "foreground" message). Used
+ * by dashboard.js to refresh the bell panel live instead of only
+ * picking up new notifications on the next page load — call this
+ * BEFORE initPushNotifications()/requestPushPermission() so it's in
+ * place before any message can arrive.
+ */
+export function onForegroundPush(callback) {
+  foregroundCallback = callback;
+}
 
 export async function initPushNotifications(userId) {
   if (!canUsePush()) return;
@@ -129,6 +142,14 @@ async function getMessagingInstance() {
  * already has the tab open, the message instead arrives here
  * silently, so it's shown manually via the same Notification API
  * the service worker uses for the background case.
+ *
+ * NOTE: some browsers (notably Chrome on Android, in some
+ * versions) intentionally suppress a manually-triggered
+ * Notification() while the tab that created it is the focused,
+ * frontmost one — that's a platform choice, not a bug here. The
+ * foregroundCallback below is what actually guarantees the student
+ * sees *something* update (the in-app bell) regardless of whether
+ * the OS banner itself shows.
  */
 function listenForForegroundMessages(messaging) {
   if (foregroundListenerBound) return;
@@ -136,8 +157,10 @@ function listenForForegroundMessages(messaging) {
 
   onMessage(messaging, (payload) => {
     const { title, body } = payload.notification || {};
-    if (!title) return;
+    if (title) {
+      new Notification(title, { body, icon: "/icons/icon-192.png" });
+    }
 
-    new Notification(title, { body, icon: "/icons/icon-192.png" });
+    foregroundCallback?.();
   });
 }

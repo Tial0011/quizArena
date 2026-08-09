@@ -205,6 +205,9 @@
 }
 
 .notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   padding: 10px;
   border-radius: 10px;
   background: #fafafa;
@@ -213,6 +216,33 @@
 @media (hover: hover) and (pointer: fine) {
   .notif-item:hover {
     background: #f3f0fb;
+  }
+}
+
+.notif-item-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.notif-item-delete {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  color: #9ca3af;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notif-item-delete:hover {
+    background: #fde8e8;
+    color: #dc2626;
   }
 }
 

@@ -359,21 +359,25 @@ Cloudinary storage after a cascade delete runs. Flagged, not solved.
 - `cascadeDelete.js` (new)
 - `dangerDialog.js` (new)
 .....
+------------------------------------------------------
+
 # Quiz Arena — Notifications, Streaks & Push: Handoff Note
 
 ## What's in this feature, end to end
 
 **Student side:**
 - Notification bell next to "Welcome Back" — unread badge, wiggles while unread, opens a dropdown panel.
+- Panel shows up to 7 notifications; each has its own dismiss (✕) button — dismissing hides it from that student only, doesn't touch it for anyone else.
+- Bell panel updates live if a push arrives while the tab's already open, not just on next reload.
 - Best Score stat card replaced with an animated Day Streak card (flame pulses while streak > 0).
 - Real OS/phone push notifications, on top of the in-app bell.
 
 **Admin side:**
-- New "Notifications" tab — compose a broadcast, see sent history, delete one.
+- "Notifications" tab — compose a broadcast, see sent history, delete one.
 
 **Automatic notifications (no admin action needed):**
 - New student signs up → personal "Welcome to Quiz Arena" ping (them only).
-- New quiz added → broadcast to all students — **wiring pending**, see "Not yet done" below.
+- New quiz created → broadcast to all students. Only fires on create, not on editing an existing quiz.
 
 ---
 
@@ -381,56 +385,52 @@ Cloudinary storage after a cascade delete runs. Flagged, not solved.
 
 | File | Destination | Status |
 |---|---|---|
-| `notificationsService.js` | root, next to `auth.js` | new |
-| `pushNotifications.js` | root, next to `auth.js` | new |
-| `firebase-messaging-sw.js` | **site root**, same level as `index.html` (not inside any subfolder) | new |
-| `functions/index.js` | replaces your existing `functions/index.js` | updated — your Flutterwave function is untouched, `sendNotificationPush` added below it |
-| `notifications.js` | admin folder, next to `subjects.js` | new |
-| `auth.js` | replaces existing | updated — fires welcome notification on signup |
-| `attemptsService.js` | replaces existing | updated — added `getStreakCount()` |
-| `dashboard.js` (student) | replaces existing | updated — bell, streak card, push registration |
-| `dashboard.css` (student) | replaces existing | updated — bell/panel/streak styles |
-| `admin.js` | replaces existing | updated — new Notifications tab wired in |
-| `admin-dashboard.css` | replaces existing | updated — notification compose/list styles |
+| `notificationsService.js` | root, next to `auth.js` | updated — added `dismissNotificationForUser()` |
+| `pushNotifications.js` | root, next to `auth.js` | updated — added `onForegroundPush()` |
+| `firebase-messaging-sw.js` | **site root**, same level as `index.html` | unchanged |
+| `functions/index.js` | replaces your existing `functions/index.js` | unchanged — your Flutterwave function untouched, `sendNotificationPush` alongside it |
+| `notifications.js` | admin folder, next to `subjects.js` | unchanged |
+| `quizzes.js` | admin folder | updated — broadcasts on quiz creation |
+| `auth.js` | replaces existing | unchanged — fires welcome notification on signup |
+| `attemptsService.js` | replaces existing | unchanged — `getStreakCount()` |
+| `dashboard.js` (student) | replaces existing | updated — dismiss buttons, live foreground refresh, scroll-close fix |
+| `dashboard.css` (student) | replaces existing | updated — dismiss button styling |
+| `admin.js` | replaces existing | unchanged |
+| `admin-dashboard.css` | replaces existing | unchanged |
 
 ---
 
-## Setup you still need to do (nothing here works until these are done)
+## Setup still needed (unchanged from before)
 
-1. **Firestore security rules** — add:
-   - `notifications` collection: students need `read`; only admins should get `write` (your manual sends already go through the admin console, but automatic ones — welcome, new quiz — get written from client code too, so make sure your rules account for that, e.g. allow write when `request.auth.uid` matches a student creating their own welcome ping, or move those two automatic writes server-side later if you want tighter control).
-   - `users/{uid}`: allow a user to `update` their own doc for `lastNotificationsSeenAt` and `fcmTokens` fields.
-
-2. **Firestore composite indexes** — the notification queries will throw an error with a "create index" console link the first time each one runs. Click through those once (both the admin broadcast query and the student's merged broadcast+personal query need one).
-
-3. **VAPID key** — Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → generate a key pair → paste it into `VAPID_KEY` in `pushNotifications.js`. Nothing push-related works until this is real.
-
-4. **Deploy the service worker** — `firebase-messaging-sw.js` has to sit at your site's root (same level as `index.html`), not in a subfolder — a service worker can only control pages within its own scope.
-
-5. **Deploy the Cloud Function** — no new dependencies needed, your existing `functions/package.json` already covers everything (`firebase-admin` gives `admin.messaging()`, `firebase-functions` already includes the `/v2/firestore` trigger). Just:
-   ```
-   firebase deploy --only functions
-   ```
-   Without this deployed, tokens get saved to Firestore but nothing ever actually sends — the Cloud Function is the only piece that talks to FCM. `sendNotificationPush` is now in the same `index.js` as your `verifyFlutterwavePurchase` function, untouched.
+1. **Firestore security rules** — `notifications` collection needs student `read`; `users/{uid}` needs a user to be able to `update` their own `lastNotificationsSeenAt`, `fcmTokens`, **and now `dismissedNotificationIds`** fields.
+2. **Firestore composite indexes** — click through the "create index" console link the first time each notification query runs.
+3. **VAPID key** — ✅ done, confirmed working.
+4. **Service worker at site root** — ✅ done, confirmed working (push arrives with app closed).
+5. **Cloud Function deployed** — ✅ done, confirmed working.
 
 ---
 
-## Bugs found and fixed during this build
+## Bugs found and fixed
 
-1. **Bell panel invisible / stuck "inside the purple box"** — `.dashboard-hero` has `overflow: hidden` (needed to clip the decorative parallax shapes at its rounded corners), which was also silently clipping the dropdown panel nested inside it. Fixed by having the panel append directly to `document.body` with `position: fixed`, positioned via JS from the bell's actual screen coordinates — same escape-the-clipped-parent trick your `dangerDialog.js` already uses for its overlay.
+1. **Bell panel invisible / stuck "inside the purple box"** — `.dashboard-hero`'s `overflow: hidden` was clipping the dropdown. Fixed by appending the panel to `document.body` with `position: fixed`, positioned via JS from the bell's screen coordinates.
 
-2. **New students saw old broadcast history** — `getRecentNotificationsForUser` had no lower bound, so a brand-new signup would see every broadcast ever sent. Fixed by filtering broadcasts to `createdAt > student's account createdAt`. Existing students are unaffected since their account predates all current broadcasts.
+2. **New students saw old broadcast history** — fixed by filtering broadcasts to `createdAt > student's account createdAt`.
 
-3. **Duplicate outside-click / scroll listeners** — a student bouncing back to the dashboard multiple times in one session (`renderStudentDashboard()` called again) would otherwise stack up multiple `document`/`window` listeners over time. Fixed with module-level handler references that get removed before a new one is bound.
+3. **Duplicate outside-click / scroll listeners** — fixed with module-level handler references removed before rebinding.
 
-4. **Empty-token-array crash risk** — sending a push to zero tokens (e.g., a broadcast before anyone has granted permission yet) is guarded against in the Cloud Function before calling `sendEachForMulticast`.
+4. **Panel closed the instant you tried to scroll it** — the `scroll` listener was registered with `capture: true` on `window`, which sees *every* scroll event on the page during capture, including the `.notif-list`'s own internal `overflow-y: auto` scrolling — not just the page scrolling behind it. So scrolling the list itself was triggering the same "close on scroll" handler meant only for the page scrolling away underneath. Fixed by checking `panel.contains(e.target)` and skipping the close when the scroll originated inside the panel.
 
-## Known limitations (not bugs, just things worth knowing)
+5. **Foreground pushes never updated the bell** — a push arriving while the tab was already open would attempt to show an OS notification via `onMessage()`, but the in-app bell panel/badge had no way to know anything happened — it was a one-time fetch on page load. Fixed by adding `onForegroundPush(callback)` in `pushNotifications.js`; `dashboard.js` now re-fetches and repaints the bell the moment a foreground push arrives, no reload needed.
 
-- **No live updates while the tab is open** — the in-app bell list is a one-time fetch per dashboard load, not a real-time listener, consistent with how the rest of this app already works (no `onSnapshot` anywhere else either). A student with the dashboard open when a new broadcast goes out won't see it in the bell until they reload — though they *will* still get the actual phone/OS push regardless, since that's a separate delivery path.
-- **iOS Safari** only supports web push for sites added to the home screen (iOS 16.4+) — a student browsing in regular mobile Safari won't be able to grant permission at all. Nothing to fix, just a platform limit worth setting expectations around.
-- **Repeated `markNotificationsSeen` writes** — every bell open writes a fresh timestamp, even if nothing changed since last time. Harmless, just a minor inefficiency if it ever matters at scale.
+6. **Empty-token-array crash risk** — guarded in the Cloud Function before calling `sendEachForMulticast`.
 
-## Not yet done
+## Known limitations (not bugs)
 
-- **"New quiz added" broadcast isn't wired in yet.** `sendNewQuizNotification(quizTitle)` exists and is ready in `notificationsService.js`, but nothing calls it — I need `quizzes.js` to hook it in after a successful quiz save, matching your actual field names (`title` vs `name`) and the exact spot the `addDoc` call succeeds.
+- **Foreground OS notification may not visibly show even though delivery worked** — some browsers (Chrome on Android, in some versions) intentionally suppress a JS-triggered `Notification()` while its own tab is the focused, frontmost one. Platform choice, not fixable here — the in-app bell now updates live regardless (fix #5 above), so the student still sees it, just via the bell instead of an OS banner in that specific scenario.
+- **iOS Safari** only supports web push for sites added to the home screen (iOS 16.4+).
+- **Repeated `markNotificationsSeen` writes** — every bell open writes a fresh timestamp. Harmless, minor inefficiency at most.
+- **Dismissed notifications still count toward the fetch batch** — `getRecentNotificationsForUser` pulls its normal batch (default 20) and dismissed ones get filtered out client-side before slicing to the 7 shown. Fine at normal scale; worth revisiting if a student's `dismissedNotificationIds` array ever grows very large.
+
+## Design note: what "delete" means for a student
+
+A student's dismiss (✕) is personal only — it hides that notification from their own bell going forward (`dismissedNotificationIds` on their user doc) and does **not** delete the notification document itself. Other students, and the admin's "Sent Notifications" list, are unaffected. If the intent was for a student to delete a broadcast for everyone, that's a different (admin-level) capability — worth confirming this matches what was meant.
