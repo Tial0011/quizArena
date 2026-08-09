@@ -1,246 +1,212 @@
 [
   {
-    "question": "Two groups have the same mean of 3.7 hours. Group A: 6,2,4,5,3,2; Group B: 1,6,7,1,2,6. Which group shows greater dispersion and why?",
+    "question": "Why was Democritus' theory of atoms ignored for over 2000 years?",
     "image": "",
     "options": [
-      "Group A because observations are closer",
-      "Group B because observations are more scattered",
-      "Both have equal dispersion",
-      "Cannot be determined without calculations"
+      "Democritus' ideas were too complex for the philosophers of his time",
+      "The scientific community was not ready to accept atomic theory",
+      "The theory was overshadowed by the popularity of alchemical practices",
+      "Aristotle and Plato's theories were more respected and influential"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "According to modern atomic theory, how are electrons distributed around the nucleus?",
+    "image": "",
+    "options": [
+      "Electrons are randomly distributed throughout the atom",
+      "Electrons are fixed in specific orbits around the nucleus",
+      "Electrons move in straight lines away from the nucleus",
+      "Electrons are distributed in an electron cloud around the nucleus"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which experiment led to the discovery of the nucleus?",
+    "image": "",
+    "options": [
+      "Cathode ray tube experiment",
+      "Gold foil experiment",
+      "Oil drop experiment",
+      "Hydrogen spectrum experiment"
     ],
     "answer": 1
   },
   {
-    "question": "For the data 4,6,9,3,7, the range is:",
-    "image": "",
-    "options": ["6", "9", "3", "5"],
-    "answer": 0
-  },
-  {
-    "question": "For the observations 70,76,80,85,85,85,95,96,100,108, the range is 38. The coefficient of range is:",
-    "image": "",
-    "options": ["21.35", "38", "178", "10.09"],
-    "answer": 0
-  },
-  {
-    "question": "Mean deviation from the mean for a dataset with Σ|Xi – Mean| = 94 and N = 10 is:",
-    "image": "",
-    "options": ["9.4", "11.03", "8.75", "94"],
-    "answer": 0
-  },
-  {
-    "question": "The coefficient of mean deviation for Mean = 88 and MD = 9.4 is:",
-    "image": "",
-    "options": ["10.68", "12.53", "9.44", "8.07"],
-    "answer": 0
-  },
-  {
-    "question": "Standard deviation is the?",
+    "question": "In which year did the Danish scientist Niels Bohr make an improvement on Rutherford's atomic theory?",
     "image": "",
     "options": [
-      "Square root of the average squared deviation from mean",
-      "Average absolute deviation from mean",
-      "Half of inter-quartile range",
-      "Difference between maximum and minimum"
-    ],
-    "answer": 0
-  },
-  {
-    "question": "Variance is also known as _______?",
-    "image": "",
-    "options": [
-      "Second moment about the mean",
-      "Square of standard deviation",
-      "Both A and B",
-      "Neither"
+      "1913, J.J. Thomson",
+      "1803, Niels Bohr",
+      "1913, Niels Bohr",
+      "1803, John Dalton"
     ],
     "answer": 2
   },
   {
-    "question": "For the wages grouped data (Mean ≈ 209.07), if variance using step deviation is 389.89, the standard deviation is ___?",
-    "image": "",
-    "options": ["19.746", "9.44", "16.88", "8.07"],
-    "answer": 0
-  },
-  {
-    "question": "Coefficient of variation for S.D. = 19.746 and Mean = 209.07 is ___?",
-    "image": "",
-    "options": ["9.44", "8.07", "10.68", "12.53"],
-    "answer": 0
-  },
-  {
-    "question": "Quartile deviation (semi-interquartile range) is:",
-    "image": "",
-    "options": ["(Q3 − Q1)/2", "Q3 − Q1", "(Q3 + Q1)/2", "Half of the range"],
-    "answer": 0
-  },
-  {
-    "question": "In the example where Q1 = 78 and Q3 = 95.5 (n = 10), the quartile deviation is _____?",
-    "image": "",
-    "options": ["8.75", "17.5", "17", "9.4"],
-    "answer": 0
-  },
-  {
-    "question": "Coefficient of quartile deviation for Q1 = 78 and Q3 = 95.5 is _____?",
-    "image": "",
-    "options": ["10.09", "8.75", "21.35", "9.44"],
-    "answer": 0
-  },
-  {
-    "question": "Which measure is most affected by extreme values?",
+    "question": "What did Rutherford conclude about the density of the nucleus compared to the rest of the atom?",
     "image": "",
     "options": [
-      "Quartile deviation",
-      "Range",
-      "Standard deviation",
-      "Mean deviation"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "Variance is independent of ____?",
-    "image": "",
-    "options": ["Change in scale", "Change in origin", "Both", "Neither"],
-    "answer": 1
-  },
-  {
-    "question": "If all observations are multiplied by a constant 'a', the new variance becomes:",
-    "image": "",
-    "options": [
-      "Old variance",
-      "a² × old variance",
-      "a × old variance",
-      "Old variance / a²"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "For two series, V(X + Y) = V(X) + V(Y) + 2Cov(X,Y). If X and Y are independent, Cov = 0, then V(X + Y) =",
-    "image": "",
-    "options": ["V(X) + V(Y)", "V(X) × V(Y)", "|V(X) − V(Y)|", "V(X) − V(Y)"],
-    "answer": 0
-  },
-  {
-    "question": "Which is the best measure for comparing dispersion when units and means differ widely?",
-    "image": "",
-    "options": [
-      "Range",
-      "Standard deviation",
-      "Coefficient of variation",
-      "Quartile deviation"
+      "The nucleus has the same density as the rest of the atom.",
+      "The nucleus is less dense than the rest of the atom.",
+      "The nucleus is denser than the rest of the atom.",
+      "The nucleus is larger than the rest of the atom."
     ],
     "answer": 2
   },
   {
-    "question": "Box plot uses which measures primarily?",
+    "question": "Which model of the atom described electrons embedded in a positively charged sphere?",
     "image": "",
     "options": [
-      "Mean and standard deviation",
-      "Quartiles and IQR",
-      "Mode and range",
-      "Geometric mean only"
+      "Dalton's model",
+      "Rutherford's model",
+      "Bohr's model",
+      "Plum pudding model"
     ],
-    "answer": 1
+    "answer": 3
   },
   {
-    "question": "In a box plot, values beyond 1.5 × IQR are considered:",
+    "question": "Which theory became one of the foundations of modern chemistry?",
     "image": "",
-    "options": ["Median", "Outliers", "Quartiles", "Mean"],
-    "answer": 1
+    "options": ["Dalton's", "Bohr's", "Rutherford's", "Thomson's"],
+    "answer": 0
   },
   {
-    "question": "Mean deviation ignores the?",
+    "question": "Firing a stream of tiny positively charged particles at a thin sheet of gold foil was an experiment associated with which atomic theory?",
     "image": "",
     "options": [
-      "Sign of deviations",
-      "Magnitude",
-      "Frequency",
-      "Central value"
+      "Bohr's theory",
+      "Dalton's theory",
+      "Thomson's theory",
+      "Rutherford's theory"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "What is the name of the model of the atom that is currently accepted?",
+    "image": "",
+    "options": [
+      "Dalton's model",
+      "Thomson's model",
+      "Rutherford's model",
+      "The quantum mechanical model"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which scientist discovered the neutron?",
+    "image": "",
+    "options": [
+      "James Chadwick",
+      "J.J. Thomson",
+      "Niels Bohr",
+      "Ernest Rutherford"
     ],
     "answer": 0
   },
   {
-    "question": "For open-end classes, which dispersion measure is most reliable?",
+    "question": "What is the significance of wave mechanics in today's understanding of atomic structure?",
     "image": "",
     "options": [
-      "Range",
-      "Standard deviation",
-      "Quartile deviation",
-      "Coefficient of variation"
+      "Wave mechanics allows for precise determination of electron paths",
+      "Wave mechanics simplifies the atomic model to fixed orbits",
+      "Wave mechanics suggests electrons are stationary within the atom",
+      "Wave mechanics provides a more accurate representation of electron behavior"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "What is the Bohr model of the atom known for?",
+    "image": "",
+    "options": [
+      "The model known for electrons moving in specific energy levels",
+      "The model that describes electrons as waves rather than particles",
+      "The model that suggests electrons have no defined paths",
+      "The model that proposes electrons are stationary around the nucleus"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "What is meant by the term \"electron cloud\"?",
+    "image": "",
+    "options": [
+      "A region where only high-energy electrons are found",
+      "A fixed orbit where electrons travel around the nucleus",
+      "A space in which electrons are likely to be found",
+      "A dense area of positive charge surrounding the nucleus"
     ],
     "answer": 2
   },
   {
-    "question": "If variance of a combined series is to be calculated from two groups with n₁, mean₁, σ₁² and n₂, mean₂, σ₂², we need:",
+    "question": "What does the term \"atomos\" mean, according to Democritus?",
     "image": "",
     "options": [
-      "Only individual variances",
-      "Means and sizes of groups",
-      "Only ranges",
-      "Only modes"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "A distribution has Mean = 88, Σ(Xi − 88)² = 1216, N = 10. The variance and standard deviation are respectively?",
-    "image": "",
-    "options": [
-      "121.6 and 11.03",
-      "9.4 and 9.4",
-      "38 and 6.16",
-      "178 and 13.34"
-    ],
-    "answer": 0
-  },
-  {
-    "question": "If a constant 5 is added to every observation, the new standard deviation will be?",
-    "image": "",
-    "options": ["Old S.D. + 5", "Old S.D.", "5 × Old S.D.", "Old S.D. − 5"],
-    "answer": 1
-  },
-  {
-    "question": "Coefficient of variation is 12.53 when S.D. = 11.03 and Mean = 88. If the mean becomes 176 (doubled), the new C.V would be?",
-    "image": "",
-    "options": ["6.265", "12.53", "25.06", "11.03"],
-    "answer": 0
-  },
-  {
-    "question": "Which pair has the same mean but different dispersion?",
-    "image": "",
-    "options": [
-      "Two salary companies in Case II",
-      "Drug A and Drug B",
-      "Both",
-      "Neither"
+      "\"Smallest piece of matter\"",
+      "\"Fundamental unit of matter\"",
+      "\"Not to be cut\"",
+      "\"Indivisible particle\""
     ],
     "answer": 2
   },
   {
-    "question": "In the step deviation method,\nVariance = h²[Σfidi²/N − (Σfidi/N)²].\nThis method is used to:",
+    "question": "\"Atoms of different elements are different\" was stated in which person's theory?",
     "image": "",
-    "options": [
-      "Simplify calculations for grouped data",
-      "Ignore extreme values",
-      "Find mode",
-      "Calculate median"
-    ],
-    "answer": 0
+    "options": ["Bohr's", "Dalton's", "Thomson's", "Rutherford's"],
+    "answer": 1
   },
   {
-    "question": "For the marks distribution example, quartile deviation is less preferable than standard deviation for continuous data because:",
+    "question": "What did Democritus believe about atoms?",
     "image": "",
     "options": [
-      "It ignores all values except Q1 and Q3",
-      "It is affected by extreme values",
-      "It cannot handle open-end classes",
-      "It is not a positional measure"
+      "Atoms are large, soft particles that can be divided indefinitely",
+      "Atoms are made of different materials and are all the same size",
+      "Atoms are stationary and cannot join together",
+      "Atoms are small, hard particles of the same material with different shapes and sizes"
     ],
-    "answer": 0
+    "answer": 3
   },
   {
-    "question": "If V(aX + b) = ?",
+    "question": "The atomic number of an element represents the number of:",
     "image": "",
-    "options": ["a²V(X)", "V(X) + b", "aV(X) + b", "V(X)"],
+    "options": [
+      "Neutrons",
+      "Protons",
+      "Electrons",
+      "Both protons and neutrons"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "What is the historical significance of the timeline of atomic theory development?",
+    "image": "",
+    "options": [
+      "The timeline shows the dominance of Aristotle's theories over scientific inquiry",
+      "The timeline highlights the transition from philosophical to empirical approaches in science",
+      "The timeline illustrates the rejection of atomic theory by early scientists",
+      "The timeline emphasizes the lack of empirical evidence for atomic theory"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Where are electrons with the highest energy generally found?",
+    "image": "",
+    "options": [
+      "Innermost energy level",
+      "Middle energy level",
+      "Outermost energy level",
+      "Nucleus"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "How did Aristotle and Plato's theories differ from Democritus' idea of atoms?",
+    "image": "",
+    "options": [
+      "Aristotle and Plato favored a theory based on earth, fire, air, and water",
+      "Aristotle and Plato's theory was based on infinite atoms",
+      "Democritus thought matter was composed of four elements",
+      "Aristotle and Plato believed in indivisible particles"
+    ],
     "answer": 0
   }
 ]
