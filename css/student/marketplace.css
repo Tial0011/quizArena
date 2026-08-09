@@ -1,13 +1,49 @@
 /* =========================
-   MARKETPLACE
+   MARKETPLACE PAGE SHELL
+   Self-contained: owns its own background, padding, radius and
+   shadow instead of depending on a parent container (e.g. .admin-card)
+   for spacing. This is what keeps the header off the edge of the
+   screen and gives every section below a stable "surface" to sit on.
 ========================= */
+.marketplace-page {
+  background: #ffffff;
+  border: 1px solid #ececf5;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow:
+    0 1px 2px rgba(20, 18, 31, 0.04),
+    0 16px 40px rgba(76, 29, 149, 0.06);
+}
 
 .marketplace-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.marketplace-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #7c3aed;
+  background: #f3effe;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.marketplace-eyebrow svg {
+  flex-shrink: 0;
 }
 
 .marketplace-header h2 {
   margin: 0 0 4px 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: #14121f;
+  letter-spacing: -0.01em;
 }
 
 .marketplace-subtitle {
@@ -18,6 +54,20 @@
 
 .marketplace-list-wrapper {
   margin-top: 8px;
+}
+
+/* =========================
+   TOOLBAR PANEL
+   Groups the level/semester selectors, search box and subject
+   pills into one visually distinct inset panel, so they read as a
+   single "filter your results" unit instead of loose floating rows.
+========================= */
+.marketplace-toolbar-panel {
+  background: #faf9fd;
+  border: 1px solid #efeef7;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 24px;
 }
 
 /* =========================
@@ -278,13 +328,14 @@
 
 /* =========================
    SEARCH + FILTERS
+   (live inside .marketplace-toolbar-panel)
 ========================= */
 
 .marketplace-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin: 20px 0 24px;
+  gap: 14px;
+  margin-top: 16px;
 }
 
 .marketplace-search {
@@ -295,6 +346,7 @@
   background: #fff;
   font-size: 15px;
   color: #111827;
+  box-sizing: border-box;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -328,7 +380,7 @@
 .marketplace-filter-btn,
 .filter-chip {
   border: none;
-  background: #f3f4f6;
+  background: #fff;
   color: #374151;
   padding: 10px 18px;
   border-radius: 999px;
@@ -337,19 +389,21 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
+  border: 1px solid #ececf5;
 }
 
 .marketplace-filter-btn:hover,
 .filter-chip:hover {
-  background: #ede9fe;
+  background: #f3effe;
   color: #6d28d9;
-  transform: translateY(-1px);
+  border-color: #ded6fb;
 }
 
 .marketplace-filter-btn.active,
 .filter-chip.active {
   background: #7c3aed;
   color: #fff;
+  border-color: #7c3aed;
   box-shadow: 0 6px 18px rgba(124, 58, 237, 0.25);
 }
 
@@ -359,6 +413,10 @@
 
 .marketplace-section {
   margin-bottom: 40px;
+}
+
+.marketplace-section:last-child {
+  margin-bottom: 0;
 }
 
 .marketplace-section-header {
@@ -403,11 +461,13 @@
   padding: 18px;
   text-align: center;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
+  transition: transform 0.15s ease;
 }
 
 .marketplace-stat:hover {
-  transform: translateY(-3px);
+  /* matches .marketplace-card's hover lift for a consistent feel
+     across every card-like surface on the page. */
+  transform: translateY(-2px);
 }
 
 .marketplace-stat-value {
@@ -436,7 +496,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(180px, 1fr));
   gap: 16px;
-  margin: 20px 0;
 }
 
 .marketplace-level-filter,
@@ -464,6 +523,7 @@
   color: #111827;
   font-size: 15px;
   font-weight: 500;
+  box-sizing: border-box;
   transition: all 0.2s ease;
   cursor: pointer;
 }
@@ -484,6 +544,11 @@
    RESPONSIVE
 ========================= */
 @media (max-width: 720px) {
+  .marketplace-page {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
   .marketplace-grid {
     grid-template-columns: 1fr;
   }
@@ -513,6 +578,18 @@
 }
 
 @media (max-width: 420px) {
+  .marketplace-page {
+    padding: 14px;
+  }
+
+  .marketplace-header h2 {
+    font-size: 22px;
+  }
+
+  .marketplace-toolbar-panel {
+    padding: 14px;
+  }
+
   .marketplace-summary {
     gap: 10px;
   }

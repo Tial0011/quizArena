@@ -27,31 +27,36 @@ export async function renderMyQuizzes(userData = {}) {
   registerBackHandler(() => {
     renderStudentDashboard(userData);
   });
+
+  // Same shell treatment as marketplace.js: this page owns its own
+  // background/padding/radius (.my-quizzes-page) instead of relying on
+  // .dashboard for spacing, and the search/semester/subject controls
+  // are grouped into one toolbar panel instead of three loose rows.
   app.innerHTML = `
-    <div class="dashboard">
-<header class="dashboard-header">
+    <div class="my-quizzes-page">
+      <div class="my-quizzes-header">
+        <span class="my-quizzes-eyebrow">Your Purchases</span>
+        <h1>My Quizzes</h1>
+        <p class="my-quizzes-subtitle">Access and attempt your purchased weekly quizzes.</p>
+      </div>
 
-  <h1>📚 My Quizzes</h1>
+      <div class="my-quizzes-toolbar-panel">
+        <div class="my-quizzes-toolbar">
+          <input
+            type="text"
+            id="myQuizSearch"
+            class="my-quizzes-search"
+            placeholder="Search by title, subject or week..."
+          />
 
-  <p>Access and attempt your purchased weekly quizzes.</p>
+          <div id="myQuizSemesterFilter" class="my-quizzes-semester-filter"></div>
+        </div>
 
-  <div class="my-quizzes-toolbar">
-    <input
-      type="text"
-      id="myQuizSearch"
-      class="my-quizzes-search"
-      placeholder="Search by title, subject or week..."
-    />
+        <div id="myQuizSubjectFilter" class="my-quizzes-subject-filter"></div>
+      </div>
 
-    <div id="myQuizSemesterFilter" class="my-quizzes-semester-filter"></div>
-  </div>
-
-  <div id="myQuizSubjectFilter" class="my-quizzes-subject-filter"></div>
-
-</header>
-<div id="myQuizSummary" class="my-quizzes-summary"></div>
+      <div id="myQuizSummary" class="my-quizzes-summary"></div>
       <div id="myQuizList"></div>
-
     </div>
   `;
   const container = document.getElementById("myQuizList");

@@ -115,6 +115,11 @@ function renderQuestion() {
     currentQuestion,
   );
 
+  // Answered-so-far count for the floating toggle badge, so the
+  // button reads as "here's your progress, tap to see it all"
+  // instead of a plain unlabeled "Questions" button.
+  const answeredCount = answers.filter((a) => a !== null).length;
+
   app.innerHTML = `
     <div class="quiz-layout">
 
@@ -126,15 +131,17 @@ function renderQuestion() {
 
       <button id="openNavigatorBtn" class="nav-toggle-btn" type="button">
         📋 Questions
+        <span class="nav-toggle-count">${answeredCount}/${questions.length}</span>
       </button>
 
       <div class="quiz-topbar">
 
         <div class="quiz-header">
-          <div id="quizTimer" class="quiz-timer">
-            ${formatTime(timeRemaining)}
-          </div>
-        </div>
+  <h2 class="quiz-title">${currentSubject}</h2>
+  <div id="quizTimer" class="quiz-timer">
+    ${formatTime(timeRemaining)}
+  </div>
+</div>
 
         <div class="quiz-progress-row">
           <span class="quiz-progress">

@@ -123,6 +123,14 @@ function shuffleArray(array) {
 }
 
 function renderQuestion(quizTitle) {
+  const navigatorHtml = renderQuestionNavigatorMarkup(
+    questions,
+    answers,
+    currentQuestion,
+  );
+
+  // Answered-so-far count for the floating toggle badge.
+  const answeredCount = answers.filter((a) => a !== null).length;
   const app = document.getElementById("app");
 
   const question = questions[currentQuestion];
@@ -145,9 +153,10 @@ function renderQuestion(quizTitle) {
 
       <div class="quiz-container">
 
-      <button id="openNavigatorBtn" class="nav-toggle-btn" type="button">
-        📋 Questions
-      </button>
+     <button id="openNavigatorBtn" class="nav-toggle-btn" type="button">
+  📋 Questions
+  <span class="nav-toggle-count">${answeredCount}/${questions.length}</span>
+</button>
 
       <div class="quiz-topbar">
 

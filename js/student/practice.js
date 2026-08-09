@@ -36,17 +36,20 @@ async function renderPracticeArenaPage(userData) {
 
   const app = document.getElementById("app");
 
+  // Same shell + eyebrow pattern as marketplace.js / my-quizzes.js:
+  // .practice-page owns its own background/padding/radius instead of
+  // relying on .dashboard, and the header uses a plain heading (no
+  // emoji) with an eyebrow tag instead of the old "🎯 Practice Arena"
+  // style.
   app.innerHTML = `
-    <div class="dashboard">
+    <div class="practice-page">
 
-      <header class="dashboard-header">
-
-        <h1>🎯 Practice Arena</h1>
-
-        <p>
+      <header class="practice-header">
+        <span class="practice-eyebrow">Solo Practice</span>
+        <h1>Practice Arena</h1>
+        <p class="practice-subtitle">
           Practice questions from your purchased quizzes.
         </p>
-
       </header>
 
       <div class="practice-card">

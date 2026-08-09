@@ -8,10 +8,22 @@
    need zero changes.
 ========================================================= */
 
+/* .quiz-container used to be transparent — just padding, no
+   background — so the timer/progress row floated directly on
+   whatever the page background happens to be, with nothing tying
+   it visually to the question card below it. Giving it the same
+   soft-panel treatment as .practice-card (lavender surface, thin
+   border) makes it read as one contained unit, and lets the white
+   .quiz-card pop as the actual focal point inside it — same
+   panel-vs-card relationship Practice Arena uses. */
 .quiz-container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 28px 20px 50px;
+  padding: 24px;
+  background: #faf9fd;
+  border: 1px solid #efeef7;
+  border-radius: 22px;
+  box-sizing: border-box;
 }
 
 /* =========================
@@ -19,7 +31,7 @@
 ========================= */
 
 .quiz-topbar {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .quiz-header {
@@ -79,15 +91,22 @@
 
 /* =========================
    QUESTION CARD
+   Toned down to the same shadow/border scale used by
+   .marketplace-card / .quiz-card (My Quizzes) / .practice-card —
+   it was noticeably heavier than every other card in the app
+   (0 10px 35px vs. everyone else's 0 8px 20px), which is part of
+   what made this page feel like it belonged to a different app.
 ========================= */
 
 .quiz-card {
   background: white;
-  border-radius: 22px;
-  padding: 30px;
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.07);
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid #f1f1f1;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .quiz-question {
@@ -198,12 +217,13 @@
 }
 
 #prevBtn {
-  background: #f3f4f6;
+  background: #ffffff;
   color: #374151;
+  border: 1px solid #e5e7eb;
 }
 
 #prevBtn:hover:not(:disabled) {
-  background: #e5e7eb;
+  background: #f3f4f6;
 }
 
 #nextBtn,
@@ -234,12 +254,13 @@
   gap: 24px;
   max-width: 1100px;
   margin: 0 auto;
+  padding: 4px 20px 50px;
+  box-sizing: border-box;
 }
 
 .quiz-layout .quiz-container {
   flex: 1;
   margin: 0;
-  padding: 28px 0 50px;
 }
 
 .question-navigator-sidebar {
@@ -248,7 +269,9 @@
   background: white;
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid #f1f1f1;
   position: sticky;
   top: 20px;
@@ -334,20 +357,48 @@
   background: #e5e7eb;
 }
 
-/* Mobile "Questions" toggle button — hidden on desktop */
+/* Mobile "Questions" toggle — was a plain gray-outlined button
+   sitting inline above the question card. Two problems: (1) it
+   looked like ambient label text, not something tappable, and
+   (2) once someone scrolled down into a long question, it
+   scrolled out of view with nothing to bring it back — that's
+   most of why it wasn't getting clicked. Fixed as a floating
+   pill, pinned to the viewport so it's reachable at any scroll
+   position, filled in the same purple used for every other
+   primary action, with a live "answered so far" count so it
+   reads as a real control instead of a label. */
 .nav-toggle-btn {
   display: none;
   align-items: center;
-  gap: 8px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  color: #374151;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-weight: 600;
+  gap: 10px;
+  border: none;
+  background: #7c3aed;
+  color: white;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  margin-bottom: 16px;
+  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.35);
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+}
+
+.nav-toggle-btn:hover {
+  background: #6d28d9;
+}
+
+.nav-toggle-btn:active {
+  transform: scale(0.97);
+}
+
+.nav-toggle-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* Mobile drawer overlay — hidden on desktop */
@@ -414,6 +465,7 @@
 @media (max-width: 768px) {
   .quiz-layout {
     display: block;
+    padding: 0 14px 40px;
   }
 
   .question-navigator-sidebar {
@@ -422,6 +474,11 @@
 
   .nav-toggle-btn {
     display: inline-flex;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 400;
+    margin-bottom: 0;
   }
 
   .navigator-drawer .navigator-grid {
@@ -429,12 +486,13 @@
   }
 
   .quiz-container {
-    padding: 18px 14px 40px;
+    padding: 16px;
+    border-radius: 18px;
   }
 
   .quiz-card {
     padding: 20px;
-    border-radius: 18px;
+    border-radius: 16px;
   }
 
   .quiz-header {

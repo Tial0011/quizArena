@@ -1,4 +1,65 @@
 /* =========================
+   MY QUIZZES PAGE SHELL
+   Same treatment as marketplace-page: owns its own background,
+   padding, radius and shadow instead of depending on .dashboard
+   for spacing.
+========================= */
+.my-quizzes-page {
+  background: #ffffff;
+  border: 1px solid #ececf5;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow:
+    0 1px 2px rgba(20, 18, 31, 0.04),
+    0 16px 40px rgba(76, 29, 149, 0.06);
+}
+
+.my-quizzes-header {
+  margin-bottom: 24px;
+}
+
+.my-quizzes-eyebrow {
+  display: inline-block;
+  color: #7c3aed;
+  background: #f3effe;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.my-quizzes-header h1 {
+  margin: 0 0 4px 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: #14121f;
+  letter-spacing: -0.01em;
+}
+
+.my-quizzes-subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* =========================
+   TOOLBAR PANEL
+   Groups search, semester select and subject chips into one inset
+   panel instead of three loose rows — same pattern as
+   .marketplace-toolbar-panel.
+========================= */
+.my-quizzes-toolbar-panel {
+  background: #faf9fd;
+  border: 1px solid #efeef7;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 24px;
+}
+
+/* =========================
    SEARCH + SEMESTER FILTER
 ========================= */
 
@@ -6,7 +67,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 20px;
 }
 
 .my-quizzes-search {
@@ -17,6 +77,7 @@
   border-radius: 14px;
   background: #fff;
   font-size: 15px;
+  box-sizing: border-box;
   transition: 0.2s;
 }
 
@@ -35,6 +96,7 @@
    to zero width automatically. */
 .my-quizzes-semester-filter select {
   height: 100%;
+  min-height: 50px;
   min-width: 170px;
   padding: 0 40px 0 16px;
   border: 1px solid #e5e7eb;
@@ -43,6 +105,7 @@
   color: #111827;
   font-size: 15px;
   font-weight: 500;
+  box-sizing: border-box;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -73,12 +136,61 @@
 }
 
 /* =========================
-   MY QUIZZES
+   SUBJECT FILTER (chips)
+========================= */
+
+.my-quizzes-subject-filter {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-top: 14px;
+  scrollbar-width: none;
+}
+
+.my-quizzes-subject-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  border: 1px solid #ececf5;
+  background: #fff;
+  color: #374151;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  background: #f3effe;
+  color: #6d28d9;
+  border-color: #ded6fb;
+}
+
+.filter-chip.active {
+  background: #7c3aed;
+  color: #fff;
+  border-color: #7c3aed;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.25);
+}
+
+@media (max-width: 600px) {
+  .my-quizzes-subject-filter {
+    gap: 8px;
+  }
+}
+
+/* =========================
+   MY QUIZZES LIST
 ========================= */
 
 #myQuizList {
   display: block;
-  margin-top: 25px;
+  margin-top: 8px;
 }
 
 /* =========================
@@ -87,44 +199,59 @@
 
 .quiz-card {
   background: white;
-  border-radius: 20px;
-  padding: 24px;
-
+  border-radius: 16px;
+  padding: 20px;
   border: 1px solid #ececec;
-
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
-
-  transition: 0.25s;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 20px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .quiz-card:hover {
-  transform: translateY(-4px);
-
-  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.08);
+  /* matches the -2px lift used across marketplace-card /
+     marketplace-stat for a consistent feel between the two pages */
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.06),
+    0 12px 24px rgba(0, 0, 0, 0.06);
 }
 
 .quiz-card h3 {
-  color: #7c3aed;
-
-  font-size: 1.2rem;
-
+  color: #14121f;
+  font-size: 1.15rem;
+  font-weight: 700;
   margin-bottom: 8px;
 }
 
 .quiz-card p {
   color: #6b7280;
-
   margin-bottom: 12px;
 }
 
 .quiz-card strong {
   display: block;
-
   font-size: 1.1rem;
-
   color: #111827;
-
   margin-bottom: 20px;
+}
+
+.quiz-subject {
+  display: inline-block;
+  background: #ede9fe;
+  color: #6d28d9;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.quiz-week {
+  color: #6b7280;
+  margin: 12px 0 20px;
 }
 
 /* =========================
@@ -133,24 +260,15 @@
 
 .attempt-btn {
   width: 100%;
-
   padding: 14px;
-
   border: none;
-
-  border-radius: 14px;
-
+  border-radius: 12px;
   background: #7c3aed;
-
   color: white;
-
   font-weight: 600;
-
   font-size: 15px;
-
   cursor: pointer;
-
-  transition: 0.25s;
+  transition: 0.2s ease;
 }
 
 .attempt-btn:hover {
@@ -166,98 +284,34 @@
 ========================= */
 
 .empty-state {
-  background: white;
-
-  border-radius: 18px;
-
-  padding: 50px 20px;
-
+  background: #fafafa;
+  border-radius: 16px;
+  padding: 48px 20px;
   text-align: center;
-
-  color: #6b7280;
-
-  border: 1px solid #ececec;
-
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
-}
-.quiz-subject {
-  display: inline-block;
-
-  background: #ede9fe;
-  color: #7c3aed;
-
-  padding: 6px 12px;
-
-  border-radius: 999px;
-
-  font-size: 13px;
-  font-weight: 600;
-
-  margin-bottom: 16px;
+  color: #888;
+  border: 1px dashed #ddd;
 }
 
-.quiz-week {
-  color: #6b7280;
-
-  margin: 12px 0 20px;
+.empty-state h3 {
+  color: #111827;
+  margin: 0 0 6px 0;
 }
 
-/* =========================
-   DESKTOP
-========================= */
-
-@media (min-width: 768px) {
-  .my-quiz-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-  .my-quizzes-summary {
-    grid-template-columns: 1fr;
-  }
-}
-/* =========================
-   SUMMARY
-========================= */
-
-.my-quizzes-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin: 24px 0;
+.empty-state p {
+  margin: 0;
+  font-size: 15px;
 }
 
-.my-quiz-stat {
-  background: #fff;
-  border: 1px solid #ececec;
-  border-radius: 18px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-  transition: 0.25s;
-}
-
-.my-quiz-stat:hover {
-  transform: translateY(-3px);
-}
-
-.my-quiz-stat-value {
-  display: block;
-  font-size: 28px;
-  font-weight: 700;
-  color: #7c3aed;
-}
-
-.my-quiz-stat-label {
-  display: block;
-  margin-top: 6px;
-  color: #6b7280;
-  font-size: 14px;
-}
 /* =========================
    SUBJECT SECTIONS
 ========================= */
 
 .my-quiz-section {
   margin-bottom: 40px;
+}
+
+.my-quiz-section:last-child {
+  margin-bottom: 0;
 }
 
 .my-quiz-section-header {
@@ -284,71 +338,69 @@
 
 .my-quiz-grid {
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
+
+@media (min-width: 768px) {
+  .my-quiz-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
 /* =========================
-   SEMESTER FILTER
+   SUMMARY
 ========================= */
 
-.my-quizzes-semester-filter select {
-  height: 100%;
-  min-width: 170px;
-  min-height: 50px;
-  padding: 0 40px 0 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
+.my-quizzes-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.my-quiz-stat {
   background: #fff;
-  color: #111827;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'><path d='M1 1L7 7L13 1' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-  transition: 0.2s;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease;
 }
 
-.my-quizzes-semester-filter select:hover {
-  border-color: #c4b5fd;
+.my-quiz-stat:hover {
+  transform: translateY(-2px);
 }
 
-.my-quizzes-semester-filter select:focus {
-  outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+.my-quiz-stat-value {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: #7c3aed;
 }
 
-@media (max-width: 600px) {
-  .my-quizzes-toolbar {
-    flex-direction: column;
-  }
-
-  .my-quizzes-semester-filter select {
-    width: 100%;
-  }
-}
-/* =========================
-   MY QUIZZES SUBJECT FILTER
-========================= */
-
-.my-quizzes-subject-filter {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  margin-top: 16px;
-
-  scrollbar-width: none;
-}
-
-.my-quizzes-subject-filter::-webkit-scrollbar {
-  display: none;
+.my-quiz-stat-label {
+  display: block;
+  margin-top: 5px;
+  color: #6b7280;
+  font-size: 12px;
 }
 
 @media (max-width: 600px) {
-  .my-quizzes-subject-filter {
+  .my-quizzes-summary {
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
+  }
+
+  .my-quiz-stat {
+    padding: 12px 8px;
+  }
+
+  .my-quiz-stat-value {
+    font-size: 20px;
+  }
+
+  .my-quiz-stat-label {
+    font-size: 15px;
   }
 }

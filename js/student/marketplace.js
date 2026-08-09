@@ -53,30 +53,39 @@ async function renderMarketplacePage(userData) {
     renderStudentDashboard(currentUserData);
   });
 
+  // NOTE: this page used to render directly onto #app with no wrapper
+  // of its own — it inherited whatever spacing the page it was called
+  // from happened to have (or didn't). `.marketplace-page` below is a
+  // self-contained shell (own background, padding, radius, shadow) so
+  // this page looks right regardless of what wraps #app.
   app.innerHTML = `
-    <div class="admin-card">
-     <div class="marketplace-header">
-  <h2>Marketplace</h2>
-  <p class="marketplace-subtitle">Browse and unlock quizzes</p>
+    <div class="marketplace-page">
+      <div class="marketplace-header">
+        <h2>Marketplace</h2>
+        <p class="marketplace-subtitle">Browse and unlock quizzes</p>
+      </div>
 
-  <div id="marketplaceLevelSemesterFilters" class="marketplace-level-semester-filters"></div>
+      <div class="marketplace-toolbar-panel">
+        <div id="marketplaceLevelSemesterFilters" class="marketplace-level-semester-filters"></div>
 
-  <div class="marketplace-toolbar">
-    <input
-      type="text"
-      id="marketplaceSearch"
-      class="marketplace-search"
-      placeholder="Search by title, subject or week..."
-    />
+        <div class="marketplace-toolbar">
+          <input
+            type="text"
+            id="marketplaceSearch"
+            class="marketplace-search"
+            placeholder="Search by title, subject or week..."
+          />
 
-    <div id="marketplaceFilters" class="marketplace-filters"></div>
-  </div>
-</div>
-<div id="marketplaceSummary" class="marketplace-summary"></div>
+          <div id="marketplaceFilters" class="marketplace-filters"></div>
+        </div>
+      </div>
 
-<div id="marketplaceList" class="marketplace-list-wrapper"></div>
+      <div id="marketplaceSummary" class="marketplace-summary"></div>
 
-    ${renderPurchaseDialogMarkup()}
+      <div id="marketplaceList" class="marketplace-list-wrapper"></div>
+
+      ${renderPurchaseDialogMarkup()}
+    </div>
   `;
 
   attachDialogEventListeners();
