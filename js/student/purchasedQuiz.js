@@ -123,14 +123,6 @@ function shuffleArray(array) {
 }
 
 function renderQuestion(quizTitle) {
-  const navigatorHtml = renderQuestionNavigatorMarkup(
-    questions,
-    answers,
-    currentQuestion,
-  );
-
-  // Answered-so-far count for the floating toggle badge.
-  const answeredCount = answers.filter((a) => a !== null).length;
   const app = document.getElementById("app");
 
   const question = questions[currentQuestion];
@@ -144,6 +136,11 @@ function renderQuestion(quizTitle) {
     currentQuestion,
   );
 
+  // Answered-so-far count for the floating toggle badge, so the
+  // button reads as "here's your progress, tap to see it all"
+  // instead of a plain unlabeled "Questions" button.
+  const answeredCount = answers.filter((a) => a !== null).length;
+
   app.innerHTML = `
     <div class="quiz-layout">
 
@@ -153,10 +150,10 @@ function renderQuestion(quizTitle) {
 
       <div class="quiz-container">
 
-     <button id="openNavigatorBtn" class="nav-toggle-btn" type="button">
-  📋 Questions
-  <span class="nav-toggle-count">${answeredCount}/${questions.length}</span>
-</button>
+      <button id="openNavigatorBtn" class="nav-toggle-btn" type="button">
+        📋 Questions
+        <span class="nav-toggle-count">${answeredCount}/${questions.length}</span>
+      </button>
 
       <div class="quiz-topbar">
 
