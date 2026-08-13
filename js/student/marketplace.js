@@ -592,6 +592,40 @@ function closePurchaseDialog() {
 }
 
 /**
+ * Swaps the purchase dialog into an explicit "Payment Successful"
+ * state instead of just silently closing it. Before this, a
+ * confirmed payment closed the dialog with no feedback at all —
+ * the only sign anything happened was the card behind it quietly
+ * flipping to "Owned", which reads as "did my payment actually go
+ * through?" on a slow connection. The dialog stays open (and the
+ * marketplace grid is NOT re-rendered yet, since that would tear
+ * this view down) until the student taps "Continue".
+ */
+function showPurchaseSuccess(quiz, onContinue) {
+  const box = document.getElementById("purchaseDialogBox");
+  if (!box) return;
+
+  box.innerHTML = `
+    <div class="purchase-success">
+      <div class="purchase-success-check">✓</div>
+      <h3>Payment Successful!</h3>
+      <p class="purchase-success-quiz">${quiz?.title || "Your quiz"}</p>
+      <p class="purchase-success-note">
+        This quiz is now yours — find it anytime under
+        <strong>My Quizzes</strong>.
+      </p>
+      <button type="button" class="btn-primary" id="purchaseSuccessContinueBtn">
+        Continue
+      </button>
+    </div>
+  `;
+
+  document
+    .getElementById("purchaseSuccessContinueBtn")
+    .addEventListener("click", onContinue, { once: true });
+}
+
+/**
  * FLUTTERWAVE PAYMENT FLOW
  * ------------------------
  * 1. Opens Flutterwave's inline checkout for the selected quiz's price.
@@ -708,6 +742,11 @@ async function finalizePurchase(response, quizId) {
   isPurchasing = false;
 
   const confirmBtn = document.getElementById("confirmPurchaseBtn");
+  // Dialog is still open at this point (see showPurchaseSuccess() below),
+  // so the selected quiz is still whatever was chosen when the dialog
+  // opened — fall back to the cache just in case.
+  const quiz =
+    selectedQuizForPurchase || quizzesCache.find((q) => q.id === quizId);
 
   if (!result.success) {
     console.warn("[purchase] Verification failed", result.message);
@@ -732,17 +771,21 @@ async function finalizePurchase(response, quizId) {
     currentUserData = freshUserData;
   }
 
-  closePurchaseDialog();
+  // Show an explicit success state and only rebuild the page once
+  // the student acknowledges it — see showPurchaseSuccess() for why.
+  showPurchaseSuccess(quiz, async () => {
+    closePurchaseDialog();
 
-  // Full re-render, sourced from Firestore: rebuilds the quiz grid
-  // (so this card flips to "Owned"), re-registers the back handler
-  // with the updated currentUserData, and keeps everything as an
-  // SPA update — no location.reload() anywhere. Calls the internal
-  // render function directly (not the exported renderMarketplace)
-  // so this refresh doesn't push a second, phantom history entry —
-  // the student hasn't navigated anywhere, they're still on
-  // Marketplace, just looking at updated data.
-  await renderMarketplacePage(currentUserData);
+    // Full re-render, sourced from Firestore: rebuilds the quiz grid
+    // (so this card flips to "Owned"), re-registers the back handler
+    // with the updated currentUserData, and keeps everything as an
+    // SPA update — no location.reload() anywhere. Calls the internal
+    // render function directly (not the exported renderMarketplace)
+    // so this refresh doesn't push a second, phantom history entry —
+    // the student hasn't navigated anywhere, they're still on
+    // Marketplace, just looking at updated data.
+    await renderMarketplacePage(currentUserData);
+  });
 }
 
 /**
@@ -794,8 +837,13 @@ async function pollForConfirmation(response, quizId, attempt = 1) {
       currentUserData = freshUserData;
     }
 
-    closePurchaseDialog();
-    await renderMarketplacePage(currentUserData);
+    const quiz =
+      selectedQuizForPurchase || quizzesCache.find((q) => q.id === quizId);
+
+    showPurchaseSuccess(quiz, async () => {
+      closePurchaseDialog();
+      await renderMarketplacePage(currentUserData);
+    });
     return;
   }
 

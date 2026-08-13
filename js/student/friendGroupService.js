@@ -352,15 +352,25 @@ export async function getGlobalChallengeLeaderboard(limitCount = 20) {
   ]);
 
   // Every attempt this week, any subject, aggregated per user.
+  // `quizKeys` tracks the distinct quizzes/subjects attempted (a
+  // purchased quiz by its quizId, a practice run by its subject)
+  // so "variety" -- doing different quizzes, not just repeating
+  // one -- can be surfaced, per the note in the doc comment above.
   const individualStats = new Map();
   attemptsSnap.forEach((docSnap) => {
     const data = docSnap.data();
     const entry = individualStats.get(data.userId) || {
       totalPercentage: 0,
       count: 0,
+      quizKeys: new Set(),
     };
     entry.totalPercentage += data.percentage || 0;
     entry.count++;
+    entry.quizKeys.add(
+      data.mode === "purchased"
+        ? `q:${data.quizId}`
+        : `s:${data.subjectName || "practice"}`,
+    );
     individualStats.set(data.userId, entry);
   });
 
@@ -428,6 +438,7 @@ export async function getGlobalChallengeLeaderboard(limitCount = 20) {
     scored.push({
       uid: userId,
       attemptCount: entry.count,
+      varietyCount: entry.quizKeys.size,
       individualAverage: Math.round(individualAvg),
       weeklyScore,
     });
@@ -448,6 +459,7 @@ export async function getGlobalChallengeLeaderboard(limitCount = 20) {
       uid: s.uid,
       name,
       attemptCount: s.attemptCount,
+      varietyCount: s.varietyCount,
       individualAverage: s.individualAverage,
       averagePercentage: Math.round(s.weeklyScore), // ranking/display number
     };

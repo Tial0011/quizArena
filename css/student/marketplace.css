@@ -327,6 +327,79 @@
 }
 
 /* =========================
+   PURCHASE SUCCESS STATE
+   Swapped into #purchaseDialogBox once a payment is confirmed —
+   see showPurchaseSuccess() in marketplace.js. Deliberately loud
+   and explicit (big check, clear copy) so it can't read as "did
+   this actually work?".
+========================= */
+.purchase-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 4px 4px;
+}
+
+.purchase-success-check {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.35);
+  margin-bottom: 16px;
+  animation: purchase-success-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes purchase-success-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.purchase-success h3 {
+  margin: 0 0 6px 0;
+  color: #065f46;
+}
+
+.purchase-success-quiz {
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1a1a;
+  margin: 0 0 10px 0;
+}
+
+.purchase-success-note {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.purchase-success .btn-primary {
+  width: 100%;
+  background: #10b981;
+}
+
+.purchase-success .btn-primary:hover {
+  background: #059669;
+}
+
+/* =========================
    SEARCH + FILTERS
    (live inside .marketplace-toolbar-panel)
 ========================= */

@@ -13,36 +13,36 @@ import {
   initScrollReveal,
   initParallax,
 } from "../student/scrollEffects.js";
+import {
+  canInstall,
+  onInstallabilityChange,
+  triggerInstallPrompt,
+} from "../installPrompt.js";
+import { initInstallNudge } from "../student/installNudge.js";
 const app = document.getElementById("app");
 
 let mode = "login";
-let deferredInstallPrompt = null;
 
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  document.getElementById("installAppBtn")?.removeAttribute("hidden");
-});
-
-window.addEventListener("appinstalled", () => {
-  deferredInstallPrompt = null;
-  document.getElementById("installAppBtn")?.setAttribute("hidden", "");
+// The "beforeinstallprompt"/"appinstalled" listeners themselves now
+// live in js/installPrompt.js (a single shared module, imported
+// once from main.js) instead of here -- this just reacts to
+// availability changes so the button can show/hide itself live.
+onInstallabilityChange(() => {
+  const btn = document.getElementById("installAppBtn");
+  if (!btn) return;
+  btn.toggleAttribute("hidden", !canInstall());
 });
 
 async function handleInstallClick() {
-  if (!deferredInstallPrompt) return;
-
   const btn = document.getElementById("installAppBtn");
   btn.disabled = true;
 
-  deferredInstallPrompt.prompt();
-  const { outcome } = await deferredInstallPrompt.userChoice;
+  const { outcome } = await triggerInstallPrompt();
 
-  deferredInstallPrompt = null;
-  if (outcome !== "accepted") {
-    btn.disabled = false;
-  } else {
+  if (outcome === "accepted") {
     btn.setAttribute("hidden", "");
+  } else {
+    btn.disabled = false;
   }
 }
 
@@ -59,7 +59,7 @@ export function renderLanding() {
   Live Platform
 </div>
 
-<button id="installAppBtn" class="install-app-btn" ${deferredInstallPrompt ? "" : "hidden"}>
+<button id="installAppBtn" class="install-app-btn" ${canInstall() ? "" : "hidden"}>
   ⬇️ Install App
 </button>
 
@@ -390,6 +390,7 @@ async function routeAfterAuth(user) {
 
   // Start inactivity tracking
   startSessionManager();
+  initInstallNudge();
 
   if (user.email === ADMIN_EMAIL) {
     renderAdminDashboard();

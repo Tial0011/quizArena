@@ -1,0 +1,100 @@
+/* =========================================================
+   INSTALL NUDGE
+   Floating, recurring "install the app" pill -- see
+   js/installPrompt.js and js/student/installNudge.js.
+========================================================= */
+
+.install-nudge {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 12px 32px rgba(30, 27, 75, 0.18),
+    0 2px 8px rgba(30, 27, 75, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+  pointer-events: none;
+}
+
+.install-nudge.install-nudge-show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.install-nudge-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.install-nudge-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.install-nudge-text strong {
+  font-size: 14px;
+  color: #1e1b4b;
+}
+
+.install-nudge-text span {
+  font-size: 12.5px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.install-nudge-btn {
+  flex-shrink: 0;
+  border: none;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
+}
+
+.install-nudge-btn:active {
+  transform: scale(0.97);
+}
+
+.install-nudge-close {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 2px;
+}
+
+.install-nudge-close:hover {
+  color: #4b5563;
+}
+
+@media (min-width: 640px) {
+  .install-nudge {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    width: 340px;
+  }
+}
