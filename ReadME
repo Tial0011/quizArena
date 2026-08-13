@@ -1,0 +1,311 @@
+# Quiz Arena — Technical Overview
+
+This is a standalone write-up for anyone taking over the project, auditing
+it, or just trying to understand how it's put together — a new developer,
+the CEO, whoever. It's not part of the app and isn't linked from it.
+It describes the app **as it exists today**, including the fixes made in
+the most recent round of work (white screen on login, recurring install
+prompt, a Friend Groups bug, and the marketplace payment-confirmation
+screen).
+
+---
+
+## 1. What this is
+
+Quiz Arena is a **CBT (Computer-Based Test) practice platform** built for
+UNIMED (a Nigerian university) 100-Level students. Students practice
+timed, randomized quizzes for free, and can buy premium quizzes (paid via
+Flutterwave) that behave like real exam-condition CBTs. There's also a
+social layer — "Friend Groups" — where students team up, and a weekly
+"Global Challenge" leaderboard with a cash prize.
+
+There are two roles:
+
+- **Student** — the main audience, everything described below.
+- **Admin** — a single hardcoded account (`admin@test.com`, see
+  `js/main.js`) that manages subjects, quizzes, questions, and sends
+  notifications.
+
+## 2. Tech stack
+
+- **No framework, no build step.** This is plain HTML/CSS/JavaScript,
+  loaded directly by the browser as native **ES modules**
+  (`<script type="module" src="js/main.js">` in `index.html`). There's no
+  webpack/vite/React — every `import`/`export` you see is the browser's
+  native module system, and every file is served as-is.
+- **Firebase** is the entire backend:
+  - **Firebase Auth** — email/password + Google sign-in.
+  - **Firestore** — the database (see §5).
+  - **Firebase Cloud Functions** (`functions/index.js`) — the only
+    trusted server-side code, used for payment verification and push
+    notifications.
+  - **Firebase Cloud Messaging** — push notifications.
+  - **Firebase Hosting** (implied by `firebase.json` / `.firebaserc`) —
+    where this is deployed.
+- **Flutterwave** — payment provider for purchasing quizzes (Nigerian
+  cards, USSD, bank transfer).
+- **Cloudinary** (`js/cloudinary/config.js`) — image hosting, used by the
+  admin panel for quiz/question images.
+- It's a **PWA** (Progressive Web App) — installable to a phone home
+  screen, works via a service worker (`sw.js`) and `manifest.json`.
+
+There is no npm build for the frontend at all — the only `package.json`
+in the repo lives under `functions/`, for the Cloud Functions.
+
+## 3. How the app boots (and why the white-screen fix matters)
+
+`index.html` is the single HTML page. It:
+
+1. Paints an inline, dependency-free **boot loader** (spinner + logo)
+   immediately — this is plain `<style>` in the `<head>`, not an external
+   stylesheet, specifically so it renders before anything else has to
+   load.
+2. Loads all the page CSS files as `<link>` tags (see §7).
+3. Loads `js/main.js` as a module — this is the actual entry point.
+
+`js/main.js`:
+
+1. Registers the service worker.
+2. Calls Firebase's `onAuthStateChanged`, which tells us whether someone
+   is already logged in (from a previous session) or not — this check
+   itself takes a moment, and then if they're logged in, we make a
+   Firestore call to fetch their user document. **That round-trip is
+   what used to leave signed-in users staring at a blank white screen**
+   — the boot loader now covers that entire window and is only removed
+   once the real page (`renderLanding`, `renderStudentDashboard`, or
+   `renderAdminDashboard`) has actually rendered into `<div id="app">`.
+3. Routes to one of three renders based on auth state + role:
+   - No user → `renderLanding()` (`js/ui/landing.js`) — the marketing
+     page + login/register form.
+   - `user.email === "admin@test.com"` → `renderAdminDashboard()`.
+   - Any other logged-in user → fetch their Firestore doc, then
+     `renderStudentDashboard(userData)`.
+
+There's no router library — this is a hand-rolled single-page app. Every
+"page" is a function that does `document.getElementById("app").innerHTML
+= \`...\``and then wires up event listeners. Back/forward browser
+navigation is handled manually via`history.pushState`+ a`popstate`listener in`js/student/navigation.js`.
+
+## 4. Project structure
+
+```
+quizArena/
+├── index.html              Single HTML page (see §3)
+├── manifest.json            PWA manifest (icons, theme color, name)
+├── sw.js                    Service worker (basic install/cache)
+├── firebase-messaging-sw.js Service worker for push notifications
+├── firebase.json / .firebaserc   Firebase Hosting + project config
+│
+├── js/
+│   ├── main.js               Entry point — auth routing (§3)
+│   ├── auth.js                Login/register/Google/reset/logout
+│   ├── sessionManager.js      Auto-logout after 1hr of inactivity
+│   ├── installPrompt.js       Shared PWA "install" event capture
+│   ├── notificationsService.js  Writes to the `notifications` collection
+│   ├── pushNotifications.js   FCM token registration
+│   │
+│   ├── firebase/config.js     Firebase project keys + SDK init
+│   ├── cloudinary/config.js   Cloudinary upload config (admin images)
+│   │
+│   ├── ui/landing.js          Logged-out landing page + auth forms
+│   │
+│   ├── student/                Everything a logged-in student sees
+│   │   ├── dashboard.js         Student home page
+│   │   ├── practice.js          Free practice quizzes
+│   │   ├── quiz.js               The actual quiz-taking screen (practice)
+│   │   ├── purchasedQuiz.js      The actual quiz-taking screen (paid)
+│   │   ├── questionNavigator.js  Question grid/jump-to-question UI
+│   │   ├── reviewAnswers.js      Post-quiz answer review
+│   │   ├── myQuizzes.js          List of quizzes the student owns
+│   │   ├── marketplace.js        Browse + buy paid quizzes (§8)
+│   │   ├── purchaseService.js    Firestore writes for purchases
+│   │   ├── friendGroups.js       Friend Groups + leaderboard UI (§9)
+│   │   ├── friendGroupService.js Firestore logic for groups/leaderboard
+│   │   ├── attemptsService.js    Records every quiz attempt, streaks
+│   │   ├── analyticsWidgets.js   Dashboard score-trend widgets
+│   │   ├── installNudge.js       Recurring "install app" banner (§10)
+│   │   ├── loadingOverlay.js     Reusable animated loading spinner
+│   │   ├── navigation.js         Manual back-button handling
+│   │   └── scrollEffects.js      Landing-page scroll reveal/parallax
+│   │
+│   └── admin/                  Admin-only panel
+│       ├── dashboard.js         Admin home / stats
+│       ├── subjects.js          CRUD for subjects
+│       ├── quizzes.js           CRUD for paid quizzes
+│       ├── questions.js         CRUD for quiz questions
+│       ├── notifications.js     Send a push notification to students
+│       ├── cascadeDelete.js     Deleting a subject also cleans up its quizzes/questions
+│       └── dangerDialog.js      Shared "are you sure?" confirmation modal
+│
+├── css/
+│   ├── base.css            Global reset + design tokens (colors, radius, shadows — see §7)
+│   ├── auth.css             Landing/login/register page
+│   ├── responsive.css       Mobile overrides — loaded LAST, see file header
+│   ├── installNudge.css     The recurring install banner
+│   ├── student/*.css        One file per student page, named to match
+│   └── admin/*.css          One file per admin page, named to match
+│
+├── functions/
+│   └── index.js             Cloud Functions (§6)
+│
+└── icons/, images/           Static assets
+```
+
+**Naming convention worth knowing:** almost every "page" has three
+matching files spread across three folders —
+`js/student/marketplace.js` + `css/student/marketplace.css` — that's the
+pattern everywhere, so if you're looking for where something on screen
+comes from, the JS and CSS filenames match.
+
+## 5. Firestore data model
+
+There's no formal schema definition (Firestore is schemaless) — this is
+reconstructed from what the code actually reads/writes. Collections:
+
+| Collection          | Written by                                                        | Shape                                                                                                                                                                                                     |
+| ------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`             | `auth.js` on signup, admin panel                                  | `{ name, email, role: "student"\|"admin", purchasedQuizzes: [purchaseId...], fcmTokens: [...], createdAt }`                                                                                               |
+| `subjects`          | `js/admin/subjects.js`                                            | Subject list shown in Practice/Marketplace filters                                                                                                                                                        |
+| `quizzes`           | `js/admin/quizzes.js`                                             | Paid quiz metadata: title, price, subject, level, semester                                                                                                                                                |
+| `questions`         | `js/admin/questions.js`                                           | Individual questions, linked to a quiz or subject                                                                                                                                                         |
+| `attempts`          | `attemptsService.js` (called from `quiz.js` / `purchasedQuiz.js`) | `{ userId, mode: "practice"\|"purchased", subjectName, quizId, quizTitle, score, totalQuestions, percentage, completedAt }` — this is the record every score/streak/leaderboard calculation is built from |
+| `purchases`         | **Cloud Function only** (`verifyFlutterwavePurchase`)             | `{ userId, quizId, status: "paid", purchasedAt }` — the source of truth for "does this student own this quiz"                                                                                             |
+| `friendGroups`      | `friendGroupService.js`                                           | `{ name, code, ownerId, ownerName, memberIds: [uid...], createdAt }`                                                                                                                                      |
+| `groupJoinRequests` | `friendGroupService.js`                                           | `{ groupId, requesterId, requesterEmail, requesterName, status: "pending"\|"accepted"\|"rejected" }`                                                                                                      |
+| `notifications`     | `notificationsService.js`                                         | Triggers the `sendNotificationPush` Cloud Function (§6)                                                                                                                                                   |
+
+**Important architectural pattern used throughout:** each collection is
+meant to have exactly **one "service" module that's allowed to write to
+it** (e.g. `purchaseService.js` for `purchases`, `friendGroupService.js`
+for `friendGroups`/`groupJoinRequests`, `attemptsService.js` for
+`attempts`). UI files call into the service, never touch Firestore
+directly for that collection. This is enforced by convention/comments in
+the code, not by tooling — worth keeping in mind if you add a new
+feature.
+
+## 6. Cloud Functions (`functions/index.js`)
+
+Only two functions, and both exist because the browser cannot be
+trusted with certain writes:
+
+1. **`verifyFlutterwavePurchase`** (callable function) — the _only_ place
+   a purchase is ever marked `"paid"`. The client calls this after
+   Flutterwave's checkout widget reports success, but the function
+   **independently re-verifies the transaction directly with
+   Flutterwave's API** before writing to Firestore. This exists so a
+   student can't fake a browser-side "payment successful" response and
+   grant themselves a free quiz.
+2. **`sendNotificationPush`** (Firestore trigger) — fires automatically
+   whenever a document is created in `notifications`. Looks up FCM
+   device tokens (either one student, or every student for a broadcast)
+   and sends the push, then prunes any tokens that bounced (uninstalled
+   app, revoked permission, etc.).
+
+## 7. CSS approach
+
+- `css/base.css` is the global reset + a set of CSS custom properties
+  (`--color-primary`, `--radius-md`, `--shadow-md`, etc.) added in the
+  latest pass so colors/spacing have named references instead of only
+  scattered hex codes. Existing page CSS wasn't force-migrated to these
+  variables (would've meant touching ~6,500 lines with real regression
+  risk) — new components should prefer them going forward.
+- Each page owns its own CSS file (see the folder structure in §4) —
+  there's no shared component library, so similar-looking elements
+  (buttons, cards) are sometimes redefined per-file rather than shared.
+  That's a known area for future cleanup, not a bug.
+- `css/responsive.css` is loaded **last**, after every page's own
+  stylesheet, and only contains mobile-width overrides — the comment at
+  the top of that file explains why the load order matters (CSS cascade:
+  it needs to win at shared breakpoints).
+- No CSS framework (no Tailwind/Bootstrap) — everything is handwritten.
+
+## 8. Payment flow (Marketplace)
+
+1. Student taps "Buy" on a quiz card → `openPurchaseDialog()` shows a
+   confirmation dialog with price.
+2. On confirm, `js/student/marketplace.js` launches Flutterwave's inline
+   checkout widget (loaded via `<script src="https://checkout.flutterwave.com/v3.js">`
+   in `index.html`).
+3. Flutterwave's callback reports a status. Card payments resolve
+   immediately (`successful`/`completed`); bank transfers often come
+   back `pending` first and get **polled** (`pollForConfirmation`, every
+   5s, up to 6 tries) rather than treated as failed.
+4. Either way, the client never trusts Flutterwave's client-side status
+   directly — it calls `confirmFlutterwavePurchase()`
+   (`purchaseService.js`), which hits the `verifyFlutterwavePurchase`
+   Cloud Function (§6) to re-verify server-side before anything is
+   written.
+5. **Once confirmed**, the dialog now shows an explicit green
+   "Payment Successful!" screen naming the quiz, with a "Continue"
+   button — added in the latest fix, because previously the dialog just
+   silently closed and only the card underneath changed to "Owned",
+   which read as "did this actually work?" on a slow connection. The
+   marketplace grid re-renders (pulling a fresh Firestore read, not
+   cached state) only once the student taps Continue.
+
+## 9. Friend Groups & the Global Challenge
+
+- A student can **own** at most 1 group and **belong to** at most 3
+  total (`MAX_GROUPS_OWNED` / `MAX_GROUPS_JOINED` in
+  `friendGroupService.js`).
+- Joining requires the group code and goes through an
+  accept/reject request flow — the group owner approves.
+- A group only unlocks the **Global Challenge** (a weekly ₦1000 prize,
+  reset every Monday) once it has 3+ members.
+- The Challenge score isn't purely "highest average" — it blends: your
+  own average score this week (65%), your attempt _volume_ this week up
+  to a cap (20%), and your best qualifying group's average as a small
+  nudge (15%). See `CHALLENGE_SCORE_WEIGHT` etc. in
+  `friendGroupService.js`.
+- **Bug fixed in the latest pass:** the leaderboard was meant to show
+  how many _different_ quizzes/subjects a student attempted this week
+  ("variety" — the code explicitly rewards trying different things over
+  repeating one quiz), but the number was never actually calculated, so
+  it displayed literally as `undefined quizzes`. This is now computed
+  from distinct `quizId`/`subjectName` values per user, per week.
+
+## 10. PWA install prompt
+
+- `js/installPrompt.js` is the single place that listens for the
+  browser's `beforeinstallprompt` event (it only fires once per session,
+  so only one listener should ever claim it).
+- `js/student/installNudge.js` shows a floating, dismissible banner on
+  the dashboard. Dismissing it **snoozes it for 3 days** rather than
+  hiding it forever — it'll come back on a later visit until the
+  student actually installs, or the browser stops offering the prompt
+  because it's already installed.
+- The landing page's own "⬇️ Install App" button (`js/ui/landing.js`)
+  now reads from this same shared module instead of keeping its own
+  separate listener, so both surfaces stay in sync.
+
+## 11. Known constraints / things a new developer should know
+
+- **The admin account is hardcoded** (`admin@test.com`, in `main.js`)
+  — there's no role-management UI to add a second admin. Anyone signing
+  up with that exact email becomes admin.
+- **No automated tests.** Nothing in this repo runs `npm test`. Changes
+  are verified manually / via `node --check` for syntax.
+- **No build step** means no bundling, minification, or tree-shaking —
+  every file is served exactly as written, and every import is a real
+  network request in production. This keeps the mental model simple but
+  means page weight scales linearly with file count.
+- **Firestore composite indexes**: a couple of queries (e.g. in
+  `attemptsService.js`) combine `where()` + `orderBy()` on different
+  fields, which Firestore can't run without a composite index. The
+  comments in that file note this — if you add a _new_ query shaped like
+  that, Firestore's own error message gives you a direct link to create
+  the needed index.
+- **Session timeout is 1 hour of inactivity** (`sessionManager.js`),
+  tracked via mouse/keyboard/touch/scroll listeners, and force-signs the
+  user out with a plain `alert()` + redirect.
+- **Everything is UNIMED-specific copy** (course codes, university name)
+  hardcoded directly into `index.html` meta tags and `landing.js` — if
+  this is ever repurposed for another school, that's manual find/replace,
+  not a config flag.
+
+---
+
+_This document reflects the codebase after the round of fixes covering:
+the login white-screen, the recurring PWA install prompt, the Friend
+Groups "undefined quizzes" bug, and the marketplace payment-confirmation
+screen._
