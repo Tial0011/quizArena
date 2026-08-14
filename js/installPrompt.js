@@ -83,7 +83,7 @@ export async function triggerInstallPrompt() {
    prompt because it's already installed).
 ========================================================= */
 const STORAGE_KEY = "qa_install_nudge";
-const SNOOZE_DAYS = 0.1;
+const SNOOZE_DAYS = 3;
 
 function readState() {
   try {

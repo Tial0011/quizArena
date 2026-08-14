@@ -563,11 +563,21 @@ function attachDialogEventListeners() {
     .getElementById("confirmPurchaseBtn")
     .addEventListener("click", handleConfirmPurchase);
 
-  // Clicking the dark overlay (outside the dialog box) also cancels.
+  // Clicking the dark overlay (outside the dialog box) also cancels —
+  // but NOT while a purchase is actively processing. Reason: when
+  // Flutterwave's own checkout modal closes (especially if the
+  // student taps its close button right after paying), that click can
+  // "leak through" to whatever's underneath it — which is this very
+  // overlay — and closes it prematurely, before finalizePurchase() has
+  // finished verifying the payment. The dialog would then still be
+  // hidden when showPurchaseSuccess() tries to show it, and the
+  // student is left staring at the marketplace grid with no
+  // confirmation. Blocking backdrop-close during isPurchasing avoids
+  // that race at the source.
   document
     .getElementById("purchaseDialogOverlay")
     .addEventListener("click", (e) => {
-      if (e.target.id === "purchaseDialogOverlay") {
+      if (e.target.id === "purchaseDialogOverlay" && !isPurchasing) {
         closePurchaseDialog();
       }
     });
@@ -582,6 +592,7 @@ function openPurchaseDialog(quiz) {
   const confirmBtn = document.getElementById("confirmPurchaseBtn");
   confirmBtn.textContent = "Purchase";
   confirmBtn.disabled = false;
+  document.getElementById("cancelPurchaseBtn").disabled = false;
 
   document.getElementById("purchaseDialogOverlay").hidden = false;
 }
@@ -604,6 +615,13 @@ function closePurchaseDialog() {
 function showPurchaseSuccess(quiz, onContinue) {
   const box = document.getElementById("purchaseDialogBox");
   if (!box) return;
+
+  // Force the overlay visible regardless of its current state. This
+  // is a deliberate safety net on top of the isPurchasing guard above:
+  // if the dialog somehow still got closed mid-purchase (backdrop
+  // click-through, browser quirk, whatever), a confirmed payment must
+  // never fail silently — the student always sees this screen.
+  document.getElementById("purchaseDialogOverlay").hidden = false;
 
   box.innerHTML = `
     <div class="purchase-success">
@@ -647,9 +665,20 @@ async function handleConfirmPurchase() {
   if (!selectedQuizForPurchase || isPurchasing) return;
 
   isPurchasing = true;
+  // Flutterwave calls onclose() whenever its modal is dismissed — this
+  // includes right AFTER a successful payment, once its own "payment
+  // successful" screen is closed (which can happen very fast). This
+  // flag distinguishes that case from a genuine cancellation: once
+  // callback() has reported a result, onclose must leave the UI alone
+  // rather than resetting it back to "Purchase" while verification is
+  // still running in the background.
+  let paymentResultReceived = false;
+
   const confirmBtn = document.getElementById("confirmPurchaseBtn");
+  const cancelBtn = document.getElementById("cancelPurchaseBtn");
   confirmBtn.disabled = true;
   confirmBtn.textContent = "Processing...";
+  cancelBtn.disabled = true;
 
   const quiz = selectedQuizForPurchase;
   const txRef = `quiz_${quiz.id}_${currentUserId}_${Date.now()}`;
@@ -676,6 +705,7 @@ async function handleConfirmPurchase() {
     },
     callback: async (response) => {
       console.log("[purchase] Flutterwave callback fired", response);
+      paymentResultReceived = true;
 
       // Flutterwave's inline checkout widget (FlutterwaveCheckout) reports
       // success as "completed" — NOT "successful". "successful" is what the
@@ -706,14 +736,28 @@ async function handleConfirmPurchase() {
       isPurchasing = false;
       confirmBtn.disabled = false;
       confirmBtn.textContent = "Purchase";
+      cancelBtn.disabled = false;
       alert("Payment was not completed.");
     },
     onclose: () => {
-      console.log("[purchase] Flutterwave modal closed by user");
-      // User closed the Flutterwave modal without paying.
+      console.log("[purchase] Flutterwave modal closed", {
+        paymentResultReceived,
+      });
+
+      // A result already came in via callback() — verification is
+      // either still running (finalizePurchase/pollForConfirmation) or
+      // has already shown the success screen. Either way, leave the UI
+      // exactly as-is; resetting it here is what caused the dialog to
+      // look abandoned right before the success screen was due to
+      // appear.
+      if (paymentResultReceived) return;
+
+      // No result ever came in — this is a genuine cancellation
+      // (closed before completing payment). Safe to reset.
       isPurchasing = false;
       confirmBtn.disabled = false;
       confirmBtn.textContent = "Purchase";
+      cancelBtn.disabled = false;
     },
   });
 }
@@ -757,6 +801,7 @@ async function finalizePurchase(response, quizId) {
       confirmBtn.disabled = false;
       confirmBtn.textContent = "Purchase";
     }
+    document.getElementById("cancelPurchaseBtn")?.removeAttribute("disabled");
     return;
   }
 
@@ -858,6 +903,7 @@ async function pollForConfirmation(response, quizId, attempt = 1) {
       confirmBtn.disabled = false;
       confirmBtn.textContent = "Purchase";
     }
+    document.getElementById("cancelPurchaseBtn")?.removeAttribute("disabled");
     alert(
       "We're still confirming your bank transfer. This can take a few minutes — please check back on the Marketplace shortly, or contact support with your reference if this persists.",
     );
