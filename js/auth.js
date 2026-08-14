@@ -8,6 +8,7 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   sendPasswordResetEmail,
+  sendEmailVerification,
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -48,7 +49,26 @@ export async function registerUser(name, email, password) {
     // hold up registration or surface as a signup error.
     sendWelcomeNotification(user.uid, name);
 
-    return { success: true, user, role: "student" };
+    // Send the email-verification link. This is a real Firebase email
+    // send (not a Cloud Function) — it can genuinely fail (rate limits,
+    // bad SMTP relay on Firebase's side, etc.), but a failure here
+    // should never block account creation, which has already
+    // succeeded. The UI that shows next tells the student to check
+    // spam either way and offers a manual resend.
+    let verificationEmailSent = true;
+    try {
+      await sendEmailVerification(user);
+    } catch (verificationError) {
+      console.error("[auth] sendEmailVerification failed", verificationError);
+      verificationEmailSent = false;
+    }
+
+    return {
+      success: true,
+      user,
+      role: "student",
+      verificationEmailSent,
+    };
   } catch (error) {
     console.error(error);
     return { success: false, message: error.message };
@@ -160,6 +180,43 @@ export async function resetPassword(email) {
     };
   } catch (error) {
     console.error(error);
+    return { success: false, message: error.message };
+  }
+}
+
+// =========================
+// EMAIL VERIFICATION
+// =========================
+
+/**
+ * Resends the verification link to the currently signed-in user.
+ * Used by the "verify your email" gate (js/emailVerificationGate.js)
+ * when a student didn't get the original email or it landed in spam
+ * and they've deleted/missed it.
+ */
+export async function resendVerificationEmail(user) {
+  if (!user) {
+    return { success: false, message: "No signed-in user to verify." };
+  }
+
+  try {
+    await sendEmailVerification(user);
+    return {
+      success: true,
+      message:
+        "Verification email sent. Please also check your Spam/Junk folder — it almost always lands there first.",
+    };
+  } catch (error) {
+    console.error(error);
+
+    if (error.code === "auth/too-many-requests") {
+      return {
+        success: false,
+        message:
+          "Too many attempts — please wait a few minutes before requesting another verification email.",
+      };
+    }
+
     return { success: false, message: error.message };
   }
 }

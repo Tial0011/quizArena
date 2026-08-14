@@ -362,13 +362,46 @@
   color: #6b7280;
 }
 
-/* Day Streak card (replaces the old static Best Score card): the
-   flame icon gets a slow pulse for as long as the streak is alive
-   (JS toggles this class once the count is known — see
-   updateStreakCard() in dashboard.js). A 0-day streak just sits
-   still, same as any other stat. */
+/* Day Streak card (replaces the old static Best Score card): gets
+   its own visual treatment once a streak exists, plus a status
+   subtitle (JS: updateStreakCard() in dashboard.js) so the card
+   actually communicates something actionable instead of just a
+   number — a warm background + pulsing flame while alive, an amber
+   "act today" tint while at risk (streak alive but not done today),
+   and a calmer green tint once today is already locked in. */
+.stat-card.streak-active {
+  background: linear-gradient(160deg, #fff7ed, #ffffff 65%);
+  border-color: #fed7aa;
+}
+
 .stat-card.streak-active .stat-icon {
   animation: streak-flame-pulse 1.6s ease-in-out infinite;
+}
+
+.streak-subtitle {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 2px;
+  color: #9ca3af;
+  min-height: 15px;
+}
+
+.stat-card.streak-at-risk {
+  background: linear-gradient(160deg, #fffbeb, #ffffff 65%);
+  border-color: #fde68a;
+}
+
+.stat-card.streak-at-risk .streak-subtitle {
+  color: #b45309;
+}
+
+.stat-card.streak-done-today {
+  background: linear-gradient(160deg, #ecfdf5, #ffffff 65%);
+  border-color: #a7f3d0;
+}
+
+.stat-card.streak-done-today .streak-subtitle {
+  color: #059669;
 }
 
 @keyframes streak-flame-pulse {

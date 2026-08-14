@@ -1,4 +1,5 @@
 import { db } from "../firebase/config.js";
+import { sendNotification } from "../notificationsService.js";
 import {
   collection,
   addDoc,
@@ -47,6 +48,15 @@ export async function recordQuizAttempt({
   const percentage = Math.round((score / totalQuestions) * 100);
 
   try {
+    // Checked BEFORE writing today's attempt, specifically so we can
+    // tell whether this is the FIRST attempt of the day (the one that
+    // actually extends the streak) versus a second/third quiz taken
+    // later the same day, which shouldn't fire another "streak"
+    // notification on top of the first.
+    const { streak: streakBeforeToday, doneToday } = await getStreakInfo(
+      userId,
+    );
+
     await addDoc(collection(db, "attempts"), {
       userId,
       mode,
@@ -58,9 +68,34 @@ export async function recordQuizAttempt({
       percentage,
       completedAt: serverTimestamp(),
     });
+
+    if (!doneToday) {
+      // See getStreakInfo()/computeConsecutiveDayStreak(): whether the
+      // prior streak was alive (via yesterday) or broken (0), today's
+      // first attempt always extends it by exactly 1 — so there's no
+      // need for a second read after the write above.
+      const newStreak = streakBeforeToday + 1;
+
+      // Fire-and-forget: a notification failing to send must never
+      // affect the quiz result the student is about to see.
+      sendNotification({
+        message: `🔥 ${newStreak}-day streak! ${streakEncouragement(newStreak)}`,
+        createdBy: "System",
+        targetUserId: userId,
+      }).catch((err) =>
+        console.error("Failed to send streak notification:", err),
+      );
+    }
   } catch (err) {
     console.error("Failed to record quiz attempt:", err);
   }
+}
+
+function streakEncouragement(streak) {
+  if (streak === 1) return "Come back tomorrow to keep it alive.";
+  if (streak % 30 === 0) return "A whole month strong — incredible! 🏆";
+  if (streak % 7 === 0) return "A full week — amazing consistency! 💪";
+  return "Keep it going!";
 }
 
 /**
@@ -104,6 +139,15 @@ export async function getRecentAttempts(userId, count = 10) {
    haven't broken it either) — it only resets to 0 once a full
    day is skipped with no attempt at all.
 
+   IMPORTANT: this is already calendar-day-based, not a rolling
+   24-hour timer — toDayKey() below zeroes out the time-of-day
+   before comparing, so a student who plays at 11pm one day and
+   9am the next (10 hours apart) still counts as two different
+   days and keeps the streak, while playing at 9am and then 11pm
+   the SAME day (14 hours apart) only counts as one day. Two
+   attempts get compared by which calendar day they fall on, never
+   by exact elapsed milliseconds.
+
    Pulls the last 60 attempts (not the student's entire history —
    this is a dashboard widget, not an audit) and collapses them to
    unique calendar-day buckets client-side. Same composite-index
@@ -114,7 +158,18 @@ const STREAK_LOOKBACK = 60;
 const ONE_DAY_MS = 86400000;
 
 export async function getStreakCount(userId) {
-  if (!userId) return 0;
+  return (await getStreakInfo(userId)).streak;
+}
+
+/**
+ * Same underlying data as getStreakCount(), but also reports
+ * whether today already has a recorded attempt — used both by the
+ * dashboard streak card (to show "keep it going" vs "you're set for
+ * today") and by recordQuizAttempt() above (to only fire the streak
+ * notification on the day's first attempt).
+ */
+export async function getStreakInfo(userId) {
+  if (!userId) return { streak: 0, doneToday: false };
 
   const q = query(
     collection(db, "attempts"),
@@ -135,10 +190,14 @@ export async function getStreakCount(userId) {
       ),
     ].sort((a, b) => b - a);
 
-    return computeConsecutiveDayStreak(dayKeysDesc);
+    const streak = computeConsecutiveDayStreak(dayKeysDesc);
+    const doneToday =
+      dayKeysDesc.length > 0 && dayKeysDesc[0] === toDayKey(new Date());
+
+    return { streak, doneToday };
   } catch (err) {
     console.error("Failed to compute streak:", err);
-    return 0;
+    return { streak: 0, doneToday: false };
   }
 }
 

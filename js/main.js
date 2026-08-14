@@ -8,6 +8,7 @@ import { getUserData } from "./auth.js";
 import { renderStudentDashboard } from "./student/dashboard.js";
 import { renderAdminDashboard } from "./admin/dashboard.js";
 import { initInstallNudge } from "./student/installNudge.js";
+import { renderVerificationGate } from "./emailVerificationGate.js";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -34,6 +35,11 @@ function hideBootLoader() {
   setTimeout(() => el.remove(), 300);
 }
 
+async function renderStudent(user) {
+  const userData = await getUserData(user.uid);
+  renderStudentDashboard(userData);
+}
+
 onAuthStateChanged(auth, async (user) => {
   // Prevent running twice during initial auth resolution
   if (initialized) return;
@@ -53,9 +59,16 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
 
-    const userData = await getUserData(user.uid);
+    // A returning session can still belong to a student who never
+    // clicked their verification link -- this check runs on every
+    // page load, not just at signup, so it also catches someone who
+    // registered, closed the tab, and came straight back.
+    if (!user.emailVerified) {
+      renderVerificationGate(user, () => renderStudent(user));
+      return;
+    }
 
-    renderStudentDashboard(userData);
+    await renderStudent(user);
   } finally {
     hideBootLoader();
   }

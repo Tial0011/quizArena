@@ -3,7 +3,7 @@ import { renderPracticeArena } from "./practice.js";
 import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
 import { renderFriendGroups } from "./friendGroups.js";
-import { getRecentAttempts, getStreakCount } from "./attemptsService.js";
+import { getRecentAttempts, getStreakInfo } from "./attemptsService.js";
 import {
   listenToNotificationsForUser,
   markNotificationsSeen,
@@ -209,7 +209,7 @@ export function renderStudentDashboard(userData = {}) {
 
         </div>
 
-        <div class="stat-card load-in">
+        <div class="stat-card load-in streak-card" id="streakCard">
 
           <span class="stat-icon">
             🔥
@@ -222,6 +222,8 @@ export function renderStudentDashboard(userData = {}) {
           <p>
             Day Streak
           </p>
+
+          <p class="streak-subtitle" id="streakSubtitle"></p>
 
         </div>
 
@@ -287,9 +289,9 @@ export function renderStudentDashboard(userData = {}) {
    already been replaced.
 ========================================================= */
 async function loadAnalytics(userData) {
-  const [attempts, streakCount] = await Promise.all([
+  const [attempts, streakInfo] = await Promise.all([
     getRecentAttempts(userData.id, 5),
-    getStreakCount(userData.id),
+    getStreakInfo(userData.id),
   ]);
 
   const trendContainer = document.getElementById("scoreTrendContainer");
@@ -310,7 +312,7 @@ async function loadAnalytics(userData) {
   }
 
   if (streakEl) {
-    updateStreakCard(streakEl, streakCount);
+    updateStreakCard(streakEl, streakInfo);
   }
 }
 
@@ -360,23 +362,42 @@ function pickHeroMessage(attempts) {
 
 /**
  * Fills in the Day Streak stat card once the count is known, with
- * the same count-up treatment as the Purchased Quizzes card, plus
- * a looping flame pulse (CSS: .streak-active) while the streak is
- * alive. Nothing to animate for a 0 streak, so it just settles.
+ * the same count-up treatment as the Purchased Quizzes card, plus a
+ * looping flame pulse (CSS: .streak-active) while the streak is
+ * alive. Also sets a status subtitle so the card actually tells the
+ * student something actionable:
+ *   - no streak yet        -> encourages starting one
+ *   - done today           -> confirms today is locked in (calm/green)
+ *   - alive but not today  -> "at risk" nudge (amber) to act today
+ *     before it resets — same calendar-day logic as
+ *     getStreakInfo()/attemptsService.js, not a 24-hour countdown.
  */
-function updateStreakCard(streakEl, streakCount) {
+function updateStreakCard(streakEl, { streak, doneToday }) {
   const card = streakEl.closest(".stat-card");
 
   if (prefersReducedMotion()) {
-    streakEl.textContent = String(streakCount);
+    streakEl.textContent = String(streak);
   } else {
     streakEl.textContent = "0";
-    animateCountUp(streakEl, streakCount);
+    animateCountUp(streakEl, streak);
   }
 
   if (card) {
-    card.classList.toggle("streak-active", streakCount > 0);
+    card.classList.toggle("streak-active", streak > 0);
+    card.classList.toggle("streak-done-today", streak > 0 && doneToday);
+    card.classList.toggle("streak-at-risk", streak > 0 && !doneToday);
   }
+
+  const subtitleEl = document.getElementById("streakSubtitle");
+  if (subtitleEl) {
+    subtitleEl.textContent = streakSubtitleText(streak, doneToday);
+  }
+}
+
+function streakSubtitleText(streak, doneToday) {
+  if (streak === 0) return "Take a quiz today to start one!";
+  if (doneToday) return "Today's done — see you tomorrow ✅";
+  return "Do a quiz today to keep it alive";
 }
 
 /**

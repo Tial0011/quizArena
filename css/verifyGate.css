@@ -1,0 +1,77 @@
+/* =========================
+   EMAIL VERIFICATION GATE
+   Full-page "verify your email" screen — see
+   js/emailVerificationGate.js. .submit-btn is reused from auth.css
+   for the primary action so it matches the login/register buttons.
+========================= */
+
+.verify-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--color-bg, #f8f7ff);
+}
+
+.verify-gate-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 36px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+.verify-gate-icon {
+  font-size: 44px;
+  margin-bottom: 12px;
+}
+
+.verify-gate-card h2 {
+  margin-bottom: 6px;
+}
+
+.verify-gate-email {
+  font-weight: 700;
+  color: var(--color-primary, #7c3aed);
+  margin-bottom: 14px;
+  word-break: break-all;
+}
+
+.verify-gate-text {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.verify-gate-spam-note {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.verify-gate-resend,
+.verify-gate-signout {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  font-size: 13.5px;
+  padding: 12px 0 0;
+  color: var(--color-primary, #7c3aed);
+  font-weight: 600;
+}
+
+.verify-gate-signout {
+  color: var(--color-text-faint, #9ca3af);
+  font-weight: 500;
+}

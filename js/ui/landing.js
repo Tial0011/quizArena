@@ -19,6 +19,7 @@ import {
   triggerInstallPrompt,
 } from "../installPrompt.js";
 import { initInstallNudge } from "../student/installNudge.js";
+import { renderVerificationGate } from "../emailVerificationGate.js";
 const app = document.getElementById("app");
 
 let mode = "login";
@@ -336,6 +337,12 @@ async function submitForm() {
     return;
   }
 
+  if (mode === "register" && result.verificationEmailSent === false) {
+    alert(
+      "Your account was created, but the verification email couldn't be sent right now. Use the \"Resend verification email\" button on the next screen to try again.",
+    );
+  }
+
   await routeAfterAuth(result.user);
 }
 
@@ -394,11 +401,22 @@ async function routeAfterAuth(user) {
 
   if (user.email === ADMIN_EMAIL) {
     renderAdminDashboard();
-  } else {
-    const userData = await getUserData(user.uid);
-
-    renderStudentDashboard(userData);
+    return;
   }
+
+  // Fresh registration lands here with a just-sent verification link
+  // unclicked, so this is the first place the gate needs to show —
+  // js/main.js repeats the same check on later page loads/reloads.
+  if (!user.emailVerified) {
+    renderVerificationGate(user, async () => {
+      const userData = await getUserData(user.uid);
+      renderStudentDashboard(userData);
+    });
+    return;
+  }
+
+  const userData = await getUserData(user.uid);
+  renderStudentDashboard(userData);
 }
 
 /* =========================================================
