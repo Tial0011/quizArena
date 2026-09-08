@@ -38,12 +38,27 @@ export async function startQuiz(subject, count, minutes, userData) {
   // Fetch every purchase document at once instead of one at a time —
   // this was the biggest chunk of the ~7s load time when a student
   // has multiple purchased quizzes.
+  //
+  // Each lookup is wrapped individually (same pattern as
+  // myQuizzes.js) because a stale/inaccessible purchaseId makes
+  // Firestore rules evaluate `resource.data.userId` against a null
+  // resource, which surfaces as "Missing or insufficient
+  // permissions" rather than a clean "not found". Without the
+  // try/catch, one bad ID would fail the whole Promise.all and
+  // leave the student stuck on the loading overlay.
   const purchaseDocs = await Promise.all(
-    purchases.map((purchaseId) => getDoc(doc(db, "purchases", purchaseId))),
+    purchases.map(async (purchaseId) => {
+      try {
+        return await getDoc(doc(db, "purchases", purchaseId));
+      } catch (error) {
+        console.error("Failed to load purchase", purchaseId, error);
+        return null;
+      }
+    }),
   );
 
   const quizIds = purchaseDocs
-    .filter((docSnap) => docSnap.exists())
+    .filter((docSnap) => docSnap && docSnap.exists())
     .map((docSnap) => docSnap.data().quizId);
 
   // De-duplicate in case the same quiz shows up via more than one
