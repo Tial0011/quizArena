@@ -40,8 +40,12 @@ There are two roles:
     trusted server-side code, used for payment verification and push
     notifications.
   - **Firebase Cloud Messaging** — push notifications.
-  - **Firebase Hosting** (implied by `firebase.json` / `.firebaserc`) —
-    where this is deployed.
+  - **Firebase Hosting** — where this is deployed on the custom
+    domain `quizarena.name.ng`. Note: `firebase.json` currently only
+    configures the `functions` codebase; it has no `hosting` block
+    (no `public` dir, no rewrites), so `firebase deploy --only hosting`
+    won't work until that's added. `.firebaserc` just points at the
+    project ID.
 - **Flutterwave** — payment provider for purchasing quizzes (Nigerian
   cards, USSD, bank transfer).
 - **Cloudinary** (`js/cloudinary/config.js`) — image hosting, used by the
@@ -94,7 +98,7 @@ quizArena/
 ├── manifest.json            PWA manifest (icons, theme color, name)
 ├── sw.js                    Service worker (basic install/cache)
 ├── firebase-messaging-sw.js Service worker for push notifications
-├── firebase.json / .firebaserc   Firebase Hosting + project config
+├── firebase.json / .firebaserc   Project config (hosting NOT yet configured -- see §3)
 │
 ├── js/
 │   ├── main.js               Entry point — auth routing (§3)

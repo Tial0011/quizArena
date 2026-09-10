@@ -125,7 +125,6 @@ async function loadMarketplaceData() {
 
   quizzesCache = quizzes;
   ownedQuizIds = owned;
-  console.log("Marketplace quizzes:", quizzesCache);
 }
 
 async function loadActiveQuizzes() {
@@ -683,12 +682,6 @@ async function handleConfirmPurchase() {
   const quiz = selectedQuizForPurchase;
   const txRef = `quiz_${quiz.id}_${currentUserId}_${Date.now()}`;
 
-  console.log("[purchase] Launching Flutterwave checkout", {
-    quizId: quiz.id,
-    price: quiz.price,
-    txRef,
-  });
-
   window.FlutterwaveCheckout({
     public_key: FLUTTERWAVE_PUBLIC_KEY,
     tx_ref: txRef,
@@ -704,7 +697,6 @@ async function handleConfirmPurchase() {
       description: quiz.title,
     },
     callback: async (response) => {
-      console.log("[purchase] Flutterwave callback fired", response);
       paymentResultReceived = true;
 
       // Flutterwave's inline checkout widget (FlutterwaveCheckout) reports
@@ -712,27 +704,17 @@ async function handleConfirmPurchase() {
       // newer Standard/redirect flow uses. Accept both so a real successful
       // payment doesn't get treated as failed.
       if (response.status === "successful" || response.status === "completed") {
-        console.log(
-          `[purchase] Status ${response.status} — finalizing immediately`,
-        );
         await finalizePurchase(response, quiz.id);
         return;
       }
 
       if (response.status === "pending") {
-        console.log(
-          "[purchase] Status pending (typical for bank transfer) — polling for confirmation",
-        );
         confirmBtn.textContent = "Confirming payment...";
         await pollForConfirmation(response, quiz.id);
         return;
       }
 
       // Anything else (e.g. "cancelled") is a genuine failure.
-      console.log(
-        "[purchase] Status not successful/pending — treating as failed",
-        response.status,
-      );
       isPurchasing = false;
       confirmBtn.disabled = false;
       confirmBtn.textContent = "Purchase";
@@ -740,10 +722,6 @@ async function handleConfirmPurchase() {
       alert("Payment was not completed.");
     },
     onclose: () => {
-      console.log("[purchase] Flutterwave modal closed", {
-        paymentResultReceived,
-      });
-
       // A result already came in via callback() — verification is
       // either still running (finalizePurchase/pollForConfirmation) or
       // has already shown the success screen. Either way, leave the UI
@@ -768,20 +746,12 @@ async function handleConfirmPurchase() {
  * the tail end of the bank-transfer polling path once it succeeds).
  */
 async function finalizePurchase(response, quizId) {
-  console.log("[purchase] Calling confirmFlutterwavePurchase()", {
-    quizId,
-    txRef: response.tx_ref,
-    transactionId: response.transaction_id,
-  });
-
   const result = await confirmFlutterwavePurchase(
     currentUserId,
     quizId,
     response.tx_ref,
     response.transaction_id,
   );
-
-  console.log("[purchase] confirmFlutterwavePurchase() result", result);
 
   isPurchasing = false;
 
@@ -804,10 +774,6 @@ async function finalizePurchase(response, quizId) {
     document.getElementById("cancelPurchaseBtn")?.removeAttribute("disabled");
     return;
   }
-
-  console.log(
-    "[purchase] Verified + recorded successfully. Refreshing user data.",
-  );
 
   // Pull the freshly-written user document (purchasedQuizzes now
   // includes the new purchase) instead of trusting local state.
@@ -844,11 +810,6 @@ async function pollForConfirmation(response, quizId, attempt = 1) {
   const maxAttempts = 6; // ~30s total at a 5s interval
   const intervalMs = 5000;
 
-  console.log(`[purchase] Polling attempt ${attempt}/${maxAttempts}`, {
-    quizId,
-    txRef: response.tx_ref,
-  });
-
   const stopLoading = showLoadingOverlay(
     document.getElementById("purchaseDialogBox"),
     [
@@ -871,10 +832,7 @@ async function pollForConfirmation(response, quizId, attempt = 1) {
     stopLoading();
   }
 
-  console.log(`[purchase] Poll attempt ${attempt} result`, result);
-
   if (result.success) {
-    console.log("[purchase] Confirmed during polling. Finalizing.");
     isPurchasing = false;
 
     const freshUserData = await getUserData(currentUserId);
