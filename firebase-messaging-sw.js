@@ -37,7 +37,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification || {};
+  const { title, body } = payload.data || {};
 
   self.registration.showNotification(title || "Quiz Arena", {
     body: body || "",

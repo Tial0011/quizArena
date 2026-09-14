@@ -144,7 +144,7 @@ function listenForForegroundMessages(messaging) {
   foregroundListenerBound = true;
 
   onMessage(messaging, (payload) => {
-    const { title, body } = payload.notification || {};
+    const { title, body } = payload.data || {};
     if (title) {
       new Notification(title, { body, icon: "/icons/icon-192.png" });
     }

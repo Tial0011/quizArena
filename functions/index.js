@@ -178,14 +178,16 @@ exports.sendNotificationPush = onDocumentCreated(
 
     const response = await admin.messaging().sendEachForMulticast({
       tokens,
-      notification: {
+      // Data-only (no top-level `notification` field) is deliberate:
+      // FCM auto-displays a payload that has a `notification` field
+      // when the tab is backgrounded, and onBackgroundMessage() in
+      // firebase-messaging-sw.js ALSO calls showNotification() for
+      // it — together that's two OS notifications for one push.
+      // Sending data-only means we're the only thing that ever
+      // calls showNotification(), so it only shows once.
+      data: {
         title: "Quiz Arena",
         body: message,
-      },
-      webpush: {
-        fcmOptions: {
-          link: "/",
-        },
       },
     });
 
