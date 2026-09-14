@@ -39,7 +39,14 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   const { title, body } = payload.data || {};
 
-  self.registration.showNotification(title || "Quiz Arena", {
+  // Returning this promise (not just calling it) matters: the browser
+  // only keeps the service worker alive for as long as this handler's
+  // returned promise is pending. Without the `return`, the browser can
+  // consider the push "handled" and tear down the worker before
+  // showNotification() actually finishes — which can mean nothing
+  // ever appears, especially when the app is fully closed rather than
+  // just backgrounded.
+  return self.registration.showNotification(title || "Quiz Arena", {
     body: body || "",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
