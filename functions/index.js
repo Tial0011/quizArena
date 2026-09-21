@@ -189,6 +189,18 @@ exports.sendNotificationPush = onDocumentCreated(
         title: "Quiz Arena",
         body: message,
       },
+      // Data-only messages default to normal priority, which Android's
+      // Doze/App Standby is free to defer until a maintenance window --
+      // that's why sends were logging as successful but not showing up
+      // right away. These headers tell the push service (and, if a
+      // native Android token ever ends up in here, the OS) to wake the
+      // device and deliver immediately instead of batching it.
+      webpush: {
+        headers: { Urgency: "high" },
+      },
+      android: {
+        priority: "high",
+      },
     });
 
     await cleanupInvalidTokens(tokens, response, targetUserId);
