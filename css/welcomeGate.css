@@ -1,0 +1,540 @@
+/* =========================================================
+   WELCOME GATE  (js/ui/welcomeGate.js)
+
+   The very first thing a new visitor sees: a near full-screen typed
+   welcome, then "download the app first", then the sign-in page.
+
+   Look: the same deep violet as the landing hero, so the hand-off to
+   sign-in feels like the same room. The one memorable thing is the
+   3D answer-cube (A B C D faces, a check on top) standing on a hex
+   "arena floor" -- hexagons are the cells in the app icon. Amber is
+   the only warm colour (caret, button, the lit check face), lifted
+   from the rim light in the icon artwork.
+
+   Pure CSS 3D + one requestAnimationFrame loop: no library, works
+   offline, light enough for low-end Android phones.
+========================================================= */
+
+.wg {
+  --wg-bg-hi: #6d28d9;
+  --wg-bg-mid: #2e1065;
+  --wg-bg-lo: #150a33;
+  --wg-violet: #a78bfa;
+  --wg-ice: #f5f3ff;
+  --wg-ice-soft: rgba(245, 243, 255, 0.76);
+  --wg-amber: #ffb454;
+  --wg-amber-deep: #ff8a3d;
+  --wg-ink: #2a1200;
+  --wg-cyan: #22bfe8;
+  --wg-green: #3fd296;
+  --wg-pad-x: 22px;
+
+  position: fixed;
+  inset: 0;
+  z-index: 10000; /* above #bootLoader (9999) and the install nudge (800) */
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: max(18px, env(safe-area-inset-top)) var(--wg-pad-x)
+    max(18px, env(safe-area-inset-bottom));
+  overflow: hidden;
+  color: var(--wg-ice);
+  background:
+    radial-gradient(120% 70% at 92% -6%, var(--wg-bg-hi) 0%, transparent 62%),
+    linear-gradient(180deg, var(--wg-bg-mid) 0%, var(--wg-bg-lo) 100%);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition:
+    opacity 0.42s ease,
+    transform 0.42s ease;
+}
+
+.wg.wg-leave {
+  opacity: 0;
+  transform: scale(1.03);
+  pointer-events: none;
+}
+
+.wg:focus,
+.wg:focus-visible {
+  outline: none;
+  border-radius: 0; /* base.css gives every :focus-visible a radius */
+}
+
+html.wg-lock,
+html.wg-lock body {
+  overflow: hidden;
+  height: 100%;
+}
+
+/* ---------- brand ---------- */
+.wg-brand {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+}
+
+.wg-brand img {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  box-shadow: 0 0 0 1.5px rgba(196, 181, 253, 0.45);
+}
+
+/* ---------- typed copy ---------- */
+.wg-copy {
+  position: relative;
+  z-index: 3;
+  align-self: start;
+  padding-top: clamp(14px, 4.5vh, 44px);
+  max-width: 40rem;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.wg-copy.wg-out {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.wg-h1 {
+  font-size: clamp(2.5rem, 12.5vw, 5.4rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+}
+
+/* The welcome is meant to fill almost the whole screen. */
+.wg[data-stage="welcome"] .wg-h1 {
+  font-size: clamp(3.1rem, 16vw, 7.2rem);
+}
+
+.wg-sub {
+  margin-top: clamp(14px, 2.6vh, 24px);
+  max-width: 34ch;
+  font-size: 1.06rem;
+  line-height: 1.55;
+  color: var(--wg-ice-soft);
+}
+
+.wg[data-stage="welcome"] .wg-sub {
+  max-width: 20ch;
+  font-size: clamp(1.55rem, 7.4vw, 2.9rem);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  color: var(--wg-ice);
+}
+
+.wg-sub[hidden] {
+  display: none;
+}
+
+/* real text for screen readers (the typed letters are aria-hidden) */
+.wg-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Every character is laid out from the start (invisible), so words
+   never jump to the next line while they type. */
+.wg-w {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.wg-c {
+  position: relative;
+  opacity: 0;
+}
+
+.wg-c.on {
+  opacity: 1;
+}
+
+/* the caret: a solid amber bar that follows the last typed character */
+.wg-c.cur::after {
+  content: "";
+  position: absolute;
+  right: -0.09em;
+  top: 0.1em;
+  bottom: 0.02em;
+  width: 0.075em;
+  min-width: 3px;
+  border-radius: 2px;
+  background: var(--wg-amber);
+}
+
+.wg.wg-typed .wg-c.cur::after {
+  animation: wg-blink 1.05s steps(2, start) infinite;
+}
+
+@keyframes wg-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.wg-fade-in {
+  animation: wg-fade-in 0.5s ease both;
+}
+
+@keyframes wg-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* iOS "Add to Home Screen" steps -- a real sequence, so real numbers */
+.wg-steps {
+  margin-top: 4px;
+  padding-left: 1.25em;
+  display: grid;
+  gap: 10px;
+  max-width: 32ch;
+}
+
+.wg-steps li::marker {
+  font-weight: 800;
+  color: var(--wg-amber);
+}
+
+.wg-steps svg {
+  display: inline-block;
+  vertical-align: -3px;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+/* ---------- 3D scene ---------- */
+.wg-scene {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 62%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.wg-floor,
+.wg-glow {
+  transition: opacity 0.9s ease;
+}
+
+.wg[data-stage="welcome"] .wg-floor,
+.wg[data-stage="welcome"] .wg-glow {
+  opacity: 0.4;
+}
+
+/* the hex arena floor: a flat grid laid down and tipped back in perspective */
+.wg-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 66%;
+  perspective: 460px;
+  perspective-origin: 50% 0%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 42%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 42%);
+}
+
+.wg-grid {
+  position: absolute;
+  left: -90%;
+  right: -90%;
+  top: 0;
+  height: 190%;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='38.11'%20height='66.00'%20viewBox='0%200%2038.11%2066.00'%3E%3Cpath%20d='M0.00%2022.00%20L-19.05%2011.00%20L-19.05%20-11.00%20L-0.00%20-22.00%20L19.05%20-11.00%20L19.05%2011.00%20Z%20M38.11%2022.00%20L19.05%2011.00%20L19.05%20-11.00%20L38.11%20-22.00%20L57.16%20-11.00%20L57.16%2011.00%20Z%20M19.05%2055.00%20L-0.00%2044.00%20L0.00%2022.00%20L19.05%2011.00%20L38.11%2022.00%20L38.11%2044.00%20Z%20M0.00%2088.00%20L-19.05%2077.00%20L-19.05%2055.00%20L-0.00%2044.00%20L19.05%2055.00%20L19.05%2077.00%20Z%20M38.11%2088.00%20L19.05%2077.00%20L19.05%2055.00%20L38.11%2044.00%20L57.16%2055.00%20L57.16%2077.00%20Z'%20fill='none'%20stroke='%23c4b5fd'%20stroke-width='1.4'%20stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 58px auto;
+  background-position: center 0;
+  transform-origin: 50% 0;
+  transform: rotateX(74deg);
+  opacity: 0.6;
+  animation: wg-drift 7s linear infinite;
+}
+
+@keyframes wg-drift {
+  to {
+    background-position: center 100px;
+  }
+}
+
+/* soft pool of light under the cube */
+.wg-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 22%;
+  width: min(92vw, 520px);
+  aspect-ratio: 1;
+  transform: translate(-50%, 50%);
+  background: radial-gradient(
+    closest-side,
+    rgba(167, 139, 250, 0.5),
+    rgba(34, 191, 232, 0.12) 55%,
+    transparent 72%
+  );
+  filter: blur(6px);
+}
+
+.wg-stage3d {
+  --s: min(34vw, 132px); /* cube edge length */
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 190px);
+  width: var(--s);
+  height: var(--s);
+  margin-left: calc(var(--s) / -2);
+  perspective: 760px;
+  transition: opacity 0.9s ease;
+}
+
+.wg[data-stage="welcome"] .wg-stage3d {
+  opacity: 0;
+}
+
+.wg-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transform: rotateX(-18deg) rotateY(-28deg);
+}
+
+.wg-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--s) * 0.5);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--wg-ice);
+  background: linear-gradient(
+    150deg,
+    rgba(196, 181, 253, 0.34),
+    rgba(76, 29, 149, 0.62)
+  );
+  border: 1.5px solid rgba(221, 214, 254, 0.6);
+  border-radius: 12%;
+  box-shadow: inset 0 0 26px rgba(167, 139, 250, 0.35);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.wg-face--front {
+  transform: translateZ(calc(var(--s) / 2));
+}
+.wg-face--right {
+  transform: rotateY(90deg) translateZ(calc(var(--s) / 2));
+}
+.wg-face--back {
+  transform: rotateY(180deg) translateZ(calc(var(--s) / 2));
+}
+.wg-face--left {
+  transform: rotateY(-90deg) translateZ(calc(var(--s) / 2));
+}
+.wg-face--top {
+  transform: rotateX(90deg) translateZ(calc(var(--s) / 2));
+  color: var(--wg-ink);
+  background: linear-gradient(150deg, var(--wg-amber), var(--wg-amber-deep));
+  border-color: rgba(255, 236, 200, 0.9);
+  box-shadow: 0 0 0 rgba(255, 180, 84, 0);
+  transition: box-shadow 0.8s ease;
+}
+.wg-face--bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--s) / 2));
+  background: rgba(46, 16, 101, 0.8);
+}
+
+.wg-face svg {
+  width: 52%;
+  height: 52%;
+}
+
+/* installed: the check face lights up */
+.wg.wg-done .wg-face--top {
+  box-shadow:
+    0 0 38px 8px rgba(255, 180, 84, 0.75),
+    inset 0 0 22px rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- actions ---------- */
+.wg-actions {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 26rem;
+  justify-self: center;
+  min-height: 132px;
+  align-content: end;
+}
+
+.wg-btn {
+  height: 58px;
+  border: 0;
+  border-radius: 18px;
+  padding: 0 22px;
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--wg-ink);
+  background: linear-gradient(180deg, #ffc474, var(--wg-amber));
+  box-shadow:
+    0 14px 30px rgba(255, 138, 61, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition:
+    transform 0.12s ease,
+    filter 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.wg-btn:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+.wg-btn:disabled {
+  opacity: 0.6;
+  filter: saturate(0.6);
+}
+
+.wg-skip {
+  height: 46px;
+  border: 0;
+  background: none;
+  color: var(--wg-ice-soft);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(245, 243, 255, 0.35);
+}
+
+.wg-btn[hidden],
+.wg-skip[hidden],
+.wg-progress[hidden] {
+  display: none;
+}
+
+.wg :focus-visible {
+  outline: 3px solid var(--wg-ice);
+  outline-offset: 3px;
+  border-radius: 14px;
+}
+
+/* ---------- loading line ---------- */
+.wg-progress {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 6px;
+}
+
+.wg-track {
+  height: 6px;
+  border-radius: 6px;
+  background: rgba(245, 243, 255, 0.16);
+  overflow: hidden;
+}
+
+.wg-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--wg-cyan), var(--wg-green));
+  transform-origin: left center;
+  transform: scaleX(var(--p, 0));
+  will-change: transform;
+}
+
+.wg-status {
+  min-height: 2.6em;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--wg-ice-soft);
+}
+
+/* ---------- wide screens (desktop install, tablets, landscape) ---------- */
+@media (min-width: 860px) and (min-aspect-ratio: 5/4) {
+  .wg {
+    --wg-pad-x: clamp(32px, 6vw, 96px);
+  }
+
+  .wg-copy {
+    max-width: min(46rem, 54vw);
+  }
+
+  .wg-actions {
+    justify-self: start;
+    max-width: 24rem;
+    align-content: start;
+    padding-bottom: 8vh;
+  }
+
+  /* the scene keeps the full width so the floor runs edge to edge;
+     only the cube itself moves to the right-hand side */
+  .wg-scene {
+    height: 100%;
+  }
+
+  .wg-floor {
+    height: 60%;
+  }
+
+  .wg-stage3d {
+    --s: min(20vw, 220px);
+    left: 75%;
+    bottom: auto;
+    top: 40%;
+    margin-top: calc(var(--s) / -2);
+  }
+
+  .wg-glow {
+    left: 75%;
+    bottom: 40%;
+  }
+}
+
+/* short phones: pull the cube in so it never sits under the text */
+@media (max-height: 700px) and (max-width: 859px) {
+  .wg-stage3d {
+    --s: min(26vw, 100px);
+    bottom: calc(env(safe-area-inset-bottom) + 176px);
+  }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .wg,
+  .wg-copy,
+  .wg-floor,
+  .wg-glow,
+  .wg-stage3d,
+  .wg-btn {
+    transition: none;
+  }
+
+  .wg-grid,
+  .wg-c.cur::after,
+  .wg-fade-in {
+    animation: none;
+  }
+}

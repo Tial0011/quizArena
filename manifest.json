@@ -1,12 +1,23 @@
 {
+  "id": "/",
   "name": "Quiz Arena - CBT Practice",
   "short_name": "Quiz Arena",
   "description": "Timed CBT practice quizzes for UNIMED 100 Level students",
+  "lang": "en-NG",
+  "categories": ["education"],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#edf7f7",
-  "theme_color": "#edf7f7",
   "orientation": "portrait-primary",
+  "background_color": "#f8f7ff",
+  "theme_color": "#2e1065",
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://quizarena.name.ng/manifest.json"
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-192.png",

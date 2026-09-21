@@ -51,14 +51,18 @@ There are two roles:
 - **Cloudinary** (`js/cloudinary/config.js`) — image hosting, used by the
   admin panel for quiz/question images.
 - It's a **PWA** (Progressive Web App) — installable to a phone home
-  screen, works via a service worker (`sw.js`) and `manifest.json`.
+  screen, works offline via a service worker (`sw.js`) and
+  `manifest.json` (see §12).
 
 There is no npm build for the frontend at all — the only `package.json`
 in the repo lives under `functions/`, for the Cloud Functions.
 
 ## 3. How the app boots (and why the white-screen fix matters)
 
-`index.html` is the single HTML page. It:
+`index.html` is the single HTML page. It loads `js/boot.js` (not
+`main.js` directly). `boot.js` registers the service worker, opens the
+welcome/download screen right away for new visitors (§12), and loads
+`main.js` in parallel. Everything below then applies. `index.html`:
 
 1. Paints an inline, dependency-free **boot loader** (spinner + logo)
    immediately — this is plain `<style>` in the `<head>`, not an external
@@ -96,11 +100,15 @@ navigation is handled manually via`history.pushState`+ a`popstate`listener in`js
 quizArena/
 ├── index.html              Single HTML page (see §3)
 ├── manifest.json            PWA manifest (icons, theme color, name)
-├── sw.js                    Service worker (basic install/cache)
-├── firebase-messaging-sw.js Service worker for push notifications
+├── sw.js                    THE service worker: offline cache + push (§12)
+├── firebase-messaging-sw.js One-line shim that imports sw.js (§12)
+├── favicon.ico              Tab icon (plus icons/favicon-*.png, apple-touch-icon.png)
+├── tools/build-sw.mjs       Regenerates the precache list in sw.js -- run before deploy
 ├── firebase.json / .firebaserc   Project config (hosting NOT yet configured -- see §3)
 │
 ├── js/
+│   ├── boot.js                First script loaded: SW + welcome gate, then main.js
+│   ├── pwa.js                 SW registration, offline-cache progress, offline pill
 │   ├── main.js               Entry point — auth routing (§3)
 │   ├── auth.js                Login/register/Google/reset/logout
 │   ├── sessionManager.js      Auto-logout after 1hr of inactivity
@@ -112,6 +120,7 @@ quizArena/
 │   ├── cloudinary/config.js   Cloudinary upload config (admin images)
 │   │
 │   ├── ui/landing.js          Logged-out landing page + auth forms
+│   ├── ui/welcomeGate.js      Typed welcome + "download the app first" flow (§12)
 │   │
 │   ├── student/                Everything a logged-in student sees
 │   │   ├── dashboard.js         Student home page
@@ -146,6 +155,8 @@ quizArena/
 │   ├── auth.css             Landing/login/register page
 │   ├── responsive.css       Mobile overrides — loaded LAST, see file header
 │   ├── installNudge.css     The recurring install banner
+│   ├── welcomeGate.css      Welcome/download screen + CSS 3D cube
+│   ├── pwa.css              App-feel rules, offline pill
 │   ├── student/*.css        One file per student page, named to match
 │   └── admin/*.css          One file per admin page, named to match
 │
@@ -270,9 +281,11 @@ trusted with certain writes:
 
 ## 10. PWA install prompt
 
-- `js/installPrompt.js` is the single place that listens for the
-  browser's `beforeinstallprompt` event (it only fires once per session,
-  so only one listener should ever claim it).
+- `index.html` has a tiny inline script that catches
+  `beforeinstallprompt` / `appinstalled` before any module loads and
+  parks them on `window`; `js/installPrompt.js` is the single module
+  that reads them. A captured prompt can be shown only once, so it is
+  discarded after use and re-armed when the browser offers a new one.
 - `js/student/installNudge.js` shows a floating, dismissible banner on
   the dashboard. Dismissing it **snoozes it for 3 days** rather than
   hiding it forever — it'll come back on a later visit until the
@@ -283,6 +296,7 @@ trusted with certain writes:
   separate listener, so both surfaces stay in sync.
 
 ## 11. Known constraints / things a new developer should know
+(§12 below covers the offline cache and welcome screen.)
 
 - **The admin account is hardcoded** (`admin@test.com`, in `main.js`)
   — there's no role-management UI to add a second admin. Anyone signing
@@ -307,9 +321,47 @@ trusted with certain writes:
   this is ever repurposed for another school, that's manual find/replace,
   not a config flag.
 
+## 12. Offline cache & welcome/download screen
+
+**Service worker (`sw.js`) — the only one.** A scope can hold one
+service worker, so caching and push live together (the old
+`firebase-messaging-sw.js` is now a shim that imports `sw.js`).
+- *Precache*: on install it downloads every css/js file, `index.html`
+  (as `/`), icons, and the Firebase SDK modules from gstatic.com (it
+  walks their imports), so the app boots with no network. It reports
+  progress to the page and never fails the install on a weak network;
+  missing files are topped up on the next start.
+- *Runtime*: page loads are network-first but fall back to the cached
+  shell after 3.5s (slow "lie-fi" data); same-origin files are
+  stale-while-revalidate; Firebase SDK is cache-first. Firestore, Auth,
+  Cloud Functions, Flutterwave and Cloudinary are never intercepted.
+- **Before every deploy run `node tools/build-sw.mjs`.** It rewrites the
+  file list and a content-hash version between the `precache-manifest`
+  markers in `sw.js`. If you add a JS/CSS file and forget, it is still
+  cached at runtime after first use, just not pre-downloaded.
+- Firestore uses a persistent on-device cache (`js/firebase/config.js`),
+  so data already loaded can be read offline. It falls back to memory
+  if IndexedDB isn't available. Note: a write made offline waits for the
+  connection, so an `await` on it will not resolve until then.
+
+**Welcome gate (`js/ui/welcomeGate.js`).** New visitors see a typed
+welcome, then "download the app first", a loading line, and
+"it's on your phone", then the normal sign-in page. It is skipped when
+the app already runs installed, for anyone who has signed in on this
+device, after installing, and for 3 days after "Continue in browser".
+Add `?welcome=1` to the URL to force it while testing (`?welcome=0`
+hides it).
+- Android/desktop Chromium: the install dialog opens from the button,
+  and the browser's `appinstalled` event completes the loading line. The
+  line itself is an estimate (browsers don't expose install progress);
+  the status text under it shows real offline-cache progress.
+- iOS Safari / browsers without an install API: step-by-step
+  instructions, no detection possible.
+- The cube is CSS 3D plus one `requestAnimationFrame` loop (no library).
+
 ---
 
 _This document reflects the codebase after the round of fixes covering:
 the login white-screen, the recurring PWA install prompt, the Friend
-Groups "undefined quizzes" bug, and the marketplace payment-confirmation
-screen._
+Groups "undefined quizzes" bug, the marketplace payment-confirmation
+screen, and the offline cache / welcome-download screen._

@@ -9,14 +9,13 @@ import { renderStudentDashboard } from "./student/dashboard.js";
 import { renderAdminDashboard } from "./admin/dashboard.js";
 import { initInstallNudge } from "./student/installNudge.js";
 import { renderVerificationGate } from "./emailVerificationGate.js";
+import {
+  whenGateDone,
+  closeWelcomeGate,
+  markReturningUser,
+} from "./ui/welcomeGate.js";
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .catch((err) => console.error("SW registration failed:", err));
-  });
-}
+// The service worker is registered once, from js/boot.js (pwa.js).
 const ADMIN_EMAIL = "admin@test.com";
 
 let initialized = false;
@@ -40,6 +39,29 @@ async function renderStudent(user) {
   renderStudentDashboard(userData);
 }
 
+function renderLoadError(user) {
+  const app = document.getElementById("app");
+  if (!app) return;
+  const offline = !navigator.onLine;
+  app.innerHTML = `
+    <div style="min-height:100dvh;display:grid;place-items:center;padding:24px;text-align:center">
+      <div style="max-width:22rem">
+        <h1 style="font-size:1.4rem;color:#1e1b4b;margin-bottom:8px">
+          ${offline ? "You're offline" : "Something went wrong"}
+        </h1>
+        <p style="color:#6b7280;margin-bottom:20px">
+          ${
+            offline
+              ? "Connect to the internet once so Quiz Arena can save your data for offline use."
+              : "We couldn't load your account. Please try again."
+          }
+        </p>
+        <button id="retryLoad" style="font:inherit;font-weight:700;padding:14px 22px;border:0;border-radius:14px;background:#7c3aed;color:#fff">Try again</button>
+      </div>
+    </div>`;
+  document.getElementById("retryLoad")?.addEventListener("click", () => location.reload());
+}
+
 onAuthStateChanged(auth, async (user) => {
   // Prevent running twice during initial auth resolution
   if (initialized) return;
@@ -47,9 +69,17 @@ onAuthStateChanged(auth, async (user) => {
 
   try {
     if (!user) {
+      // New visitors see the welcome/download screen first; everyone
+      // else gets a resolved promise and goes straight to sign-in.
+      await whenGateDone();
       renderLanding();
       return;
     }
+
+    // Signed in: a welcome screen that opened before auth resolved
+    // has no business being here.
+    markReturningUser();
+    closeWelcomeGate({ instant: true });
 
     startSessionManager();
     initInstallNudge();
@@ -69,6 +99,12 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     await renderStudent(user);
+  } catch (err) {
+    // Most likely offline with nothing saved yet for this account.
+    // Without this the loader is removed and the student sees a
+    // blank page.
+    console.error("Failed to load the app:", err);
+    renderLoadError(user);
   } finally {
     hideBootLoader();
   }

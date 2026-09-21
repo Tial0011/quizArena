@@ -19,6 +19,7 @@ import {
   triggerInstallPrompt,
 } from "../installPrompt.js";
 import { initInstallNudge } from "../student/installNudge.js";
+import { markReturningUser } from "./welcomeGate.js";
 import { renderVerificationGate } from "../emailVerificationGate.js";
 const app = document.getElementById("app");
 
@@ -396,6 +397,7 @@ async function routeAfterAuth(user) {
   const ADMIN_EMAIL = "admin@test.com";
 
   // Start inactivity tracking
+  markReturningUser();
   startSessionManager();
   initInstallNudge();
 

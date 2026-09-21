@@ -2,7 +2,32 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover lets the app draw under phone notches/gesture bars;
+         css/pwa.css keeps content clear of them with safe-area insets. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
+    <!--
+      INSTALL-PROMPT CATCHER (inline on purpose)
+      Chrome fires "beforeinstallprompt" once, whenever it likes -- on a
+      slow connection that can be before js/installPrompt.js has even
+      downloaded, and an event nobody was listening for is lost. This
+      parks it on window; installPrompt.js picks it up from there.
+    -->
+    <script>
+      window.addEventListener("beforeinstallprompt", function (e) {
+        e.preventDefault();
+        window.__qaDeferredPrompt = e;
+        window.dispatchEvent(new Event("qa:bip"));
+      });
+      window.addEventListener("appinstalled", function () {
+        window.__qaInstalled = true;
+        window.__qaDeferredPrompt = null;
+        window.dispatchEvent(new Event("qa:installed"));
+      });
+    </script>
 
     <title>Quiz Arena | CBT Practice for UNIMED Students</title>
 
@@ -20,12 +45,19 @@
     <meta name="robots" content="index,follow" />
 
     <link rel="canonical" href="https://quizarena.name.ng/" />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="512x512"
-      href="/icons/icon-512.png"
-    />
+    <!--
+      FAVICONS
+      A real /favicon.ico (browsers and crawlers ask for it by name), small
+      PNGs drawn for tab size (the 512px launcher artwork turns to mush at
+      16px), and a 180px icon for iOS. "?v=2" forces browsers to drop the
+      old cached (or cached-as-missing) favicon.
+    -->
+    <link rel="icon" href="/favicon.ico?v=2" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=2" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png?v=2" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=2" />
+
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta
@@ -42,7 +74,13 @@
       content="https://quizarena.name.ng/icons/icon-512.png"
     />
     <!-- Theme -->
-    <meta name="theme-color" content="#edf7f7" />
+    <meta name="theme-color" content="#2e1065" />
+    <!-- Behave like an app once added to the home screen -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Quiz Arena" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
 
     <!-- Schema.org -->
     <script type="application/ld+json">
@@ -55,7 +93,6 @@
       }
     </script>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 
     <!--
       BOOT LOADER (critical, inline)
@@ -174,6 +211,8 @@
     <link rel="stylesheet" href="css/student/reviewAnswers.css" />
     <link rel="stylesheet" href="css/installNudge.css" />
     <link rel="stylesheet" href="css/verifyGate.css" />
+    <link rel="stylesheet" href="css/welcomeGate.css" />
+    <link rel="stylesheet" href="css/pwa.css" />
     <link rel="stylesheet" href="css/responsive.css" />
   </head>
   <body>
@@ -187,7 +226,14 @@
 
     <div id="app"></div>
 
-    <script src="https://checkout.flutterwave.com/v3.js"></script>
-    <script type="module" src="js/main.js"></script>
+    <noscript>
+      <p style="padding:24px;text-align:center;font-family:system-ui,sans-serif">
+        Quiz Arena needs JavaScript. Please turn it on and reload.
+      </p>
+    </noscript>
+
+    <script src="https://checkout.flutterwave.com/v3.js" async></script>
+    <!-- boot.js opens the welcome screen at once, then loads main.js -->
+    <script type="module" src="js/boot.js"></script>
   </body>
 </html>

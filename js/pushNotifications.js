@@ -10,6 +10,7 @@ import {
   onMessage,
   isSupported,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+import { registerServiceWorker } from "./pwa.js";
 
 /* =========================================================
    PUSH NOTIFICATIONS (Firebase Cloud Messaging)
@@ -89,9 +90,10 @@ async function registerDevice(userId) {
     const messaging = await getMessagingInstance();
     if (!messaging) return;
 
-    const registration = await navigator.serviceWorker.register(
-      "/firebase-messaging-sw.js",
-    );
+    // sw.js is the single service worker (caching + push). Registering a
+    // second one at the same scope would evict it.
+    const registration = await registerServiceWorker();
+    if (!registration) return;
 
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,

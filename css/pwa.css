@@ -1,0 +1,59 @@
+/* =========================================================
+   PWA / "feels like an app" layer
+   Small, additive rules. Loaded before responsive.css.
+========================================================= */
+
+html {
+  /* No pull-to-refresh / rubber-band bounce: a stray swipe mid-quiz
+     should never reload the page and lose the attempt. */
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Keep floating UI clear of the phone's gesture bar. */
+.install-nudge {
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------- online / offline pill (js/pwa.js) ---------- */
+.qa-net {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: 9000;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  color: #fff;
+  background: #1e1b4b;
+  box-shadow: 0 8px 24px rgba(30, 27, 75, 0.28);
+  transform: translate(-50%, -180%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.qa-net[data-tone="online"] {
+  background: #059669;
+}
+
+.qa-net.qa-net-show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa-net {
+    transition: none;
+  }
+}
