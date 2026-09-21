@@ -21,7 +21,7 @@
   --wg-bg-lo: #150a33;
   --wg-violet: #a78bfa;
   --wg-ice: #f5f3ff;
-  --wg-ice-soft: rgba(245, 243, 255, 0.76);
+  --wg-ice-soft: rgba(245, 243, 255, 0.85);
   --wg-amber: #ffb454;
   --wg-amber-deep: #ff8a3d;
   --wg-ink: #2a1200;
@@ -42,7 +42,13 @@
   background:
     radial-gradient(120% 70% at 92% -6%, var(--wg-bg-hi) 0%, transparent 62%),
     linear-gradient(180deg, var(--wg-bg-mid) 0%, var(--wg-bg-lo) 100%);
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* "Inter" isn't bundled/loaded anywhere in this project, so it never
+     actually paints -- every visitor already gets the system-ui stack
+     below. Naming it here is harmless (browsers just skip missing
+     families) but keep this list without it unless Inter gets
+     self-hosted as a real @font-face, since remote font CDNs would
+     break the "works offline" promise of this screen. */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-user-select: none;
   user-select: none;
   touch-action: manipulation;
@@ -113,9 +119,12 @@ html.wg-lock body {
   text-wrap: balance;
 }
 
-/* The welcome is meant to fill almost the whole screen. */
+/* The welcome is meant to fill almost the whole screen. At this size the
+   base -0.038em letter-spacing compounds into visibly cramped letterforms,
+   so it's loosened slightly here to keep the huge type legible. */
 .wg[data-stage="welcome"] .wg-h1 {
   font-size: clamp(3.1rem, 16vw, 7.2rem);
+  letter-spacing: -0.028em;
 }
 
 .wg-sub {

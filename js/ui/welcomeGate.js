@@ -111,8 +111,8 @@ const CHECK_ICON =
 
 const STAGES = {
   welcome: {
-    h1: "We are so glad to have you here.",
-    sub: "Your study just became more scientifically improved.",
+    h1: "We're so glad you're here.",
+    sub: "The smarter, science-backed way to study.",
     typeSub: true,
   },
   download: {
