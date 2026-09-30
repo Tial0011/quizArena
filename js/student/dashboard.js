@@ -172,11 +172,7 @@ export function renderStudentDashboard(userData = {}) {
       <main class="sd-main">
 
         <header class="sd-top">
-          <div class="sd-top-text">
-            <p class="sd-eyebrow">${greetingForNow()}</p>
-            <h1>${firstName ? escapeHtml(firstName) : "Welcome back"}${rank ? ` <span class="sd-rank-emoji" aria-hidden="true">${rank.emoji}</span>` : ""}</h1>
-            ${rank ? `<span class="sd-rank sd-rank-${rank.at}" title="Own ${rank.at}+ quizzes">${rank.emoji} ${rank.title}</span>` : ""}
-          </div>
+          <p class="sd-eyebrow">${greetingForNow()}</p>
 
           <div class="sd-top-actions">
             <div class="sd-top-streak" role="status" aria-live="polite" aria-label="Current day streak">
@@ -194,6 +190,9 @@ export function renderStudentDashboard(userData = {}) {
               </button>
             </div>
           </div>
+
+          <h1>${firstName ? escapeHtml(firstName) : "Welcome back"}${rank ? ` <span class="sd-rank-emoji" aria-hidden="true">${rank.emoji}</span>` : ""}</h1>
+          ${rank ? `<span class="sd-rank sd-rank-${rank.at}" title="Own ${rank.at}+ quizzes">${rank.emoji} ${rank.title}</span>` : ""}
         </header>
 
         <section class="sd-panel sd-stats load-in" aria-label="Your progress">

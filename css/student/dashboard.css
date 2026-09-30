@@ -194,19 +194,21 @@
 }
 
 .sd-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "greeting actions"
+    "name name"
+    "rank rank";
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 12px;
+  width: 100%;
   padding-bottom: 16px;
 }
 
-.sd-top-text {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 .sd-eyebrow {
+  grid-area: greeting;
   margin: 0 0 4px;
   font-size: 12px;
   font-weight: 700;
@@ -216,6 +218,7 @@
 }
 
 .sd-top h1 {
+  grid-area: name;
   margin: 0;
   font-size: clamp(1.7rem, 4.5vw, 2.6rem);
   line-height: 1.05;
@@ -226,6 +229,7 @@
 }
 
 .sd-top-actions {
+  grid-area: actions;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -260,7 +264,8 @@
 
 @media (max-width: 480px) {
   .sd-top {
-    gap: 8px;
+    column-gap: 8px;
+    row-gap: 10px;
   }
 
   .sd-top-actions {
@@ -1157,12 +1162,16 @@ body:has(.sd, .quiz-layout, .practice-page, .quiz-result) {
 
 /* Pack rank title (Quiz Arena Scholar, Legend, ...) */
 .sd-rank {
-  display: inline-flex;
+  grid-area: rank;
+  display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
-  padding: 3px 12px;
-  border-radius: 999px;
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: 10px;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.02em;
