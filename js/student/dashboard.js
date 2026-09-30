@@ -179,7 +179,7 @@ export function renderStudentDashboard(userData = {}) {
           </div>
 
           <div class="sd-top-actions">
-            <div class="sd-top-streak" aria-label="Current day streak">
+            <div class="sd-top-streak" role="status" aria-live="polite" aria-label="Current day streak">
               <span aria-hidden="true">🔥</span>
               <strong id="topbarStreakValue">--</strong>
             </div>

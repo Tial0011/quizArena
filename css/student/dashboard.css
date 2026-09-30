@@ -195,10 +195,15 @@
 
 .sd-top {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 16px;
+}
+
+.sd-top-text {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .sd-eyebrow {
@@ -214,8 +219,9 @@
   margin: 0;
   font-size: clamp(1.7rem, 4.5vw, 2.6rem);
   line-height: 1.05;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
+  color: var(--color-text);
   overflow-wrap: anywhere;
 }
 
@@ -224,6 +230,7 @@
   align-items: center;
   gap: 10px;
   flex: 0 0 auto;
+  flex-wrap: nowrap;
 }
 
 .sd-top-streak {
@@ -249,6 +256,39 @@
 .sd-top-streak strong {
   font-size: 14px;
   font-weight: 800;
+}
+
+@media (max-width: 480px) {
+  .sd-top {
+    gap: 8px;
+  }
+
+  .sd-top-actions {
+    gap: 6px;
+  }
+
+  .sd-top-streak {
+    min-width: 44px;
+    height: 40px;
+    gap: 3px;
+    padding: 0 6px;
+  }
+
+  .sd-top-streak span {
+    font-size: 16px;
+  }
+
+  .sd-top-actions .theme-toggle,
+  .sd-signout-mobile,
+  .sd-top-actions .notif-bell {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sd-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
 }
 
 .sd-label {
@@ -1050,7 +1090,7 @@
 
   .sd-main {
     width: 100%;
-    max-width: 1240px;
+    max-width: none;
     margin: 0;
     padding: 40px 48px 64px;
     gap: 28px;

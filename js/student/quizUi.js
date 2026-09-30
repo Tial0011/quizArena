@@ -165,9 +165,7 @@ export function revealResultStreak(streakInfo) {
   if (!streakEl || !countEl || !labelEl) return;
 
   countEl.textContent = String(streakInfo.streak);
-  labelEl.textContent = streakInfo.extended
-    ? "day streak · extended!"
-    : "day streak · today complete";
+  labelEl.textContent = `${streakInfo.streak === 1 ? "day" : "days"} streak · ${streakInfo.extended ? "extended!" : "today complete"}`;
   streakEl.hidden = false;
   streakEl.classList.add("is-visible");
 }
