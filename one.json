@@ -1,212 +1,463 @@
 [
   {
-    "question": "Why was Democritus' theory of atoms ignored for over 2000 years?",
+    "question": "A rescue plane flies horizontally at 50.0 m/s at a height of 100 m above the ground when it releases a supply package. Ignoring air resistance, how long does it take the package to reach the ground? (g = 9.8 m/s²)",
     "image": "",
-    "options": [
-      "Democritus' ideas were too complex for the philosophers of his time",
-      "The scientific community was not ready to accept atomic theory",
-      "The theory was overshadowed by the popularity of alchemical practices",
-      "Aristotle and Plato's theories were more respected and influential"
-    ],
-    "answer": 3
-  },
-  {
-    "question": "According to modern atomic theory, how are electrons distributed around the nucleus?",
-    "image": "",
-    "options": [
-      "Electrons are randomly distributed throughout the atom",
-      "Electrons are fixed in specific orbits around the nucleus",
-      "Electrons move in straight lines away from the nucleus",
-      "Electrons are distributed in an electron cloud around the nucleus"
-    ],
-    "answer": 3
-  },
-  {
-    "question": "Which experiment led to the discovery of the nucleus?",
-    "image": "",
-    "options": [
-      "Cathode ray tube experiment",
-      "Gold foil experiment",
-      "Oil drop experiment",
-      "Hydrogen spectrum experiment"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "In which year did the Danish scientist Niels Bohr make an improvement on Rutherford's atomic theory?",
-    "image": "",
-    "options": [
-      "1913, J.J. Thomson",
-      "1803, Niels Bohr",
-      "1913, Niels Bohr",
-      "1803, John Dalton"
-    ],
+    "options": ["2.04 s", "5.10 s", "4.52 s", "10.2 s"],
     "answer": 2
   },
   {
-    "question": "What did Rutherford conclude about the density of the nucleus compared to the rest of the atom?",
+    "question": "A rescue plane flying horizontally at 50.0 m/s releases a supply package from a height of 100 m. Ignoring air resistance, how far horizontally does the package travel before hitting the ground? (g = 9.8 m/s²)",
     "image": "",
-    "options": [
-      "The nucleus has the same density as the rest of the atom.",
-      "The nucleus is less dense than the rest of the atom.",
-      "The nucleus is denser than the rest of the atom.",
-      "The nucleus is larger than the rest of the atom."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "Which model of the atom described electrons embedded in a positively charged sphere?",
-    "image": "",
-    "options": [
-      "Dalton's model",
-      "Rutherford's model",
-      "Bohr's model",
-      "Plum pudding model"
-    ],
-    "answer": 3
-  },
-  {
-    "question": "Which theory became one of the foundations of modern chemistry?",
-    "image": "",
-    "options": ["Dalton's", "Bohr's", "Rutherford's", "Thomson's"],
+    "options": ["226 m", "181 m", "500 m", "100 m"],
     "answer": 0
   },
   {
-    "question": "Firing a stream of tiny positively charged particles at a thin sheet of gold foil was an experiment associated with which atomic theory?",
+    "question": "A boat can travel at 10.0 m/s in still water and heads due north across a river that flows due east at 4.0 m/s. Find the magnitude and direction of the boat's velocity relative to the Earth.",
     "image": "",
     "options": [
-      "Bohr's theory",
-      "Dalton's theory",
-      "Thomson's theory",
-      "Rutherford's theory"
+      "14.0 m/s, 45° north of east",
+      "10.8 m/s, 21.8° north of east",
+      "6.0 m/s, 21.8° west of north",
+      "10.8 m/s, 21.8° east of north"
     ],
     "answer": 3
   },
   {
-    "question": "What is the name of the model of the atom that is currently accepted?",
+    "question": "A boat travels at 10.0 m/s in still water and heads due north across a river 100 m wide that flows due east at 4.0 m/s. How long does it take the boat to cross the river?",
+    "image": "",
+    "options": ["25.0 s", "10.0 s", "9.28 s", "14.3 s"],
+    "answer": 1
+  },
+  {
+    "question": "A boat travels at 10.0 m/s in still water and heads due north across a river that flows due east at 4.0 m/s. How far downstream from its starting point does the boat reach the opposite bank if the crossing takes 10.0 s?",
+    "image": "",
+    "options": ["10.0 m", "20.0 m", "40.0 m", "100 m"],
+    "answer": 2
+  },
+  {
+    "question": "A pilot flies a plane at 200 km/h relative to the air, heading due north, while a wind blows due east at 50.0 km/h. Find the magnitude and direction of the plane's velocity relative to the ground.",
     "image": "",
     "options": [
-      "Dalton's model",
-      "Thomson's model",
-      "Rutherford's model",
-      "The quantum mechanical model"
+      "206 km/h, 14.0° north of east",
+      "206 km/h, 14.0° east of north",
+      "250 km/h, 45° north of east",
+      "150 km/h, 14.0° west of north"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "A ball is thrown horizontally at 20.0 m/s from the top of a building 45.0 m tall. How long does it take to hit the ground below? (g = 9.8 m/s², ignore air resistance)",
+    "image": "",
+    "options": ["2.25 s", "4.50 s", "9.18 s", "3.03 s"],
+    "answer": 3
+  },
+  {
+    "question": "A ball is thrown horizontally at 20.0 m/s from the top of a building 45.0 m tall. How far from the base of the building does it land? (g = 9.8 m/s², ignore air resistance)",
+    "image": "",
+    "options": ["45.0 m", "90.0 m", "60.6 m", "30.3 m"],
+    "answer": 2
+  },
+  {
+    "question": "A football is kicked at 20.0 m/s at an angle of 30.0° above the horizontal. How far does it travel horizontally before returning to its launch height? (g = 9.8 m/s²)",
+    "image": "",
+    "options": ["35.4 m", "17.3 m", "20.4 m", "40.8 m"],
+    "answer": 0
+  },
+  {
+    "question": "A football is kicked at 20.0 m/s at an angle of 30.0° above the horizontal. What is its maximum height? (g = 9.8 m/s²)",
+    "image": "",
+    "options": ["10.2 m", "20.4 m", "2.55 m", "5.10 m"],
+    "answer": 3
+  },
+  {
+    "question": "A ball rolls off a horizontal table 1.00 m high with a speed of 3.00 m/s. How far from the edge of the table does it land? (g = 9.8 m/s²)",
+    "image": "",
+    "options": ["0.68 m", "1.36 m", "3.00 m", "2.05 m"],
+    "answer": 1
+  },
+  {
+    "question": "A projectile is launched at 30.0 m/s at an angle of 45.0° above the horizontal. What is its horizontal range on level ground? (g = 9.8 m/s²)",
+    "image": "",
+    "options": ["91.8 m", "45.9 m", "183.6 m", "75.0 m"],
+    "answer": 0
+  },
+  {
+    "question": "In projectile motion (ignoring air resistance), the horizontal component of velocity:",
+    "image": "",
+    "options": [
+      "Increases steadily",
+      "Decreases steadily",
+      "Remains constant",
+      "Becomes zero at maximum height"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "At the maximum height of a projectile's path, the vertical component of its velocity is:",
+    "image": "",
+    "options": [
+      "Equal to the initial vertical velocity",
+      "Zero",
+      "Equal to the horizontal velocity",
+      "Maximum"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "The acceleration of a projectile (ignoring air resistance) throughout its flight is:",
+    "image": "",
+    "options": [
+      "Zero at the top of the path",
+      "g upward on the way up and g downward on the way down",
+      "Parallel to the velocity at every point",
+      "g downward at all points"
     ],
     "answer": 3
   },
   {
-    "question": "Which scientist discovered the neutron?",
+    "question": "At what angle of projection is the horizontal range of a projectile maximum (for launch and landing at the same height)?",
+    "image": "",
+    "options": ["30°", "60°", "45°", "90°"],
+    "answer": 2
+  },
+  {
+    "question": "A projectile launched at 30° and another launched at 60° with the same speed will have:",
     "image": "",
     "options": [
-      "James Chadwick",
-      "J.J. Thomson",
-      "Niels Bohr",
-      "Ernest Rutherford"
+      "The same range",
+      "The same maximum height",
+      "The same time of flight",
+      "The same speed at maximum height"
     ],
     "answer": 0
   },
   {
-    "question": "What is the significance of wave mechanics in today's understanding of atomic structure?",
+    "question": "If the launch speed of a projectile is doubled (same angle), its horizontal range becomes:",
     "image": "",
     "options": [
-      "Wave mechanics allows for precise determination of electron paths",
-      "Wave mechanics simplifies the atomic model to fixed orbits",
-      "Wave mechanics suggests electrons are stationary within the atom",
-      "Wave mechanics provides a more accurate representation of electron behavior"
+      "Twice as large",
+      "Half as large",
+      "Eight times as large",
+      "Four times as large"
     ],
     "answer": 3
   },
   {
-    "question": "What is the Bohr model of the atom known for?",
+    "question": "The path (trajectory) of a projectile is:",
+    "image": "",
+    "options": ["A straight line", "A parabola", "A circle", "A hyperbola"],
+    "answer": 1
+  },
+  {
+    "question": "For a projectile launched and landing at the same height, the speed at landing is:",
     "image": "",
     "options": [
-      "The model known for electrons moving in specific energy levels",
-      "The model that describes electrons as waves rather than particles",
-      "The model that suggests electrons have no defined paths",
-      "The model that proposes electrons are stationary around the nucleus"
+      "Less than the launch speed",
+      "Greater than the launch speed",
+      "Equal to the launch speed",
+      "Zero"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "The time of flight of a projectile launched at speed v₀ at angle θ above the horizontal (landing at the same height) is:",
+    "image": "",
+    "options": ["2v₀sinθ/g", "v₀sinθ/g", "v₀cosθ/g", "2v₀cosθ/g"],
+    "answer": 0
+  },
+  {
+    "question": "The maximum height of a projectile launched at speed v₀ at angle θ is:",
+    "image": "",
+    "options": ["v₀²sinθ/2g", "v₀²cos²θ/2g", "v₀²sin²θ/2g", "2v₀²sinθ/g"],
+    "answer": 2
+  },
+  {
+    "question": "For a projectile launched at 45° on level ground, the ratio of its horizontal range to its maximum height is:",
+    "image": "",
+    "options": ["1", "2", "8", "4"],
+    "answer": 3
+  },
+  {
+    "question": "Which quantity remains constant during projectile motion (ignoring air resistance)?",
+    "image": "",
+    "options": [
+      "Speed",
+      "Horizontal velocity",
+      "Vertical velocity",
+      "Kinetic energy"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Relative velocity is best defined as:",
+    "image": "",
+    "options": [
+      "The sum of all velocities acting on an object",
+      "The velocity of an object in a vacuum",
+      "The velocity of an object measured in a specified reference frame",
+      "The velocity measured only at the equator"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Two trains move toward each other on parallel tracks, one at 20 m/s and the other at 25 m/s. The speed of one train relative to the other is:",
+    "image": "",
+    "options": ["5 m/s", "22.5 m/s", "500 m/s", "45 m/s"],
+    "answer": 3
+  },
+  {
+    "question": "Two cars travel in the same direction on a highway, one at 30 m/s and the other at 20 m/s. The velocity of the faster car relative to the slower car is:",
+    "image": "",
+    "options": ["10 m/s forward", "50 m/s forward", "10 m/s backward", "Zero"],
+    "answer": 0
+  },
+  {
+    "question": "To cross a river in the minimum time (in still-boat speed greater than the current), the boat should head:",
+    "image": "",
+    "options": [
+      "Upstream at an angle",
+      "Directly across (perpendicular to the bank)",
+      "Downstream at an angle",
+      "Along the bank first"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "For a boat to land directly opposite its starting point on the other bank of a river with an eastward current, the boat must aim:",
+    "image": "",
+    "options": [
+      "Downstream (east)",
+      "Directly across",
+      "Upstream (west of straight across)",
+      "Along the bank"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "To a passenger in a moving car, rain falling vertically appears to fall at an angle. This is because:",
+    "image": "",
+    "options": [
+      "The rain changes direction near the car",
+      "Air resistance pushes the rain sideways",
+      "Gravity acts differently inside the car",
+      "The horizontal velocity of the car is subtracted from the rain's velocity in the car's reference frame"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Suppose you are running at constant velocity and you wish to throw a ball such that you will catch it as it comes back down. In what direction should you throw the ball relative to you?",
+    "image": "",
+    "options": [
+      "At an angle to the ground that depends on your running speed",
+      "In the forward direction",
+      "Straight up",
+      "Backward at 45°"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "As a projectile thrown upward moves in its parabolic path, at what point along its path are the velocity and acceleration vectors perpendicular to each other?",
+    "image": "",
+    "options": [
+      "The highest point",
+      "Nowhere",
+      "The launch point",
+      "The landing point"
     ],
     "answer": 0
   },
   {
-    "question": "What is meant by the term \"electron cloud\"?",
+    "question": "As a projectile thrown upward moves along its parabolic path, at what point are the velocity and acceleration vectors parallel to each other?",
     "image": "",
     "options": [
-      "A region where only high-energy electrons are found",
-      "A fixed orbit where electrons travel around the nucleus",
-      "A space in which electrons are likely to be found",
-      "A dense area of positive charge surrounding the nucleus"
-    ],
-    "answer": 2
-  },
-  {
-    "question": "What does the term \"atomos\" mean, according to Democritus?",
-    "image": "",
-    "options": [
-      "\"Smallest piece of matter\"",
-      "\"Fundamental unit of matter\"",
-      "\"Not to be cut\"",
-      "\"Indivisible particle\""
-    ],
-    "answer": 2
-  },
-  {
-    "question": "\"Atoms of different elements are different\" was stated in which person's theory?",
-    "image": "",
-    "options": ["Bohr's", "Dalton's", "Thomson's", "Rutherford's"],
-    "answer": 1
-  },
-  {
-    "question": "What did Democritus believe about atoms?",
-    "image": "",
-    "options": [
-      "Atoms are large, soft particles that can be divided indefinitely",
-      "Atoms are made of different materials and are all the same size",
-      "Atoms are stationary and cannot join together",
-      "Atoms are small, hard particles of the same material with different shapes and sizes"
+      "The highest point",
+      "The launch point",
+      "Halfway up",
+      "Nowhere"
     ],
     "answer": 3
   },
   {
-    "question": "The atomic number of an element represents the number of:",
+    "question": "Which of the following cannot possibly be accelerating?",
     "image": "",
     "options": [
-      "Neutrons",
-      "Protons",
-      "Electrons",
-      "Both protons and neutrons"
+      "An object moving with a constant speed",
+      "An object moving with a constant velocity",
+      "An object moving along a curve",
+      "An object slowing down in a straight line"
     ],
     "answer": 1
   },
   {
-    "question": "What is the historical significance of the timeline of atomic theory development?",
+    "question": "Consider the controls in an automobile: gas pedal, brake, and steering wheel. Which of these controls cause an acceleration of the car?",
     "image": "",
     "options": [
-      "The timeline shows the dominance of Aristotle's theories over scientific inquiry",
-      "The timeline highlights the transition from philosophical to empirical approaches in science",
-      "The timeline illustrates the rejection of atomic theory by early scientists",
-      "The timeline emphasizes the lack of empirical evidence for atomic theory"
+      "All three controls",
+      "The gas pedal and the brake only",
+      "Only the brake",
+      "Only the gas pedal"
     ],
-    "answer": 1
+    "answer": 0
   },
   {
-    "question": "Where are electrons with the highest energy generally found?",
+    "question": "A particle starts from the origin at t = 0 with an initial velocity having an x component of 20 m/s and a y component of −15 m/s. The particle moves in the xy plane with an x component of acceleration only, given by ax = 4.0 m/s². Determine the velocity vector of the particle at any time t.",
     "image": "",
     "options": [
-      "Innermost energy level",
-      "Middle energy level",
-      "Outermost energy level",
-      "Nucleus"
+      "(20 + 4.0t)i + 15j m/s",
+      "20i − (15 + 4.0t)j m/s",
+      "(20 + 4.0t)i − 15j m/s",
+      "(20 − 4.0t)i − 15j m/s"
     ],
     "answer": 2
   },
   {
-    "question": "How did Aristotle and Plato's theories differ from Democritus' idea of atoms?",
+    "question": "At t = 0, a particle moving in the xy plane with constant acceleration has a velocity of vi = (3.00i − 2.00j) m/s and is at the origin. At t = 3.00 s, the particle's velocity is v = (9.00i + 7.00j) m/s. Find the acceleration of the particle.",
     "image": "",
     "options": [
-      "Aristotle and Plato favored a theory based on earth, fire, air, and water",
-      "Aristotle and Plato's theory was based on infinite atoms",
-      "Democritus thought matter was composed of four elements",
-      "Aristotle and Plato believed in indivisible particles"
+      "(3.00i + 2.00j) m/s²",
+      "(2.00i + 3.00j) m/s²",
+      "(2.00i − 3.00j) m/s²",
+      "(6.00i + 9.00j) m/s²"
     ],
+    "answer": 1
+  },
+  {
+    "question": "A particle moves in the xy plane with constant acceleration. At t = 0 its velocity is (3.00i − 2.00j) m/s, its acceleration is (2.00i + 3.00j) m/s², and it is at the origin. What are the coordinates of the particle at any time t?",
+    "image": "",
+    "options": [
+      "(3t + 2t²)i + (−2t + 3t²)j m",
+      "(3t − t²)i + (−2t − 1.5t²)j m",
+      "(3t)i + (−2t)j m",
+      "(3t + t²)i + (−2t + 1.5t²)j m"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "The vector position of a particle varies in time according to the expression r = (3.00i − 6.00t²j) m. Find expressions for the velocity and acceleration of the particle as functions of time.",
+    "image": "",
+    "options": [
+      "v = −12.0tj m/s and a = −12.0j m/s²",
+      "v = −6.00tj m/s and a = −6.00j m/s²",
+      "v = 3.00i − 12.0tj m/s and a = −12.0j m/s²",
+      "v = −12.0tj m/s and a = +12.0j m/s²"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "The vector position of a particle varies in time according to the expression r = (3.00i − 6.00t²j) m. Determine the particle's position and velocity at t = 1.00 s.",
+    "image": "",
+    "options": [
+      "(3.00i − 12.0j) m and −6.00j m/s",
+      "(3.00i − 3.00j) m and −12.0j m/s",
+      "(3.00i − 6.00j) m and −12.0j m/s",
+      "(6.00i − 6.00j) m and −12.0j m/s"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "A fish swimming in a horizontal plane has velocity vi = (4.00i + 1.00j) m/s at a point where its position relative to a rock is ri = (10.0i − 4.00j) m. After swimming with constant acceleration for 20.0 s, its velocity is v = (20.0i + 5.00j) m/s. What are the components of the fish's acceleration?",
+    "image": "",
+    "options": [
+      "(0.20i + 0.80j) m/s²",
+      "(0.80i + 0.20j) m/s²",
+      "(0.80i − 0.20j) m/s²",
+      "(16i + 4j) m/s²"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "A fish swims with velocity vi = (4.00i + 1.00j) m/s at position ri = (10.0i − 4.00j) m and maintains a constant acceleration of (0.80i + 0.20j) m/s². Where is the fish at t = 25.0 s?",
+    "image": "",
+    "options": [
+      "(360i − 83.5j) m",
+      "(110i + 29.5j) m",
+      "(360i + 79.5j) m",
+      "(360i + 83.5j) m"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "A fish swims with velocity vi = (4.00i + 1.00j) m/s and maintains a constant acceleration of (0.80i + 0.20j) m/s². What is the fish's velocity at t = 25.0 s?",
+    "image": "",
+    "options": [
+      "(24.0i + 6.00j) m/s",
+      "(20.0i + 5.00j) m/s",
+      "(24.0i + 5.00j) m/s",
+      "(20.0i + 6.00j) m/s"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "A particle initially located at the origin has an acceleration of a = 3.00j m/s² and an initial velocity of vi = 5.00i m/s. Find the vector position and velocity of the particle at any time t.",
+    "image": "",
+    "options": [
+      "r = 5.00ti + 3.00t²j m and v = 5.00i + 6.00tj m/s",
+      "r = 3.00ti + 5.00t²j m and v = 3.00i + 10.0tj m/s",
+      "r = 5.00ti + 1.50t²j m and v = 5.00i + 3.00tj m/s",
+      "r = 5.00ti + 1.50t²j m and v = 5.00i + 1.50tj m/s"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "A particle initially located at the origin has an acceleration of a = 3.00j m/s² and an initial velocity of vi = 5.00i m/s. What are the coordinates and speed of the particle at t = 2.00 s?",
+    "image": "",
+    "options": [
+      "(10.0, 12.0) m and 11.0 m/s",
+      "(10.0, 6.00) m and 7.81 m/s",
+      "(5.00, 6.00) m and 7.81 m/s",
+      "(10.0, 6.00) m and 6.00 m/s"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Observer A is a passenger in a car traveling at a constant horizontal velocity of 60 mi/h and pours a cup of coffee for the driver. Observer B stands on the side of the road and watches the pouring process through the window as the car passes. Which observer(s) see a parabolic path for the coffee as it moves through the air?",
+    "image": "",
+    "options": [
+      "Observer A only",
+      "Both observers A and B",
+      "Neither observer",
+      "Observer B only"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following correctly describes the centripetal acceleration vector for a particle moving in a circular path?",
+    "image": "",
+    "options": [
+      "Constant and always perpendicular to the velocity vector",
+      "Constant and always parallel to the velocity vector",
+      "Of constant magnitude and always perpendicular to the velocity vector",
+      "Of constant magnitude and always parallel to the velocity vector"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "A particle moves in a circular path of radius r with speed v. It then increases its speed to 2v while traveling along the same circular path. The centripetal acceleration of the particle has changed by a factor of:",
+    "image": "",
+    "options": ["0.25", "0.5", "2", "4"],
+    "answer": 3
+  },
+  {
+    "question": "A spacecraft drifts through space at constant velocity. Suddenly a gas leak gives it a constant acceleration in a direction perpendicular to its initial velocity, and the acceleration remains perpendicular to the original velocity direction. What is the shape of the path followed by the spacecraft?",
+    "image": "",
+    "options": ["A parabola", "A straight line", "A circle", "A hyperbola"],
+    "answer": 0
+  },
+  {
+    "question": "A rock is dropped at the same instant that a ball, at the same initial elevation, is thrown horizontally. Which will have the greater speed when it reaches ground level?",
+    "image": "",
+    "options": [
+      "The rock, because it falls straight down",
+      "Both the same, because vertical motion is identical",
+      "The ball, because it has horizontal velocity in addition to its vertical velocity",
+      "It depends on their masses"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following moving objects obey the equations of projectile motion (constant downward acceleration g, no horizontal acceleration)? (a) A ball thrown in an arbitrary direction (b) A jet airplane crossing the sky with its engines thrusting it forward (c) A rocket leaving the launch pad (d) A rocket moving through the sky after its engines have failed",
+    "image": "",
+    "options": ["(a) and (d)", "(a) and (b)", "(b) and (c)", "(c) and (d)"],
     "answer": 0
   }
 ]

@@ -16,6 +16,16 @@ import {
 } from "./questionNavigator.js";
 import { recordQuizAttempt } from "./attemptsService.js";
 import { renderStudentDashboard } from "./dashboard.js";
+import {
+  setQuizKeys,
+  clearQuizKeys,
+  quizHintMarkup,
+  railExtrasMarkup,
+  wireRailFinish,
+  timerClass,
+  updateTimerEl,
+  resultMarkup,
+} from "./quizUi.js";
 
 let questions = [];
 let answers = [];
@@ -109,6 +119,17 @@ export async function startQuiz(subject, count, minutes, userData) {
 
   timeRemaining = minutes * 60;
 
+  setQuizKeys({
+    select: (i) => {
+      if (i < questions[currentQuestion].options.length) {
+        answers[currentQuestion] = i;
+        renderQuestion();
+      }
+    },
+    next: () => currentQuestion < questions.length - 1 && goToQuestion(currentQuestion + 1),
+    prev: () => currentQuestion > 0 && goToQuestion(currentQuestion - 1),
+  });
+
   renderQuestion();
 
   startTimer();
@@ -140,6 +161,7 @@ function renderQuestion() {
 
       <aside class="question-navigator-sidebar">
         ${navigatorHtml}
+        ${railExtrasMarkup(answeredCount, questions.length)}
       </aside>
 
       <div class="quiz-container">
@@ -153,7 +175,7 @@ function renderQuestion() {
 
         <div class="quiz-header">
   <h2 class="quiz-title">${currentSubject}</h2>
-  <div id="quizTimer" class="quiz-timer">
+  <div id="quizTimer" class="quiz-timer ${timerClass(timeRemaining)}">
     ${formatTime(timeRemaining)}
   </div>
 </div>
@@ -203,6 +225,8 @@ function renderQuestion() {
 
         </div>
 
+        ${quizHintMarkup()}
+
       </div>
 
       <div class="quiz-actions">
@@ -243,6 +267,7 @@ function renderQuestion() {
           </button>
         </div>
         ${navigatorHtml}
+        ${railExtrasMarkup(answeredCount, questions.length)}
       </div>
     </div>
   `;
@@ -260,6 +285,7 @@ function renderQuestion() {
     },
   );
   attachNavigatorToggleEvents();
+  wireRailFinish(answers, finishQuiz);
 }
 
 function goToQuestion(index) {
@@ -344,7 +370,7 @@ function startTimer() {
     const timerEl = document.getElementById("quizTimer");
 
     if (timerEl) {
-      timerEl.textContent = formatTime(timeRemaining);
+      updateTimerEl(timerEl, timeRemaining, formatTime(timeRemaining));
     }
 
     if (timeRemaining <= 0) {
@@ -389,41 +415,16 @@ function finishQuiz() {
     message = "Good Job 👍";
   }
 
-  document.getElementById("app").innerHTML = `
-    <div class="quiz-result">
+  clearQuizKeys();
 
-      <h1>
-        Quiz Completed
-      </h1>
-
-      <div class="score-circle">
-        ${percentage}%
-      </div>
-
-      <h2>
-        ${score}
-        /
-        ${questions.length}
-      </h2>
-
-      <p>
-        ${message}
-      </p>
-
-      <div class="result-actions">
-
-        <button id="reviewAnswersBtn" class="review-answers-btn">
-          Review Answers
-        </button>
-
-        <button id="restartBtn" class="result-back-btn">
-          Back To Dashboard
-        </button>
-
-      </div>
-
-    </div>
-  `;
+  document.getElementById("app").innerHTML = resultMarkup({
+    title: "Quiz Completed",
+    percentage,
+    score,
+    total: questions.length,
+    answeredCount: answers.filter((a) => a !== null).length,
+    message,
+  });
 
   document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
     renderReviewAnswers(questions, answers, () =>

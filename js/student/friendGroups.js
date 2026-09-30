@@ -75,7 +75,7 @@ async function renderFriendGroupsPage(userData) {
 
       <div class="friend-group-forms">
 
-        <div class="friend-group-form-card">
+        <div class="friend-group-form-card" id="createGroupCard">
           <h3>Create a Group</h3>
           <input
             id="createGroupName"
@@ -308,6 +308,16 @@ async function loadMyGroups() {
   // was loading — same class of bug fixed elsewhere in this app.
   const container = document.getElementById("myGroupsList");
   if (!container) return;
+
+  // Each student can own only one group, so once they've created one
+  // the "Create a Group" form has nothing left to do — remove it and
+  // let the Join form use the full row.
+  const ownsGroup = groups.some((g) => g.ownerId === currentUserData.id);
+  const createCard = document.getElementById("createGroupCard");
+  if (createCard) createCard.hidden = ownsGroup;
+  document
+    .querySelector(".friend-group-forms")
+    ?.classList.toggle("single-form", ownsGroup);
 
   if (groups.length === 0) {
     container.innerHTML = `

@@ -12,7 +12,7 @@
 
 .questions-subtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -28,7 +28,7 @@
 .form-field label {
   font-size: 13px;
   font-weight: 600;
-  color: #444;
+  color: var(--color-text);
 }
 
 select,
@@ -44,8 +44,8 @@ textarea {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  background: #fafafa;
-  border: 1px solid #eee;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 18px;
   margin: 20px 0;
@@ -54,15 +54,15 @@ textarea {
 .context-card select {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 14px;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .context-card select:disabled {
-  background: #f3f3f3;
-  color: #999;
+  background: var(--color-surface-2);
+  color: var(--color-text-faint);
   cursor: not-allowed;
 }
 
@@ -73,8 +73,8 @@ textarea {
   display: grid;
   gap: 15px;
   margin-top: 20px;
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 20px;
 }
@@ -84,10 +84,10 @@ textarea {
 .question-form select {
   width: 100%;
   padding: 14px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   font-size: 15px;
-  background: white;
+  background: var(--color-surface);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -97,8 +97,8 @@ textarea {
 .question-form input:focus,
 .question-form select:focus {
   outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(56, 150, 149, 0.15);
 }
 
 .question-form textarea {
@@ -119,7 +119,7 @@ textarea {
 
 .btn-primary {
   border: none;
-  background: #7c3aed;
+  background: var(--color-primary);
   color: white;
   padding: 14px 20px;
   border-radius: 12px;
@@ -132,7 +132,7 @@ textarea {
 }
 
 .btn-primary:hover {
-  background: #6d28d9;
+  background: var(--color-primary-hover);
 }
 
 .btn-primary:active {
@@ -140,9 +140,9 @@ textarea {
 }
 
 .btn-secondary {
-  border: 1px solid #ddd;
-  background: #fff;
-  color: #444;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
   padding: 14px 20px;
   border-radius: 12px;
   cursor: pointer;
@@ -152,7 +152,7 @@ textarea {
 }
 
 .btn-secondary:hover {
-  background: #f3f3f3;
+  background: var(--color-surface-2);
 }
 
 /* =========================
@@ -160,8 +160,8 @@ textarea {
 ========================= */
 .import-card {
   margin-top: 24px;
-  background: #fafafa;
-  border: 1px dashed #ddd;
+  background: var(--color-surface-2);
+  border: 1px dashed var(--color-border);
   border-radius: 16px;
   padding: 20px;
 }
@@ -173,7 +173,7 @@ textarea {
 
 .import-hint {
   margin: 0 0 14px 0;
-  color: #777;
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 
@@ -188,9 +188,9 @@ textarea {
   flex: 1;
   min-width: 200px;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-surface);
   font-size: 13px;
 }
 
@@ -201,7 +201,7 @@ textarea {
 .import-result {
   margin-top: 10px;
   font-size: 13px;
-  color: #444;
+  color: var(--color-text);
   min-height: 18px;
 }
 
@@ -217,21 +217,21 @@ textarea {
 }
 
 .status-info {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  background: var(--info-bg);
+  color: var(--color-info);
+  border: 1px solid var(--color-border-tint);
 }
 
 .status-success {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+  background: var(--success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--success-border);
 }
 
 .status-error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
+  background: var(--danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--danger-border);
 }
 
 /* =========================
@@ -239,8 +239,8 @@ textarea {
 ========================= */
 .question-form input[type="file"] {
   padding: 10px;
-  border: 1px dashed #ddd;
-  background: #fafafa;
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface-2);
   cursor: pointer;
 }
 
@@ -257,14 +257,14 @@ textarea {
   max-height: 200px;
   object-fit: contain;
   border-radius: 12px;
-  border: 1px solid #eee;
-  background: #f9fafb;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
 }
 
 .btn-remove-image {
   border: none;
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--danger-bg);
+  color: var(--color-danger);
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -274,7 +274,7 @@ textarea {
 }
 
 .btn-remove-image:hover {
-  background: #fecaca;
+  background: var(--danger-bg);
 }
 
 /* Thumbnail shown on question cards in the admin list */
@@ -283,8 +283,8 @@ textarea {
   max-height: 180px;
   object-fit: contain;
   border-radius: 10px;
-  background: #f9fafb;
-  border: 1px solid #eee;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
 }
 
 /* =========================
@@ -303,16 +303,16 @@ textarea {
   flex: 1;
   min-width: 220px;
   padding: 12px 14px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 14px;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(56, 150, 149, 0.15);
 }
 
 .list-toolbar-right {
@@ -324,7 +324,7 @@ textarea {
 .question-counter {
   font-size: 13px;
   font-weight: 600;
-  color: #555;
+  color: var(--color-text);
   white-space: nowrap;
 }
 
@@ -347,8 +347,8 @@ textarea {
   gap: 12px;
   padding: 18px;
   border-radius: 16px;
-  background: #fafafa;
-  border: 1px solid #eee;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 8px 20px rgba(0, 0, 0, 0.03);
@@ -376,7 +376,7 @@ textarea {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text);
   line-height: 1.4;
 }
 
@@ -392,14 +392,14 @@ textarea {
   gap: 8px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   font-size: 13px;
 }
 
 .option-correct {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
+  background: var(--success-bg);
+  border-color: var(--success-border);
 }
 
 .option-letter {
@@ -409,21 +409,21 @@ textarea {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #f3f4f6;
+  background: var(--color-surface-2);
   font-size: 11px;
   font-weight: 700;
-  color: #555;
+  color: var(--color-text);
   flex-shrink: 0;
 }
 
 .option-correct .option-letter {
-  background: #10b981;
+  background: var(--color-success-solid);
   color: white;
 }
 
 .option-text {
   flex: 1;
-  color: #333;
+  color: var(--color-text);
 }
 
 .question-card-actions {
@@ -445,17 +445,17 @@ textarea {
 }
 
 .badge-subject {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: var(--color-tint);
+  color: var(--color-link);
 }
 
 .badge-quiz {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--info-bg);
+  color: var(--color-info);
 }
 
 .badge-correct {
-  background: #10b981;
+  background: var(--color-success-solid);
   color: white;
   margin-left: auto;
 }
@@ -465,8 +465,8 @@ textarea {
 ========================= */
 .btn-edit {
   border: none;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--color-tint);
+  color: var(--color-link);
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -476,13 +476,13 @@ textarea {
 }
 
 .btn-edit:hover {
-  background: #e0e7ff;
+  background: var(--color-tint-strong);
 }
 
 .btn-delete {
   border: none;
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--danger-bg);
+  color: var(--color-danger);
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -492,7 +492,7 @@ textarea {
 }
 
 .btn-delete:hover {
-  background: #fecaca;
+  background: var(--danger-bg);
 }
 
 /* =========================
@@ -501,10 +501,10 @@ textarea {
 .question-empty-state {
   text-align: center;
   padding: 48px 20px;
-  border: 1px dashed #ddd;
+  border: 1px dashed var(--color-border);
   border-radius: 16px;
-  background: #fafafa;
-  color: #888;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
   font-size: 15px;
   font-weight: 500;
 }

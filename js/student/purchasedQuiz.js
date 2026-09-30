@@ -8,6 +8,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
+import {
+  setQuizKeys,
+  clearQuizKeys,
+  quizHintMarkup,
+  railExtrasMarkup,
+  wireRailFinish,
+  timerClass,
+  updateTimerEl,
+  resultMarkup,
+} from "./quizUi.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
 import { renderReviewAnswers } from "./reviewAnswers.js";
 import {
@@ -101,6 +111,20 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
     renderMyQuizzes(userData);
   });
 
+  setQuizKeys({
+    select: (i) => {
+      if (i < questions[currentQuestion].options.length) {
+        answers[currentQuestion] = i;
+        renderQuestion(quizTitle);
+      }
+    },
+    next: () =>
+      currentQuestion < questions.length - 1 &&
+      goToQuestion(currentQuestion + 1, quizTitle),
+    prev: () =>
+      currentQuestion > 0 && goToQuestion(currentQuestion - 1, quizTitle),
+  });
+
   stopLoading();
   renderQuestion(quizTitle);
 
@@ -146,6 +170,7 @@ function renderQuestion(quizTitle) {
 
       <aside class="question-navigator-sidebar">
         ${navigatorHtml}
+        ${railExtrasMarkup(answeredCount, questions.length)}
       </aside>
 
       <div class="quiz-container">
@@ -162,7 +187,7 @@ function renderQuestion(quizTitle) {
             ${quizTitle}
           </h2>
 
-          <div id="quizTimer" class="quiz-timer">
+          <div id="quizTimer" class="quiz-timer ${timerClass(timeRemaining)}">
             ${formatTime(timeRemaining)}
           </div>
         </div>
@@ -212,6 +237,8 @@ function renderQuestion(quizTitle) {
 
         </div>
 
+        ${quizHintMarkup()}
+
       </div>
 
       <div class="quiz-actions">
@@ -252,6 +279,7 @@ function renderQuestion(quizTitle) {
           </button>
         </div>
         ${navigatorHtml}
+        ${railExtrasMarkup(answeredCount, questions.length)}
       </div>
     </div>
   `;
@@ -269,6 +297,7 @@ function renderQuestion(quizTitle) {
     },
   );
   attachNavigatorToggleEvents();
+  wireRailFinish(answers, () => finishQuiz(quizTitle));
 }
 
 function goToQuestion(index, quizTitle) {
@@ -352,7 +381,7 @@ function startTimer(quizTitle) {
     const timerEl = document.getElementById("quizTimer");
 
     if (timerEl) {
-      timerEl.textContent = formatTime(timeRemaining);
+      updateTimerEl(timerEl, timeRemaining, formatTime(timeRemaining));
     }
 
     if (timeRemaining <= 0) {
@@ -389,41 +418,21 @@ function finishQuiz(quizTitle) {
     totalQuestions: questions.length,
   });
 
-  document.getElementById("app").innerHTML = `
-    <div class="quiz-result">
+  clearQuizKeys();
 
-      <h1>
-        ${quizTitle}
-      </h1>
-
-      <div class="score-circle">
-        ${percentage}%
-      </div>
-
-      <h2>
-        ${score}
-        /
-        ${questions.length}
-      </h2>
-
-      <p>
-        Quiz Completed 🎉
-      </p>
-
-      <div class="result-actions">
-
-        <button id="reviewAnswersBtn" class="review-answers-btn">
-          Review Answers
-        </button>
-
-        <button id="restartBtn" class="result-back-btn">
-          Back To Dashboard
-        </button>
-
-      </div>
-
-    </div>
-  `;
+  document.getElementById("app").innerHTML = resultMarkup({
+    title: quizTitle,
+    percentage,
+    score,
+    total: questions.length,
+    answeredCount: answers.filter((a) => a !== null).length,
+    message:
+      percentage >= 80
+        ? "Excellent work"
+        : percentage >= 60
+          ? "Good job"
+          : "Keep practising",
+  });
 
   document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
     renderReviewAnswers(questions, answers, () =>

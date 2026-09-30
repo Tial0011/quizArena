@@ -1,37 +1,15 @@
 /* =========================
    DESIGN TOKENS
    Central palette/spacing/shadow scale, pulled from the colors
-   already used throughout the app (purple/violet primary, blue
-   accent, green success) so new components can reference a
+   already used throughout the app (teal primary, sand accent, brown ink) so new components can reference a
    variable instead of a one-off hex, and existing ones can be
    migrated over time without a risky full rewrite.
 ========================= */
 :root {
-  --color-primary: #7c3aed;
-  --color-primary-light: #a78bfa;
-  --color-primary-dark: #6d28d9;
-  --color-accent: #2563eb;
-  --color-success: #10b981;
-  --color-success-dark: #059669;
-  --color-danger: #dc2626;
-  --color-warning: #b45309;
-
-  --color-bg: #f8f7ff;
-  --color-surface: #ffffff;
-  --color-text: #111827;
-  --color-text-strong: #1e1b4b;
-  --color-text-muted: #6b7280;
-  --color-text-faint: #9ca3af;
-  --color-border: #e5e7eb;
-
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
-
-  --shadow-sm: 0 2px 8px rgba(30, 27, 75, 0.06);
-  --shadow-md: 0 8px 24px rgba(30, 27, 75, 0.1);
-  --shadow-lg: 0 12px 32px rgba(30, 27, 75, 0.18);
 
   --transition-fast: 0.15s ease;
   --transition-base: 0.25s ease;
@@ -54,17 +32,20 @@ html {
      any element that overflows its container causing sideways
      scroll, on top of the specific fixes already made per-page. */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-ui);
   background: var(--color-bg);
   color: var(--color-text);
   min-height: 100vh;
+  min-height: 100dvh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 button,

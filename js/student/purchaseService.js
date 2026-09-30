@@ -156,14 +156,17 @@ export async function purchaseQuiz(userId, quizId) {
  */
 export async function confirmFlutterwavePurchase(
   userId,
-  quizId,
+  quizIds,
   txRef,
   transactionId,
 ) {
+  // Accepts one id or many: a single payment can now unlock a whole pack.
+  const ids = Array.isArray(quizIds) ? quizIds : [quizIds];
   try {
     const result = await verifyFlutterwavePurchaseCallable({
       userId,
-      quizId,
+      quizIds: ids,
+      quizId: ids[0], // kept so an older deployed function still understands single buys
       txRef,
       transactionId,
     });

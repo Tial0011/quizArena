@@ -1,132 +1,108 @@
-/* =========================
-   PRACTICE ARENA PAGE SHELL
-   Same treatment as .marketplace-page / .my-quizzes-page: owns its
-   own background, padding, radius and shadow instead of depending
-   on .dashboard for spacing.
-========================= */
+/* =========================================================
+   PRACTICE ARENA
+
+   Phones: a single form. Desktop (900px+): the form on the left
+   and a live "Your session" summary on the right, so the setup
+   reads as one screen instead of a narrow centred card.
+========================================================= */
+
 .practice-page {
-  background: #ffffff;
-  border: 1px solid #ececf5;
-  border-radius: 24px;
-  padding: 28px;
-  box-shadow:
-    0 1px 2px rgba(20, 18, 31, 0.04),
-    0 16px 40px rgba(76, 29, 149, 0.06);
+  --p-ink: var(--color-text-strong);
+  --p-teal: var(--color-primary);
+  --p-teal-dark: var(--color-primary-hover);
+  --p-rule: var(--color-border-tint);
+  --p-muted: var(--color-text-muted);
+
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+  color: var(--p-ink);
 }
 
 .practice-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
 }
 
 .practice-eyebrow {
-  display: inline-block;
-  color: #7c3aed;
-  background: #f3effe;
-  padding: 5px 12px;
-  border-radius: 999px;
+  display: block;
+  margin-bottom: 6px;
+  color: var(--p-teal-dark);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 10px;
 }
 
 .practice-header h1 {
-  margin: 0 0 4px 0;
-  font-size: 26px;
+  margin: 0 0 4px;
+  font-size: clamp(1.7rem, 4.5vw, 2.5rem);
   font-weight: 800;
-  color: #14121f;
-  letter-spacing: -0.01em;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--p-ink);
 }
 
 .practice-subtitle {
-  margin: 0;
-  color: #6b7280;
-  font-size: 14px;
+  margin: 6px 0 0;
+  color: var(--p-muted);
+  font-size: 15px;
+}
+
+.practice-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
 }
 
 /* =========================
-   PRACTICE FORM CARD
+   FORM PANEL
 ========================= */
 
 .practice-card {
-  position: relative;
-  max-width: 600px;
-  margin: 0 auto;
-  background: #faf9fd;
-  padding: 28px;
-  border-radius: 18px;
-  border: 1px solid #efeef7;
-  overflow: hidden;
-}
-
-/* Thin accent bar across the top edge — a single brand color
-   (purple) rather than a two-color gradient, so it stays on the
-   same accent used everywhere else in the app (badges, buttons,
-   the eyebrow tag, stat values). */
-.practice-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: #7c3aed;
-}
-
-/* Concentric target rings, echoing "Practice Arena" — purely
-   decorative, sits behind the card content in the top-right
-   corner. Kept purple-only, same rgba token as the bar above. */
-.practice-card::after {
-  content: "";
-  position: absolute;
-  top: -60px;
-  right: -60px;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  border: 22px solid rgba(124, 58, 237, 0.05);
-  box-shadow: 0 0 0 22px rgba(124, 58, 237, 0.035);
-  pointer-events: none;
+  background: var(--color-surface);
+  border: 1px solid var(--p-rule);
+  border-radius: 20px;
+  padding: 22px 18px;
 }
 
 .practice-card .form-group {
-  position: relative;
   margin-bottom: 22px;
 }
 
-.practice-card label {
+.practice-card label,
+.practice-label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--p-muted);
 }
 
 .practice-card select,
 .practice-card input[type="number"] {
   width: 100%;
-  padding: 15px;
-  border: 1px solid #e5e7eb;
+  height: 52px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-border-tint);
   border-radius: 14px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  color: #1f2430;
-  background: white;
+  color: var(--p-ink);
+  background: var(--color-surface);
   box-sizing: border-box;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   appearance: none;
   -webkit-appearance: none;
 }
 
-/* Custom chevron for the subject select, since appearance is
-   stripped above. */
 .practice-card select {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'><path d='M1 1L7 7L13 1' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'><path d='M1 1L7 7L13 1' stroke='%2316302f' stroke-width='2'/></svg>");
   background-repeat: no-repeat;
   background-position: right 16px center;
   padding-right: 42px;
@@ -136,134 +112,251 @@
 .practice-card select:focus,
 .practice-card input[type="number"]:focus {
   outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  border-color: var(--p-teal);
+  box-shadow: 0 0 0 3px rgba(56, 150, 149, 0.22);
 }
 
-/* =========================
-   QUESTIONS + TIME — grouped as peers, unit-suffixed
-========================= */
+/* Presets */
+.practice-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
 
+.practice-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--p-rule);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--p-ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.practice-preset strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.practice-preset span {
+  font-size: 12px;
+  color: var(--p-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .practice-preset:hover {
+    border-color: var(--p-teal);
+  }
+}
+
+.practice-preset.is-active {
+  border-color: var(--p-teal);
+  box-shadow: 0 0 0 1px var(--p-teal);
+  background: var(--color-surface-2);
+}
+
+/* Questions + time */
 .practice-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 0;
 }
 
-/* Wraps a single number input so a unit label ("questions", "min")
-   can sit inside the field instead of the number floating alone. */
 .practice-field-unit {
   position: relative;
 }
 
 .practice-field-unit input[type="number"] {
-  padding-right: 78px;
+  padding-right: 92px;
+  font-variant-numeric: tabular-nums;
 }
 
 .practice-field-unit span {
   position: absolute;
-  right: 15px;
+  right: 14px;
   top: 50%;
-  transform: translateY(calc(-50% + 12px));
+  transform: translateY(-50%);
   font-size: 13px;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--p-muted);
   pointer-events: none;
 }
 
-/* Questions and Time used to be color-coded purple vs. amber —
-   dropped so both fields share the single accent color used
-   everywhere else on the page. */
-
-/* =========================
-   PACE READOUT
-========================= */
-
-/* Small live summary line: "≈1.0 min per question". Populate with
-   JS — see note below — falls back to just not showing if left
-   empty. Uses the same soft-lavender token as .practice-eyebrow /
-   the marketplace-eyebrow tag, instead of the old amber card. */
 .practice-pace {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: -6px 0 22px;
   padding: 10px 14px;
+  background: var(--color-tint);
   border-radius: 12px;
-  background: #f3effe;
-  border: 1px solid #ded6fb;
   font-size: 13px;
-  font-weight: 600;
-  color: #6d28d9;
+  font-weight: 700;
+  color: var(--p-ink);
 }
 
 .practice-pace:empty {
   display: none;
 }
 
-.practice-pace::before {
-  content: "⏱";
-  font-size: 14px;
-}
-
-/* =========================
-   START BUTTON
-========================= */
-
 #startPracticeBtn {
   width: 100%;
-  padding: 16px;
-  border: none;
+  height: 56px;
+  border: 0;
   border-radius: 14px;
-  background: #7c3aed;
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
+  background: var(--p-teal);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition:
-    background 0.25s ease,
-    transform 0.15s ease,
-    box-shadow 0.25s ease;
-  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
+  transition: background 0.15s ease;
 }
 
 #startPracticeBtn:hover {
-  background: #6d28d9;
-  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.32);
+  background: var(--p-teal-dark);
 }
 
 #startPracticeBtn:active {
-  transform: scale(0.98);
+  background: var(--color-primary-deep);
 }
 
 /* =========================
-   RESPONSIVE
+   SUMMARY PANEL (desktop)
 ========================= */
 
-@media (max-width: 720px) {
-  .practice-page {
-    padding: 18px;
-    border-radius: 18px;
-  }
+.practice-summary {
+  display: none;
+  background: linear-gradient(160deg, var(--color-primary), var(--color-primary-deep));
+  color: #fff;
+  padding: 28px 28px 24px;
+  border-radius: 20px;
 }
 
-@media (max-width: 768px) {
+.practice-summary-kicker {
+  display: block;
+  margin-bottom: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.practice-summary-list {
+  margin: 0 0 24px;
+}
+
+.practice-summary-list > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.practice-summary-list dt {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.practice-summary-list dd {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.practice-tips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.practice-tips li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.practice-tips li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 2px;
+}
+
+.practice-tips kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font: 700 11px/1.5 inherit;
+  text-align: center;
+  color: #fff;
+}
+
+/* =========================
+   LARGER SCREENS
+========================= */
+
+@media (min-width: 640px) {
+  .practice-page {
+    padding: 28px 28px 56px;
+  }
+
   .practice-card {
-    padding: 22px;
+    padding: 28px;
+  }
+
+  .practice-presets {
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .practice-row {
-    grid-template-columns: 1fr;
-    gap: 0;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
   }
 }
 
-@media (max-width: 420px) {
+@media (min-width: 900px) {
   .practice-page {
-    padding: 14px;
+    padding: 44px 48px 64px;
   }
 
-  .practice-header h1 {
-    font-size: 22px;
+  .practice-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+    gap: 28px;
+  }
+
+  .practice-card {
+    padding: 34px 36px;
+  }
+
+  .practice-summary {
+    display: block;
+    position: sticky;
+    top: 24px;
   }
 }

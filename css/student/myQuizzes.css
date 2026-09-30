@@ -5,13 +5,13 @@
    for spacing.
 ========================= */
 .my-quizzes-page {
-  background: #ffffff;
-  border: 1px solid #ececf5;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 24px;
   padding: 28px;
   box-shadow:
-    0 1px 2px rgba(20, 18, 31, 0.04),
-    0 16px 40px rgba(76, 29, 149, 0.06);
+    0 1px 2px rgba(6, 36, 36, 0.04),
+    0 16px 40px rgba(23, 73, 74, 0.06);
 }
 
 .my-quizzes-header {
@@ -20,8 +20,8 @@
 
 .my-quizzes-eyebrow {
   display: inline-block;
-  color: #7c3aed;
-  background: #f3effe;
+  color: var(--color-link);
+  background: var(--color-tint);
   padding: 5px 12px;
   border-radius: 999px;
   font-size: 12px;
@@ -35,13 +35,13 @@
   margin: 0 0 4px 0;
   font-size: 26px;
   font-weight: 800;
-  color: #14121f;
+  color: var(--color-text-strong);
   letter-spacing: -0.01em;
 }
 
 .my-quizzes-subtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -52,8 +52,8 @@
    .marketplace-toolbar-panel.
 ========================= */
 .my-quizzes-toolbar-panel {
-  background: #faf9fd;
-  border: 1px solid #efeef7;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
   padding: 18px;
   margin-bottom: 24px;
@@ -73,22 +73,22 @@
   flex: 1;
   min-width: 220px;
   padding: 14px 18px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--color-surface);
   font-size: 15px;
   box-sizing: border-box;
   transition: 0.2s;
 }
 
 .my-quizzes-search::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-faint);
 }
 
 .my-quizzes-search:focus {
   outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(56, 150, 149, 0.12);
 }
 
 /* Wrapper div rendered by renderSemesterFilter() — empty (no
@@ -99,10 +99,10 @@
   min-height: 50px;
   min-width: 170px;
   padding: 0 40px 0 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: #fff;
-  color: #111827;
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 15px;
   font-weight: 500;
   box-sizing: border-box;
@@ -116,13 +116,13 @@
 }
 
 .my-quizzes-semester-filter select:hover {
-  border-color: #c4b5fd;
+  border-color: var(--color-border-tint);
 }
 
 .my-quizzes-semester-filter select:focus {
   outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(56, 150, 149, 0.12);
 }
 
 @media (max-width: 600px) {
@@ -153,9 +153,9 @@
 }
 
 .filter-chip {
-  border: 1px solid #ececf5;
-  background: #fff;
-  color: #374151;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-soft);
   padding: 10px 18px;
   border-radius: 999px;
   font-size: 14px;
@@ -166,16 +166,16 @@
 }
 
 .filter-chip:hover {
-  background: #f3effe;
-  color: #6d28d9;
-  border-color: #ded6fb;
+  background: var(--color-tint);
+  color: var(--color-link);
+  border-color: var(--color-border-tint);
 }
 
 .filter-chip.active {
-  background: #7c3aed;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #7c3aed;
-  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.25);
+  border-color: var(--color-primary);
+  box-shadow: 0 6px 18px rgba(56, 150, 149, 0.25);
 }
 
 @media (max-width: 600px) {
@@ -198,10 +198,10 @@
 ========================= */
 
 .quiz-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 16px;
   padding: 20px;
-  border: 1px solid #ececec;
+  border: 1px solid var(--color-border);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 8px 20px rgba(0, 0, 0, 0.03);
@@ -220,28 +220,28 @@
 }
 
 .quiz-card h3 {
-  color: #14121f;
+  color: var(--color-text-strong);
   font-size: 1.15rem;
   font-weight: 700;
   margin-bottom: 8px;
 }
 
 .quiz-card p {
-  color: #6b7280;
+  color: var(--color-text-muted);
   margin-bottom: 12px;
 }
 
 .quiz-card strong {
   display: block;
   font-size: 1.1rem;
-  color: #111827;
+  color: var(--color-text);
   margin-bottom: 20px;
 }
 
 .quiz-subject {
   display: inline-block;
-  background: #ede9fe;
-  color: #6d28d9;
+  background: var(--color-tint);
+  color: var(--color-link);
   padding: 6px 12px;
   border-radius: 999px;
   font-size: 13px;
@@ -250,7 +250,7 @@
 }
 
 .quiz-week {
-  color: #6b7280;
+  color: var(--color-text-muted);
   margin: 12px 0 20px;
 }
 
@@ -263,7 +263,7 @@
   padding: 14px;
   border: none;
   border-radius: 12px;
-  background: #7c3aed;
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   font-size: 15px;
@@ -272,7 +272,7 @@
 }
 
 .attempt-btn:hover {
-  background: #6d28d9;
+  background: var(--color-primary-hover);
 }
 
 .attempt-btn:active {
@@ -284,16 +284,16 @@
 ========================= */
 
 .empty-state {
-  background: #fafafa;
+  background: var(--color-surface-2);
   border-radius: 16px;
   padding: 48px 20px;
   text-align: center;
-  color: #888;
-  border: 1px dashed #ddd;
+  color: var(--color-text-muted);
+  border: 1px dashed var(--color-border);
 }
 
 .empty-state h3 {
-  color: #111827;
+  color: var(--color-text);
   margin: 0 0 6px 0;
 }
 
@@ -320,19 +320,19 @@
   align-items: center;
   margin-bottom: 16px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ececec;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .my-quiz-section-title {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .my-quiz-section-count {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-weight: 600;
 }
 
@@ -359,8 +359,8 @@
 }
 
 .my-quiz-stat {
-  background: #fff;
-  border: 1px solid #ececec;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   padding: 14px 10px;
   text-align: center;
@@ -376,13 +376,13 @@
   display: block;
   font-size: 22px;
   font-weight: 700;
-  color: #7c3aed;
+  color: var(--color-link);
 }
 
 .my-quiz-stat-label {
   display: block;
   margin-top: 5px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 

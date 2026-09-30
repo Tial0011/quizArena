@@ -18,6 +18,13 @@ import { showLoadingOverlay } from "./loadingOverlay.js";
 const DEFAULT_QUESTION_COUNT = 20;
 const DEFAULT_TIME_MINUTES = 20;
 
+const PRESETS = [
+  { name: "Quick", q: 10, t: 10 },
+  { name: "Standard", q: 20, t: 20 },
+  { name: "Extended", q: 40, t: 40 },
+  { name: "Full", q: 60, t: 60 },
+];
+
 let currentUserData = {};
 
 export async function renderPracticeArena(userData = {}) {
@@ -45,43 +52,78 @@ async function renderPracticeArenaPage(userData) {
     <div class="practice-page">
 
       <header class="practice-header">
-        <span class="practice-eyebrow">Solo Practice</span>
+        <span class="practice-eyebrow">Solo practice</span>
         <h1>Practice Arena</h1>
         <p class="practice-subtitle">
-          Practice questions from your purchased quizzes.
+          Build an exam-style session from the quizzes you own.
         </p>
       </header>
 
-      <div class="practice-card">
+      <div class="practice-grid">
 
-       <div class="form-group">
-  <label for="subjectSelect">Subject</label>
-  <select id="subjectSelect">
-    <option value="">Select Subject</option>
-  </select>
-</div>
+        <div class="practice-card">
 
-<div class="practice-row">
-  <div class="form-group">
-    <label for="questionCount">Questions</label>
-    <div class="practice-field-unit">
-      <input id="questionCount" type="number" min="1" value="${DEFAULT_QUESTION_COUNT}">
-      <span>questions</span>
-    </div>
-  </div>
+          <div class="form-group">
+            <label for="subjectSelect">Subject</label>
+            <select id="subjectSelect">
+              <option value="">Select Subject</option>
+            </select>
+          </div>
 
-  <div class="form-group">
-    <label for="timeLimit">Time</label>
-    <div class="practice-field-unit">
-      <input id="timeLimit" type="number" min="1" value="${DEFAULT_TIME_MINUTES}">
-      <span>min</span>
-    </div>
-  </div>
-</div>
+          <div class="form-group">
+            <span class="practice-label">Quick presets</span>
+            <div class="practice-presets" id="practicePresets">
+              ${PRESETS.map(
+                (p) => `
+                <button type="button" class="practice-preset" data-q="${p.q}" data-t="${p.t}">
+                  <strong>${p.name}</strong>
+                  <span>${p.q} Q · ${p.t} min</span>
+                </button>`,
+              ).join("")}
+            </div>
+          </div>
 
-<p class="practice-pace" id="pacePreview"></p>
+          <div class="practice-row">
+            <div class="form-group">
+              <label for="questionCount">Questions</label>
+              <div class="practice-field-unit">
+                <input id="questionCount" type="number" min="1" value="${DEFAULT_QUESTION_COUNT}">
+                <span>questions</span>
+              </div>
+            </div>
 
-<button id="startPracticeBtn">🚀 Start Practice</button>
+            <div class="form-group">
+              <label for="timeLimit">Time</label>
+              <div class="practice-field-unit">
+                <input id="timeLimit" type="number" min="1" value="${DEFAULT_TIME_MINUTES}">
+                <span>min</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="practice-pace" id="pacePreview"></p>
+
+          <button id="startPracticeBtn">Start practice</button>
+
+        </div>
+
+        <aside class="practice-summary" aria-label="Session summary">
+          <span class="practice-summary-kicker">Your session</span>
+
+          <dl class="practice-summary-list">
+            <div><dt>Subject</dt><dd id="sumSubject">Not chosen</dd></div>
+            <div><dt>Questions</dt><dd id="sumQuestions">–</dd></div>
+            <div><dt>Time</dt><dd id="sumTime">–</dd></div>
+            <div><dt>Pace</dt><dd id="sumPace">–</dd></div>
+          </dl>
+
+          <ul class="practice-tips">
+            <li>Questions are drawn at random from quizzes you own.</li>
+            <li>Asking for more than exist? You'll get every available question.</li>
+            <li>The timer submits your session automatically at zero.</li>
+            <li>On a keyboard: <kbd>A</kbd>–<kbd>D</kbd> to answer, <kbd>←</kbd> <kbd>→</kbd> to move.</li>
+          </ul>
+        </aside>
 
       </div>
 
@@ -90,14 +132,39 @@ async function renderPracticeArenaPage(userData) {
   function updatePacePreview() {
     const count = Number(document.getElementById("questionCount").value);
     const time = Number(document.getElementById("timeLimit").value);
+    const subject = document.getElementById("subjectSelect").value;
     const pace = document.getElementById("pacePreview");
-    if (count > 0 && time > 0) {
-      pace.textContent = `≈ ${(time / count).toFixed(1)} min per question`;
-    } else {
-      pace.textContent = "";
-    }
+    const valid = count > 0 && time > 0;
+    const paceText = valid ? `≈ ${(time / count).toFixed(1)} min per question` : "";
+
+    pace.textContent = paceText;
+
+    document.getElementById("sumSubject").textContent = subject || "Not chosen";
+    document.getElementById("sumQuestions").textContent = count > 0 ? count : "–";
+    document.getElementById("sumTime").textContent = time > 0 ? `${time} min` : "–";
+    document.getElementById("sumPace").textContent = valid
+      ? `${((time * 60) / count).toFixed(0)} sec / question`
+      : "–";
+
+    document.querySelectorAll(".practice-preset").forEach((btn) => {
+      btn.classList.toggle(
+        "is-active",
+        Number(btn.dataset.q) === count && Number(btn.dataset.t) === time,
+      );
+    });
   }
 
+  document.querySelectorAll(".practice-preset").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.getElementById("questionCount").value = btn.dataset.q;
+      document.getElementById("timeLimit").value = btn.dataset.t;
+      updatePacePreview();
+    });
+  });
+
+  document
+    .getElementById("subjectSelect")
+    .addEventListener("change", updatePacePreview);
   document
     .getElementById("questionCount")
     .addEventListener("input", updatePacePreview);

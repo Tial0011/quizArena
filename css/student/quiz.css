@@ -1,63 +1,103 @@
 /* =========================================================
-   QUIZ PAGE — REDESIGN
-   Same class names the JS already targets (.quiz-container,
-   .quiz-timer, .quiz-progress, .quiz-card, .option-btn,
-   .quiz-actions, #prevBtn/#nextBtn/#finishBtn) plus a handful
-   of new ones for the top bar / progress bar / option cards.
-   No IDs were renamed, so timer, navigation, and scoring JS
-   need zero changes.
+   QUIZ SCREEN (shared by Practice Arena and purchased quizzes)
+
+   Square-edged exam layout. Phones: one column with a floating
+   "Questions" button. Desktop (1024px+): sticky exam bar on top,
+   question on the left, question grid + submit rail on the right.
+   Class names / IDs are unchanged, so the quiz JS needs no
+   selector changes.
 ========================================================= */
 
-/* .quiz-container used to be transparent — just padding, no
-   background — so the timer/progress row floated directly on
-   whatever the page background happens to be, with nothing tying
-   it visually to the question card below it. Giving it the same
-   soft-panel treatment as .practice-card (lavender surface, thin
-   border) makes it read as one contained unit, and lets the white
-   .quiz-card pop as the actual focal point inside it — same
-   panel-vs-card relationship Practice Arena uses. */
-.quiz-container {
-  max-width: 900px;
+.quiz-layout {
+  --q-ink: var(--color-text-strong);
+  --q-teal: var(--color-primary);
+  --q-teal-dark: var(--color-primary-hover);
+  --q-rule: var(--color-border-tint);
+  --q-muted: var(--color-text-muted);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 24px;
-  background: #faf9fd;
-  border: 1px solid #efeef7;
-  border-radius: 22px;
+  padding: 16px 14px 48px;
   box-sizing: border-box;
+  color: var(--q-ink);
+}
+
+.quiz-container {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* legacy panel look removed — the page background shows through */
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
 }
 
 /* =========================
-   TOP BAR
+   EXAM BAR (title · timer · progress)
 ========================= */
 
 .quiz-topbar {
-  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  margin: 0;
+  padding: 14px 16px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--q-rule);
+  border-radius: 18px;
 }
 
 .quiz-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .quiz-title {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: #111827;
   margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--q-ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .quiz-timer {
-  background: #7c3aed;
-  color: white;
-  padding: 10px 18px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 16px;
   flex-shrink: 0;
-  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.25);
+  min-width: 84px;
+  padding: 8px 14px;
+  background: var(--q-teal);
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: none;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.quiz-timer.is-low {
+  background: var(--color-danger-solid);
+  animation: quiz-timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes quiz-timer-pulse {
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .quiz-progress-row {
@@ -68,64 +108,58 @@
 }
 
 .quiz-progress {
-  font-size: 14px;
-  font-weight: 600;
-  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--q-muted);
 }
 
-/* Progress bar */
 .quiz-progress-track {
   width: 100%;
-  height: 8px;
-  background: #ede9fe;
+  height: 6px;
+  background: var(--color-tint);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .quiz-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  background: var(--q-teal);
   border-radius: 999px;
   transition: width 0.3s ease;
 }
 
 /* =========================
    QUESTION CARD
-   Toned down to the same shadow/border scale used by
-   .marketplace-card / .quiz-card (My Quizzes) / .practice-card —
-   it was noticeably heavier than every other card in the app
-   (0 10px 35px vs. everyone else's 0 8px 20px), which is part of
-   what made this page feel like it belonged to a different app.
 ========================= */
 
 .quiz-card {
-  background: white;
+  background: var(--color-surface);
+  border: 1px solid var(--q-rule);
   border-radius: 18px;
-  padding: 26px;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    0 8px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f1f1f1;
-  margin-bottom: 20px;
+  box-shadow: none;
+  padding: 22px 18px;
+  margin: 0;
 }
 
 .quiz-question {
-  font-size: clamp(1.1rem, 2.4vw, 1.4rem);
-  line-height: 1.6;
-  margin-bottom: 20px;
-  color: #111827;
+  margin: 0 0 20px;
+  font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+  line-height: 1.55;
   font-weight: 700;
+  color: var(--q-ink);
 }
 
 /* =========================
-   OPTIONS (card style)
+   OPTIONS
 ========================= */
 
 .quiz-options {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 0;
 }
 
 .option-btn {
@@ -134,25 +168,26 @@
   align-items: center;
   gap: 14px;
   text-align: left;
-  border: 2px solid #e5e7eb;
-  background: white;
-  padding: 16px 18px;
-  border-radius: 16px;
+  border: 1.5px solid var(--q-rule);
+  background: var(--color-surface);
+  padding: 14px 16px;
+  border-radius: 14px;
   font-size: 15px;
-  color: #1f2937;
+  line-height: 1.5;
+  color: var(--q-ink);
   cursor: pointer;
   transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    transform 0.15s ease,
-    box-shadow 0.2s ease;
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
-.option-btn:hover {
-  border-color: #a78bfa;
-  background: #faf9ff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(124, 58, 237, 0.08);
+@media (hover: hover) and (pointer: fine) {
+  .option-btn:hover {
+    border-color: var(--q-teal);
+    background: var(--color-surface-2);
+    transform: none;
+    box-shadow: none;
+  }
 }
 
 .option-letter {
@@ -161,200 +196,244 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  color: #6b7280;
-  font-weight: 700;
+  border-radius: 10px;
+  background: var(--color-tint);
+  color: var(--q-ink);
+  font-weight: 800;
   font-size: 14px;
   flex-shrink: 0;
   transition:
-    background 0.2s ease,
-    color 0.2s ease;
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .option-text {
   flex: 1;
-  line-height: 1.5;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-/* Selected: colored border + light background, per spec
-   (no more solid purple fill / white text). */
 .option-btn.selected {
-  border-color: #7c3aed;
-  background: #f5f3ff;
-  color: #4c1d95;
+  border-color: var(--q-teal);
+  box-shadow: 0 0 0 1px var(--q-teal);
+  background: var(--color-surface-2);
+  color: var(--q-ink);
 }
 
 .option-btn.selected .option-letter {
-  background: #7c3aed;
-  color: white;
+  background: var(--q-teal);
+  color: #fff;
+}
+
+.quiz-hint {
+  display: none;
+  margin: 18px 0 0;
+  font-size: 12px;
+  color: var(--q-muted);
+}
+
+.quiz-hint kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 5px;
+  border: 1px solid var(--q-rule);
+  border-bottom-width: 2px;
+  background: var(--color-surface-2);
+  font: 700 11px/1.4 inherit;
+  text-align: center;
 }
 
 /* =========================
-   QUESTION IMAGE
-   (shared .quiz-question-image class from quizImages.css
-   still applies — no change needed there.)
-========================= */
-
-/* =========================
-   NAVIGATION
+   PREV / NEXT
 ========================= */
 
 .quiz-actions {
   display: flex;
-  gap: 14px;
+  gap: 12px;
 }
 
 .quiz-actions button {
   flex: 1;
-  border: none;
-  padding: 16px;
+  border: 1.5px solid var(--q-teal);
+  padding: 15px;
   border-radius: 14px;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: 0.2s;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 #prevBtn {
-  background: #ffffff;
-  color: #374151;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  color: var(--q-teal-dark);
 }
 
-#prevBtn:hover:not(:disabled) {
-  background: #f3f4f6;
+@media (hover: hover) and (pointer: fine) {
+  #prevBtn:hover:not(:disabled) {
+    background: var(--color-tint);
+  }
 }
 
 #nextBtn,
 #finishBtn {
-  background: #7c3aed;
-  color: white;
+  background: var(--q-teal);
+  border-color: var(--q-teal);
+  color: #fff;
 }
 
 #nextBtn:hover,
 #finishBtn:hover {
-  background: #6d28d9;
+  background: var(--q-teal-dark);
+  border-color: var(--q-teal-dark);
 }
 
 .quiz-actions button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* =========================================================
-   QUESTION NAVIGATOR
+   QUESTION NAVIGATOR (rail on desktop, drawer on phones)
 ========================================================= */
 
-/* Desktop: sidebar sits beside the quiz; mobile: hidden,
-   replaced by the toggle button + drawer below. */
-.quiz-layout {
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 4px 20px 50px;
-  box-sizing: border-box;
-}
-
-.quiz-layout .quiz-container {
-  flex: 1;
-  margin: 0;
-}
-
 .question-navigator-sidebar {
-  flex-shrink: 0;
-  width: 220px;
-  background: white;
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    0 8px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f1f1f1;
-  position: sticky;
-  top: 20px;
+  display: none;
+  background: var(--color-surface);
+  border: 1px solid var(--q-rule);
+  border-radius: 18px;
+  box-shadow: none;
+  padding: 18px;
 }
 
 .navigator-title {
-  margin: 0 0 14px 0;
-  font-size: 0.95rem;
-  color: #111827;
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--q-ink);
 }
 
 .navigator-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
   margin-bottom: 16px;
 }
 
 .nav-question-btn {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border: none;
+  border: 1px solid var(--q-rule);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition:
-    background 0.2s ease,
-    transform 0.15s ease,
-    box-shadow 0.2s ease;
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .nav-question-btn:hover {
-  transform: translateY(-2px);
+  transform: none;
+  border-color: var(--q-teal);
 }
 
 .nav-question-btn.nav-current {
-  background: #3b82f6;
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  background: var(--color-surface);
+  border: 2px solid var(--q-teal);
+  color: var(--q-teal-dark);
+  box-shadow: none;
 }
 
 .nav-question-btn.nav-answered {
-  background: #22c55e;
-  color: white;
+  background: var(--q-teal);
+  border-color: var(--q-teal);
+  color: #fff;
 }
 
 .nav-question-btn.nav-unanswered {
-  background: #e5e7eb;
-  color: #4b5563;
+  background: var(--color-surface);
+  color: var(--q-muted);
 }
 
 .navigator-legend {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 6px 14px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--q-muted);
 }
 
 .legend-dot {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: 4px;
   flex-shrink: 0;
+  border: 1px solid var(--q-rule);
 }
 
 .legend-dot.nav-current {
-  background: #3b82f6;
+  background: var(--color-surface);
+  border-color: var(--q-teal);
 }
 
 .legend-dot.nav-answered {
-  background: #22c55e;
+  background: var(--q-teal);
+  border-color: var(--q-teal);
 }
 
 .legend-dot.nav-unanswered {
-  background: #e5e7eb;
+  background: var(--color-surface);
+}
+
+.rail-summary {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--q-rule);
+}
+
+.rail-summary p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--q-muted);
+}
+
+.rail-summary strong {
+  color: var(--q-ink);
+  font-size: 1.1rem;
+}
+
+.rail-finish {
+  width: 100%;
+  padding: 13px;
+  border: 1.5px solid var(--q-teal);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--q-teal-dark);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.rail-finish:hover {
+  background: var(--q-teal);
+  color: #fff;
 }
 
 /* Mobile "Questions" toggle — was a plain gray-outlined button
@@ -372,21 +451,21 @@
   align-items: center;
   gap: 10px;
   border: none;
-  background: #7c3aed;
+  background: var(--color-primary);
   color: white;
   padding: 14px 20px;
   border-radius: 999px;
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.35);
+  box-shadow: 0 10px 24px rgba(56, 150, 149, 0.35);
   transition:
     background 0.2s ease,
     transform 0.15s ease;
 }
 
 .nav-toggle-btn:hover {
-  background: #6d28d9;
+  background: var(--color-primary-hover);
 }
 
 .nav-toggle-btn:active {
@@ -405,7 +484,7 @@
 .navigator-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(22, 48, 47, 0.55);
   z-index: 1000;
   display: flex;
   justify-content: flex-end;
@@ -416,14 +495,18 @@
 }
 
 .navigator-drawer {
-  width: 85%;
-  max-width: 340px;
+  width: 88%;
+  max-width: 360px;
   height: 100%;
-  background: white;
-  padding: 22px;
+  background: var(--color-surface);
+  padding: 20px;
   overflow-y: auto;
-  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+  border-radius: 18px 0 0 18px;
   animation: navigator-slide-in 0.25s ease;
+}
+
+.navigator-drawer .navigator-grid {
+  grid-template-columns: repeat(5, 1fr);
 }
 
 @keyframes navigator-slide-in {
@@ -444,75 +527,183 @@
 
 .navigator-drawer-header h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .navigator-close-btn {
-  border: none;
-  background: #f3f4f6;
-  color: #374151;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  border: 1px solid var(--color-border-tint);
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media (max-width: 768px) {
-  .quiz-layout {
-    display: block;
-    padding: 0 14px 40px;
-  }
-
-  .question-navigator-sidebar {
-    display: none;
-  }
-
+/* Phone: floating Questions button (see .nav-toggle-btn above) */
+@media (max-width: 1023px) {
   .nav-toggle-btn {
     display: inline-flex;
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    right: 16px;
     z-index: 400;
-    margin-bottom: 0;
   }
 
-  .navigator-drawer .navigator-grid {
-    grid-template-columns: repeat(5, 1fr);
+  .quiz-layout {
+    padding-bottom: 96px;
+  }
+}
+
+/* Phones: tighten spacing */
+@media (max-width: 640px) {
+  .quiz-timer {
+    min-width: 72px;
+    padding: 7px 10px;
+    font-size: 16px;
+  }
+}
+
+/* Tablet (641–1023px) */
+@media (min-width: 641px) {
+  .quiz-layout {
+    padding: 24px 24px 96px;
+    gap: 20px;
   }
 
-  .quiz-container {
-    padding: 16px;
-    border-radius: 18px;
-  }
-
-  .quiz-card {
-    padding: 20px;
-    border-radius: 16px;
-  }
-
-  .quiz-header {
-    gap: 10px;
+  .quiz-topbar {
+    padding: 16px 22px 18px;
   }
 
   .quiz-title {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
   }
 
-  .quiz-timer {
-    padding: 8px 14px;
-    font-size: 14px;
+  .quiz-card {
+    padding: 30px 28px;
   }
 
   .option-btn {
-    padding: 14px;
+    padding: 16px 18px;
+    font-size: 16px;
+  }
+}
+
+/* =========================================================
+   DESKTOP (1024px+): exam workspace
+   Sticky exam bar spans the full width. Below it, the question
+   sits on the left and a sticky rail (question grid, progress,
+   submit) on the right — everything visible without scrolling
+   for typical questions.
+========================================================= */
+
+@media (min-width: 1024px) {
+  .quiz-layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    padding: 28px 40px 56px;
+  }
+
+  .quiz-container {
+    display: contents; /* let topbar / card / actions join the layout grid */
+  }
+
+  .quiz-topbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    padding: 18px 28px 20px;
+  }
+
+  .quiz-header {
+    margin-bottom: 14px;
+  }
+
+  .quiz-title {
+    font-size: 1.35rem;
+  }
+
+  .quiz-timer {
+    font-size: 22px;
+    padding: 10px 20px;
+    min-width: 108px;
+  }
+
+  .quiz-card {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 40px 44px 32px;
+    min-height: 340px;
   }
 
   .quiz-actions {
-    flex-direction: column;
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .question-navigator-sidebar {
+    display: block;
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    position: sticky;
+    top: 150px; /* clears the sticky exam bar */
+    align-self: start;
+  }
+
+  .quiz-question {
+    font-size: 1.55rem;
+    margin-bottom: 28px;
+  }
+
+  .quiz-options {
+    gap: 12px;
+  }
+
+  .option-btn {
+    padding: 18px 20px;
+    font-size: 17px;
+  }
+
+  .option-letter {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .quiz-hint {
+    display: block;
+  }
+
+  .quiz-actions button {
+    padding: 17px;
+    font-size: 14px;
+  }
+
+  /* The question grid lives in the rail now */
+  .nav-toggle-btn,
+  .navigator-overlay {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) and (hover: none) {
+  .quiz-hint {
+    display: none; /* touch laptops / tablets: no keyboard hint */
+  }
+}
+
+@media (min-width: 1440px) {
+  .quiz-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quiz-timer.is-low,
+  .navigator-drawer {
+    animation: none;
   }
 }

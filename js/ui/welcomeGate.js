@@ -44,7 +44,7 @@ const RETURNING_KEY = "qa_returning";
 const SKIP_DAYS = 3;
 
 const INSTALL_ESTIMATE_MS = 40000; // what we tell students to expect
-const INSTALL_GIVE_UP_MS = 90000; // then offer a manual "I can see it" button
+const INSTALL_GIVE_UP_MS = 25000; // then offer a manual "I can see it" button
 const PROMPT_WAIT_MS = 2500; // how long to wait for the browser to offer the install dialog
 
 const reduceMotion = () =>
@@ -111,37 +111,41 @@ const CHECK_ICON =
 
 const STAGES = {
   welcome: {
-    h1: "We're so glad you're here.",
-    sub: "The smarter, science-backed way to study.",
-    typeSub: true,
+    h1: "Welcome to Quiz Arena.",
+    sub: "Practice smarter. Score higher.",
   },
   download: {
-    h1: "First, download Quiz Arena.",
-    sub: "It takes about 40 seconds. After that it lives on your phone and opens even when your network is bad.",
+    h1: "Get the app first.",
+    sub: "One tap. Opens instantly, even on bad network.",
     cta: "Download app",
     skip: true,
   },
   waiting: {
-    h1: "First, download Quiz Arena.",
-    sub: "Getting the download ready…",
+    h1: "Get the app first.",
+    sub: "Getting it ready…",
     cta: "Download app",
     ctaDisabled: true,
     skip: true,
   },
   confirming: {
-    h1: "First, download Quiz Arena.",
-    sub: "Confirm on your screen when your phone asks.",
+    h1: "Get the app first.",
+    sub: "Tap Install when your phone asks.",
     cta: "Waiting for you…",
     ctaDisabled: true,
   },
   installing: {
-    h1: "Downloading to your phone.",
-    sub: "Please wait about 40 seconds, then check your phone.",
+    h1: "Installing…",
+    sub: "We'll tell you the moment your phone confirms it.",
     progress: true,
   },
   installed: {
-    h1: "It's on your phone.",
-    sub: "Check your home screen or your app drawer for Quiz Arena. You can open it from there any time.",
+    h1: "Installed. It's on your phone.",
+    sub: "Find Quiz Arena on your home screen.",
+    cta: "Continue to sign in",
+  },
+  unconfirmed: {
+    h1: "We can't confirm it yet.",
+    sub: "If Quiz Arena is on your home screen, you're set. If not, you can install it later from the menu.",
     cta: "Continue to sign in",
   },
   manualIOS: {
@@ -151,18 +155,18 @@ const STAGES = {
       "Scroll down and tap Add to Home Screen.",
       "Tap Add. Quiz Arena appears on your home screen.",
     ],
-    cta: "I've added it",
+    cta: "Done, continue",
     skip: true,
   },
   manualOther: {
     h1: "One more tap to download.",
     sub: "Open your browser menu (the three dots at the top), then tap Install app or Add to Home screen.",
-    cta: "I've added it",
+    cta: "Done, continue",
     skip: true,
   },
   declined: {
     h1: "No problem.",
-    sub: "You can download it whenever you're ready. Signing in works either way.",
+    sub: "Install any time. Signing in works either way.",
     cta: "Continue to sign in",
   },
 };
@@ -214,6 +218,7 @@ let progressRaf = 0;
 let progressValue = 0;
 let precache = { done: 0, total: 0, failed: 0, ready: false };
 let cube = null;
+let verifyTimer = null;
 let installedNow = false; // set synchronously so racing events can't double-handle
 let currentH1 = null;
 
@@ -307,6 +312,7 @@ function teardown(instant) {
   runId++;
   clearTimeout(advanceTimer);
   clearTimeout(promptTimer);
+  clearInterval(verifyTimer);
   cancelAnimationFrame(progressRaf);
   cleanup.forEach((fn) => fn());
   cleanup = [];
@@ -406,14 +412,14 @@ async function setStage(name) {
     chars1.concat(chars2).forEach((c) => c.classList.add("on"));
   } else {
     if (chars1.length) {
-      await typeChars(chars1, 44, myRun);
+      await typeChars(chars1, 26, myRun);
       if (myRun !== runId) return;
     }
     if (chars2.length) {
-      await wait(180);
+      await wait(60);
       if (myRun !== runId) return;
       chars1.at(-1)?.classList.remove("cur");
-      await typeChars(chars2, 30, myRun);
+      await typeChars(chars2, 16, myRun);
       if (myRun !== runId) return;
     } else if (plainSub) {
       sub.classList.add("wg-fade-in");
@@ -432,7 +438,7 @@ async function setStage(name) {
 function after(name) {
   if (name === "welcome") {
     // Let it be read, then move on. Tapping anywhere skips the wait.
-    advanceTimer = setTimeout(enterDownload, 2300);
+    advanceTimer = setTimeout(enterDownload, 700);
   }
   if (name === "installing") {
     updateStatusText();
@@ -498,14 +504,24 @@ async function onCta() {
       const { outcome } = await triggerInstallPrompt();
       if (!root) return;
       if (installedNow) return; // appinstalled beat us to it (desktop Chrome installs instantly)
-      if (outcome === "accepted") startInstalling();
+      if (outcome === "accepted") startInstalling(); // "installed" is only shown once VERIFIED (see verifyInstall)
       else if (outcome === "dismissed") setStage("declined");
       else setStage(isIOS() ? "manualIOS" : "manualOther");
       break;
     }
-    case "installing": // the "I can see it" fallback button
-      showInstalled();
+    case "installing": {
+      // Fallback button. Never trust the tap: check first, and only
+      // celebrate if the browser really reports the app as installed.
+      const btn = $("wgCta");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Checking…";
+      }
+      if (await isInstalledElsewhere()) showInstalled();
+      else if (root && !installedNow) setStage("unconfirmed");
       break;
+    }
+    case "unconfirmed":
     case "installed":
     case "declined":
       finish(stage === "installed" ? "installed" : "skipped");
@@ -524,11 +540,23 @@ function startInstalling() {
   progressValue = 0;
   lastStatus = "";
   setStage("installing"); // starts the loading line once the stage switches
+
+  // VERIFY, don't assume: the browser's "appinstalled" event is one
+  // signal; asking the OS whether the app is really there is the other.
+  clearInterval(verifyTimer);
+  verifyTimer = setInterval(async () => {
+    if (!root || stage !== "installing" || installedNow) {
+      clearInterval(verifyTimer);
+      return;
+    }
+    if (await isInstalledElsewhere()) showInstalled();
+  }, 1500);
 }
 
 async function showInstalled() {
   if (!root || installedNow) return;
   installedNow = true;
+  clearInterval(verifyTimer);
   cancelAnimationFrame(progressRaf);
   writeGate({ installedAt: Date.now() });
 
@@ -542,7 +570,7 @@ async function showInstalled() {
     }
     $("wgTrack")?.setAttribute("aria-valuenow", "100");
     const status = $("wgStatus");
-    if (status) status.textContent = "Downloaded.";
+    if (status) status.textContent = "Confirmed.";
     await wait(quick ? 0 : 800);
     if (!root) return;
   }
@@ -570,7 +598,7 @@ function startProgress() {
   const tick = () => {
     if (!root || stage !== "installing") return;
     const elapsed = performance.now() - installStartedAt;
-    const eased = 0.94 * (1 - Math.exp((-3 * elapsed) / INSTALL_ESTIMATE_MS));
+    const eased = 0.9 * (1 - Math.exp((-3 * elapsed) / INSTALL_ESTIMATE_MS));
     progressValue = Math.max(progressValue, eased);
 
     const f = fill();
@@ -582,7 +610,7 @@ function startProgress() {
       const cta = $("wgCta");
       cta.hidden = false;
       cta.disabled = false;
-      cta.textContent = "I can see it on my phone";
+      cta.textContent = "Check again";
     }
     updateStatusText(elapsed);
     progressRaf = requestAnimationFrame(tick);
@@ -597,15 +625,15 @@ function updateStatusText(elapsed = performance.now() - installStartedAt) {
 
   let text;
   if (elapsed > INSTALL_ESTIMATE_MS * 1.6) {
-    text = "Still working. Slow networks take longer. Check your home screen.";
+    text = "Still waiting for your phone to confirm. Slow networks take longer.";
   } else if (elapsed > INSTALL_ESTIMATE_MS) {
-    text = "Almost there. Your phone is finishing the download.";
+    text = "Almost there. Waiting for your phone to confirm…";
   } else if (precache.total && !precache.ready && precache.done + precache.failed < precache.total) {
     text = `Saving for offline use: ${precache.done} of ${precache.total} files`;
   } else if (precache.ready) {
-    text = "Saved for offline use. Finishing the download…";
+    text = "Saved for offline use. Waiting for your phone to confirm…";
   } else {
-    text = "Your phone is downloading Quiz Arena…";
+    text = "Waiting for your phone to confirm the install…";
   }
   if (text !== lastStatus) {
     lastStatus = text;
@@ -668,8 +696,8 @@ async function typeChars(chars, perChar, myRun) {
     prev = c;
 
     const ch = c.textContent;
-    const pause = ".!?".includes(ch) ? 260 : ",".includes(ch) ? 150 : 0;
-    await wait(perChar + Math.random() * 22 + pause);
+    const pause = ".!?".includes(ch) ? 90 : ",".includes(ch) ? 50 : 0;
+    await wait(perChar + Math.random() * 10 + pause);
   }
 }
 

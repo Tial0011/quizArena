@@ -11,7 +11,14 @@ const db = admin.firestore();
    PAYMENTS — Flutterwave purchase verification
 ========================================================= */
 exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
-  const { userId, quizId, txRef, transactionId } = request.data;
+  const { userId, txRef, transactionId } = request.data;
+
+  // One payment can now unlock several quizzes. `quizId` is still
+  // accepted so older clients keep working.
+  const rawIds = Array.isArray(request.data.quizIds)
+    ? request.data.quizIds
+    : [request.data.quizId];
+  const quizIds = [...new Set(rawIds.filter((id) => typeof id === "string" && id))];
 
   // Must be logged in, and can only confirm a purchase for themselves.
   if (!request.auth || request.auth.uid !== userId) {
@@ -21,7 +28,7 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
     );
   }
 
-  if (!quizId || !txRef || !transactionId) {
+  if (quizIds.length === 0 || quizIds.length > 50 || !txRef || !transactionId) {
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Missing required fields.",
@@ -45,21 +52,6 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
 
   const tx = verifyData.data;
 
-  // 2. Look up the quiz so we check the REAL price, not whatever the client sent.
-  const quizSnap = await db.collection("quizzes").doc(quizId).get();
-  if (!quizSnap.exists) {
-    return { success: false, message: "Quiz not found." };
-  }
-  const quiz = quizSnap.data();
-  if (tx.currency !== "NGN" || tx.amount < quiz.price) {
-    console.log("Amount/currency check failed", {
-      txAmount: tx.amount,
-      txCurrency: tx.currency,
-      quizPrice: quiz.price,
-    });
-    return { success: false, message: "Payment amount mismatch." };
-  }
-
   if (tx.tx_ref !== txRef) {
     console.log("tx_ref mismatch", {
       fromFlutterwave: tx.tx_ref,
@@ -68,77 +60,121 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
     return { success: false, message: "Transaction reference mismatch." };
   }
 
-  // 3. Prevent the same payment being processed twice.
+  // The reference is minted by our own client and contains the buyer's
+  // uid, so one student can't claim another student's payment.
+  if (!String(tx.tx_ref).includes(userId)) {
+    return { success: false, message: "Transaction reference mismatch." };
+  }
+
+  // 2. Load every quiz so we add up the REAL prices, not what the client sent.
+  const quizSnaps = await Promise.all(
+    quizIds.map((id) => db.collection("quizzes").doc(id).get()),
+  );
+  if (quizSnaps.some((snap) => !snap.exists)) {
+    return { success: false, message: "One of the quizzes was not found." };
+  }
+  const quizzes = quizSnaps.map((snap) => ({ id: snap.id, ...snap.data() }));
+
   const txRecordRef = db
     .collection("flutterwaveTransactions")
     .doc(String(transactionId));
-  const alreadyProcessed = await db.runTransaction(async (t) => {
+
+  // 3. Everything below runs in ONE Firestore transaction, so a payment
+  //    is either fully applied (record + every purchase) or not at all.
+  //    (Before, the "processed" marker was written first; a crash after
+  //    it meant a paid-for quiz was never granted.)
+  const outcome = await db.runTransaction(async (t) => {
     const txDoc = await t.get(txRecordRef);
-    if (txDoc.exists) return true;
+    if (txDoc.exists) {
+      return { alreadyProcessed: true, purchasedIds: txDoc.data().quizIds || [] };
+    }
+
+    const ownedSnap = await t.get(
+      db
+        .collection("purchases")
+        .where("userId", "==", userId)
+        .where("status", "==", "paid"),
+    );
+    const owned = new Set(ownedSnap.docs.map((d) => d.data().quizId));
+    const toGrant = quizzes.filter((q) => !owned.has(q.id));
+
+    if (toGrant.length === 0) {
+      return { alreadyOwned: true, purchasedIds: [] };
+    }
+
+    const expected = toGrant.reduce((sum, q) => sum + Number(q.price || 0), 0);
+    if (tx.currency !== "NGN" || tx.amount < expected) {
+      console.log("Amount/currency check failed", {
+        txAmount: tx.amount,
+        txCurrency: tx.currency,
+        expected,
+      });
+      return { mismatch: true };
+    }
+
+    const purchaseIds = [];
+    toGrant.forEach((q) => {
+      const purchaseRef = db.collection("purchases").doc();
+      purchaseIds.push(purchaseRef.id);
+      t.set(purchaseRef, {
+        quizId: q.id,
+        userId,
+        purchasedAt: admin.firestore.FieldValue.serverTimestamp(),
+        status: "paid",
+        txRef,
+        transactionId,
+      });
+    });
+
     t.set(txRecordRef, {
       userId,
-      quizId,
+      quizIds: toGrant.map((q) => q.id),
       txRef,
       amount: tx.amount,
       processedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-    return false;
+
+    t.update(db.collection("users").doc(userId), {
+      purchasedQuizzes: admin.firestore.FieldValue.arrayUnion(...purchaseIds),
+    });
+
+    // Personal in-app + push notification, written server-side after
+    // verification so it can't be spoofed. sendNotificationPush (below)
+    // handles delivery.
+    t.set(db.collection("notifications").doc(), {
+      message:
+        toGrant.length === 1
+          ? `🎉 You now own "${toGrant[0].title}"! Find it under My Quizzes.`
+          : `🎉 ${toGrant.length} quizzes unlocked! Find them under My Quizzes.`,
+      createdBy: "System",
+      targetUserId: userId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { purchasedIds: toGrant.map((q) => q.id) };
   });
 
-  if (alreadyProcessed) {
-    return { success: true, message: "Already processed." };
+  if (outcome.mismatch) {
+    return { success: false, message: "Payment amount mismatch." };
   }
-
-  // 4. Check they don't already own it.
-  const existing = await db
-    .collection("purchases")
-    .where("userId", "==", userId)
-    .where("quizId", "==", quizId)
-    .where("status", "==", "paid")
-    .get();
-
-  if (!existing.empty) {
+  if (outcome.alreadyOwned) {
     return {
       success: true,
       alreadyOwned: true,
-      message: "You already own this quiz.",
+      purchasedIds: [],
+      message: "You already own these quizzes.",
     };
   }
-
-  // 5. Same writes purchaseQuiz() used to do client-side — now done here, server-side.
-  const purchaseRef = await db.collection("purchases").add({
-    quizId,
-    userId,
-    purchasedAt: admin.firestore.FieldValue.serverTimestamp(),
-    status: "paid",
-    txRef,
-    transactionId,
-  });
-
-  await db
-    .collection("users")
-    .doc(userId)
-    .update({
-      purchasedQuizzes: admin.firestore.FieldValue.arrayUnion(purchaseRef.id),
-    });
-
-  // Personal in-app + push notification confirming the purchase.
-  // Written here (server-side, after verification) rather than from
-  // the client, so it can't be spoofed and always matches a real
-  // paid purchase. Reuses the same "notifications" collection the
-  // client already listens to (js/notificationsService.js) and the
-  // sendNotificationPush trigger below already handles delivery —
-  // no client changes needed for this to show up.
-  await db.collection("notifications").add({
-    message: `🎉 You now own "${quiz.title}"! Find it under My Quizzes.`,
-    createdBy: "System",
-    targetUserId: userId,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
+  if (outcome.alreadyProcessed) {
+    return {
+      success: true,
+      purchasedIds: outcome.purchasedIds,
+      message: "Already processed.",
+    };
+  }
   return {
     success: true,
-    purchaseId: purchaseRef.id,
+    purchasedIds: outcome.purchasedIds,
     message: "Purchase successful.",
   };
 });

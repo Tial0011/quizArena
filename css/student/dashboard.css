@@ -1,87 +1,624 @@
-/* =========================
-   DASHBOARD
-========================= */
+/* =========================================================
+   STUDENT HOME (dashboard)
 
-.dashboard {
-  max-width: 1150px;
-  margin: 0 auto;
-  padding: 30px 20px 60px;
+   Square-edged "ledger" look: hairline rules instead of soft
+   shadows, big tabular numerals, a solid teal call-to-action and
+   ink-coloured navigation. Mobile gets a bottom tab bar; from
+   1024px up it becomes a fixed sidebar + wide content area.
+
+   All layout classes are prefixed .sd- so nothing here can leak
+   into the other student pages. The un-prefixed rules further
+   down (.dashboard, .notif-*, .attempt-*, .trend-*, .empty-state)
+   are shared with other screens and kept.
+========================================================= */
+
+.sd {
+  --sd-ink: var(--color-text-strong);
+  --sd-cream: var(--color-surface-2);
+  --sd-teal-soft: var(--color-tint);
+  --sd-teal-deep: var(--color-primary-deep);
+  --sd-teal: var(--color-primary);
+  --sd-teal-dark: var(--color-primary-hover);
+  --sd-sand: var(--color-accent-deep);
+  --sd-green: var(--color-success-solid);
+  --sd-rule: var(--color-border-tint);
+  --sd-muted: var(--color-text-muted);
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: block;
+  color: var(--sd-ink);
+}
+
+.sd button {
+  font: inherit;
+  color: inherit;
+}
+
+.sd .ico {
+  flex: 0 0 auto;
+  display: block;
 }
 
 /* =========================
-   HERO
+   SIDEBAR (desktop only)
 ========================= */
 
-.dashboard-hero {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  color: white;
-  border-radius: 24px;
-  padding: 40px;
-  margin-bottom: 30px;
-  box-shadow: 0 20px 45px rgba(124, 58, 237, 0.18);
+.sd-side {
+  display: none;
 }
 
-/* Parallax shapes — JS (scrollEffects.js) sets translateY on
-   these via data-parallax-speed; CSS only handles their static
-   look. Same visual language as the landing page hero. */
-.dashboard-hero-shape {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(2px);
-  will-change: transform;
-}
-
-.dashboard-hero-shape-1 {
-  width: 200px;
-  height: 200px;
-  background: rgba(255, 255, 255, 0.06);
-  top: -60px;
-  right: -40px;
-}
-
-.dashboard-hero-shape-2 {
-  width: 100px;
-  height: 100px;
-  background: rgba(192, 132, 252, 0.16);
-  bottom: -30px;
-  left: 20%;
-}
-
-.hero-text {
-  position: relative;
-}
-
-/* Title row: welcome heading + notification bell side by side.
-   Split out from .hero-text (which still wraps the whole block,
-   including the subtitle line below) so the bell sits flush with
-   the heading instead of centered against the taller two-line
-   hero. */
-.hero-top {
-  position: relative;
+.sd-brand {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px 28px;
+}
+
+.sd-brand-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: var(--sd-teal);
+  color: #fff;
+  font-weight: 800;
+  font-size: 18px;
+  border-radius: 10px;
+}
+
+.sd-brand-name {
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--sd-ink);
+}
+
+.sd-side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sd-side .sd-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sd-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.sd-side .sd-nav-item:hover {
+  background: var(--sd-teal-soft);
+  color: var(--sd-teal-dark);
+}
+
+.sd-side .sd-nav-item.is-active {
+  background: var(--sd-teal);
+  color: #fff;
+}
+
+.sd-side-foot {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--sd-rule);
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.hero-top h1 {
-  font-size: 2rem;
-  margin-bottom: 0;
+.sd-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  min-width: 0;
 }
 
-.hero-text p {
-  opacity: 0.9;
-  line-height: 1.7;
-  max-width: 600px;
-  margin-top: 12px;
+.sd-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  background: var(--sd-teal-soft);
+  color: var(--sd-teal-dark);
+  font-weight: 800;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+.sd-user-name {
+  color: var(--sd-ink);
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sd-signout {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sd-side .sd-signout {
+  padding: 10px 12px;
+  color: var(--sd-muted);
+  border-radius: 12px;
+}
+
+.sd-side .sd-signout:hover {
+  color: var(--sd-ink);
+  background: var(--color-surface-2);
+}
+
+.sd-signout-mobile {
+  width: 44px;
+  height: 44px;
+  justify-content: center;
+  border: 1px solid var(--sd-rule) !important;
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+/* =========================
+   MAIN COLUMN
+========================= */
+
+.sd-main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 20px 16px calc(96px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sd-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.sd-eyebrow {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sd-teal-dark);
+}
+
+.sd-top h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 4.5vw, 2.6rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.sd-top-actions {
+  display: flex;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.sd-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sd-muted);
+}
+
+/* =========================
+   PANELS
+========================= */
+
+.sd-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--sd-rule);
+  padding: 20px;
+  border-radius: 18px;
+}
+
+.sd-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sd-head h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sd-loading {
+  color: var(--sd-muted);
+  font-size: 14px;
+}
+
+/* =========================
+   STATS STRIP
+========================= */
+
+.sd-stats {
+  padding: 0;
+  overflow: hidden;
+}
+
+.sd-goal {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--sd-rule);
+}
+
+.sd-goal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.sd-goal-pct {
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--sd-teal-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.sd-goal-track {
+  height: 8px;
+  background: var(--color-tint);
+  border-radius: 999px;
+}
+
+.sd-goal-fill {
+  height: 100%;
+  width: 0;
+  background: var(--sd-teal);
+  transition: width 0.6s ease;
+  border-radius: 999px;
+}
+
+.sd-stat-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.sd-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 20px;
+  border-right: 1px solid var(--sd-rule);
+  border-bottom: 1px solid var(--sd-rule);
+  min-width: 0;
+}
+
+.sd-stat:nth-child(2n) {
+  border-right: 0;
+}
+
+.sd-stat:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.sd-stat strong {
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sd-stat span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sd-muted);
+}
+
+.sd-stat .streak-subtitle {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--sd-muted);
+  min-height: 0;
+  margin: 2px 0 0;
+}
+
+.sd-stat.streak-active strong {
+  color: var(--color-warning);
+}
+.sd-stat.streak-at-risk .streak-subtitle {
+  color: var(--color-warning);
+}
+.sd-stat.streak-done-today strong {
+  color: var(--sd-green);
+}
+.sd-stat.streak-done-today .streak-subtitle {
+  color: var(--color-success);
+}
+
+/* =========================
+   PRIMARY CALL TO ACTION
+========================= */
+
+.sd .sd-cta {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: var(--sd-teal);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 18px;
+}
+
+.sd-cta-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  min-width: 0;
+}
+
+.sd-cta-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.sd-cta-sub {
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.88);
   transition: opacity 0.3s ease;
 }
 
-.hero-text p.message-updating {
+.sd-cta-sub.message-updating {
   opacity: 0;
+}
+
+.sd-cta-arrow {
+  flex: 0 0 64px;
+  display: grid;
+  place-items: center;
+  background: var(--sd-teal-deep);
+  transition: flex-basis 0.2s ease;
+}
+
+.sd-cta:hover {
+  background: var(--sd-teal-dark);
+}
+
+.sd-cta:hover .sd-cta-arrow {
+  flex-basis: 80px;
+}
+
+/* =========================
+   MODULE TILES (ruled grid)
+========================= */
+
+.sd-modules {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.sd-module {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 20px 20px;
+  border: 1px solid var(--sd-rule);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: inset 0 4px 0 var(--accent, var(--sd-teal));
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.sd-module-index {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--accent, var(--sd-teal));
+  font-variant-numeric: tabular-nums;
+}
+
+.sd-module-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.sd-module-text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--sd-muted);
+  flex: 1;
+}
+
+.sd-module-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sd-teal-dark);
+}
+
+.sd-module-cta .ico {
+  transition: transform 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sd-module:hover {
+    border-color: var(--sd-teal);
+    background: var(--sd-teal-soft);
+    transform: translateY(-2px);
+  }
+  .sd-module:hover .sd-module-cta .ico {
+    transform: translateX(4px);
+  }
+}
+
+/* =========================
+   ANALYTICS COLUMNS
+========================= */
+
+.sd-cols {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.sd-cols .sd-panel {
+  min-width: 0;
+}
+
+/* =========================
+   BOTTOM TAB BAR (below 1024px)
+========================= */
+
+.sd-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 700;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--color-surface);
+  border-top: 1px solid var(--sd-rule);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -6px 20px rgba(22, 48, 47, 0.06);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.sd-tabbar .sd-nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 62px;
+  border: 0;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sd-muted);
+  cursor: pointer;
+}
+
+.sd-tabbar .sd-nav-item.is-active {
+  color: var(--sd-teal-dark);
+}
+
+.sd-tabbar .sd-nav-item.is-active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: var(--sd-teal);
+}
+
+/* Keep the install nudge clear of the tab bar. */
+@media (max-width: 1023px) {
+  body:has(.sd-tabbar) .install-nudge {
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* =========================
+   ENTRANCE MOTION
+   Simple fade-and-rise, staggered. No bounce or scale.
+========================= */
+
+@keyframes sd-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sd .load-in {
+  animation: sd-rise 0.45s ease both;
+}
+.sd .sd-cta.load-in {
+  animation-delay: 0.06s;
+}
+.sd .sd-module:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.sd .sd-module:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.sd .sd-module:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.sd .sd-module:nth-child(4) {
+  animation-delay: 0.25s;
+}
+
+.sd .reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
+}
+
+.sd .reveal.reveal-visible {
+  opacity: 1;
+  transform: none;
 }
 
 /* =========================
@@ -96,48 +633,43 @@
   position: relative;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.12);
-  color: white;
-  font-size: 18px;
-  line-height: 1;
+  border: 1px solid var(--color-border-tint);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .notif-bell:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
   }
 }
 
 .notif-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: #ef4444;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 18px;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: var(--color-danger-solid);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 20px;
   text-align: center;
-  border: 2px solid #7c3aed;
+  border-radius: 999px;
 }
 
-/* A little wiggle to draw the eye when there's something unread —
-   same "make it feel alive" language as the trend-line draw and
-   count-up elsewhere on this page. Only plays while the badge is
-   actually showing, via :has() (Baseline-widely-available as of
-   2024); browsers without :has() just get a still bell instead of
-   a broken one. */
 @supports selector(:has(a)) {
   .notif-bell:has(.notif-badge:not([hidden])) {
     animation: notif-bell-wiggle 2.2s ease-in-out infinite;
@@ -167,55 +699,53 @@
   }
 }
 
-/* The panel itself is appended straight to document.body by
-   dashboard.js (see setupNotifBell / positionNotifPanel), not
-   nested under .dashboard-hero — that box has overflow:hidden to
-   clip its decorative parallax shapes at the rounded corners,
-   which was also silently clipping the dropdown. Being on body
-   with position:fixed and JS-computed top/left sidesteps that
-   entirely, the same way dangerDialog.js's overlay lives on body
-   instead of inside whichever admin tab happened to be open. */
+/* Appended to <body> by dashboard.js (position:fixed), so it
+   can't be clipped by any page container. */
 .notif-panel {
   position: fixed;
-  width: min(300px, 80vw);
-  max-height: 360px;
+  width: min(340px, 90vw);
+  max-height: 380px;
   overflow-y: auto;
-  background: white;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-tint);
   border-radius: 16px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 18px 40px rgba(22, 48, 47, 0.16);
   z-index: 1000;
-  color: #111827;
+  color: var(--color-text-strong);
 }
 
 .notif-panel-header {
   position: sticky;
   top: 0;
-  background: white;
-  padding: 14px 16px 10px;
-  font-weight: 700;
-  font-size: 14px;
-  border-bottom: 1px solid #ececec;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 12px 16px;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .notif-list {
-  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
 .notif-item {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 10px;
-  border-radius: 10px;
-  background: #fafafa;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border-tint);
+}
+
+.notif-item:last-child {
+  border-bottom: 0;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .notif-item:hover {
-    background: #f3f0fb;
+    background: var(--color-surface-2);
   }
 }
 
@@ -228,194 +758,40 @@
   flex: 0 0 auto;
   border: none;
   background: none;
-  color: #9ca3af;
+  color: var(--color-text-faint);
   font-size: 12px;
   line-height: 1;
-  padding: 4px 6px;
-  border-radius: 6px;
+  padding: 6px 8px;
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .notif-item-delete:hover {
-    background: #fde8e8;
-    color: #dc2626;
+    background: var(--danger-bg);
+    color: var(--color-danger);
   }
 }
 
 .notif-message {
   font-size: 13px;
   line-height: 1.55;
-  color: #111827;
   margin-bottom: 4px;
 }
 
 .notif-time {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--color-text-faint);
 }
 
 .notif-empty {
-  padding: 24px 16px;
+  padding: 28px 16px;
   text-align: center;
-  color: #9ca3af;
+  color: var(--color-text-faint);
   font-size: 13px;
 }
 
 /* =========================
-   ACTION CARDS
-========================= */
-
-.action-grid {
-  display: grid;
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.action-card {
-  background: white;
-  border-radius: 22px;
-  padding: 28px;
-  cursor: pointer;
-  transition:
-    transform 0.15s ease-out,
-    box-shadow 0.25s ease;
-  border: 1px solid #ececec;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-}
-
-/* Hover-lift only on devices with real hover (mouse/trackpad).
-   On touch, :hover often triggers on tap and sticks until the
-   user taps elsewhere — same fix already applied on the landing
-   page's feature cards. The JS tilt effect (initCardTilt) is
-   already separately gated to the same capability check. */
-@media (hover: hover) and (pointer: fine) {
-  .action-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.09);
-  }
-}
-
-.action-icon {
-  width: 65px;
-  height: 65px;
-  border-radius: 18px;
-  background: #ede9fe;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 30px;
-  margin-bottom: 18px;
-}
-
-.action-card h3 {
-  margin-bottom: 10px;
-  color: #111827;
-}
-
-.action-card p {
-  color: #6b7280;
-  line-height: 1.7;
-}
-
-.action-link {
-  display: inline-block;
-  margin-top: 18px;
-  color: #7c3aed;
-  font-weight: 700;
-}
-
-/* =========================
-   STATS
-========================= */
-
-.stats-grid {
-  display: grid;
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 20px;
-  padding: 25px;
-  text-align: center;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-  border: 1px solid #ececec;
-}
-
-.stat-icon {
-  font-size: 30px;
-  display: inline-block;
-}
-
-.stat-card h2 {
-  font-size: 2rem;
-  margin: 15px 0 8px;
-  color: #7c3aed;
-}
-
-.stat-card p {
-  color: #6b7280;
-}
-
-/* Day Streak card (replaces the old static Best Score card): gets
-   its own visual treatment once a streak exists, plus a status
-   subtitle (JS: updateStreakCard() in dashboard.js) so the card
-   actually communicates something actionable instead of just a
-   number — a warm background + pulsing flame while alive, an amber
-   "act today" tint while at risk (streak alive but not done today),
-   and a calmer green tint once today is already locked in. */
-.stat-card.streak-active {
-  background: linear-gradient(160deg, #fff7ed, #ffffff 65%);
-  border-color: #fed7aa;
-}
-
-.stat-card.streak-active .stat-icon {
-  animation: streak-flame-pulse 1.6s ease-in-out infinite;
-}
-
-.streak-subtitle {
-  font-size: 12px;
-  font-weight: 600;
-  margin-top: 2px;
-  color: #9ca3af;
-  min-height: 15px;
-}
-
-.stat-card.streak-at-risk {
-  background: linear-gradient(160deg, #fffbeb, #ffffff 65%);
-  border-color: #fde68a;
-}
-
-.stat-card.streak-at-risk .streak-subtitle {
-  color: #b45309;
-}
-
-.stat-card.streak-done-today {
-  background: linear-gradient(160deg, #ecfdf5, #ffffff 65%);
-  border-color: #a7f3d0;
-}
-
-.stat-card.streak-done-today .streak-subtitle {
-  color: #059669;
-}
-
-@keyframes streak-flame-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.18);
-  }
-}
-
-/* =========================
-   SCORE TREND CHART
+   SCORE TREND (inline SVG)
 ========================= */
 
 .score-trend-container {
@@ -429,210 +805,34 @@
 }
 
 .trend-baseline {
-  stroke: #e5e7eb;
+  stroke: var(--color-border-tint);
   stroke-width: 1;
 }
 
 .trend-line {
-  stroke: #7c3aed;
-  stroke-width: 3;
+  stroke: var(--color-link);
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.trend-dot {
-  fill: #7c3aed;
-  stroke: white;
-  stroke-width: 2;
-}
-
-/* =========================
-   RECENT ATTEMPTS LIST
-========================= */
-
-.attempts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.attempt-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: #fafafa;
-  border: 1px solid #ececec;
-}
-
-.attempt-item-main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.attempt-title {
-  font-weight: 700;
-  color: #111827;
-  font-size: 14px;
-}
-
-.attempt-mode-badge {
-  background: #ede9fe;
-  color: #6d28d9;
-}
-
-.attempt-item-meta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.attempt-score {
-  font-weight: 700;
-  color: #7c3aed;
-}
-
-/* =========================
-   RECENT ACTIVITY
-========================= */
-
-.dashboard-section {
-  background: white;
-  border-radius: 22px;
-  padding: 28px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-  border: 1px solid #ececec;
-  margin-bottom: 30px;
-}
-
-.section-header h2 {
-  margin-bottom: 20px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 45px 20px;
-  color: #9ca3af;
-  line-height: 1.8;
-}
-
-/* =========================
-   LOGOUT
-========================= */
-
-.logout-btn {
-  width: 100%;
-  border: none;
-  padding: 16px;
-  border-radius: 16px;
-  background: #ef4444;
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.25s;
-}
-
-.logout-btn:hover {
-  background: #dc2626;
-}
-
-/* =========================================================
-   ENTRANCE ANIMATIONS (Duolingo-style)
-
-   Two triggers:
-   - .load-in: plays automatically on mount. Used for the
-     action cards and stat cards, since they're above the fold
-     and visible immediately — no need to wait for a scroll
-     event that may never come.
-   - .reveal / .reveal-visible: scroll-triggered (via
-     scrollEffects.js's initScrollReveal), for the Score Trend
-     and Recent Activity sections that often sit below the fold,
-     especially on mobile.
-
-   Both use the same squash-and-stretch bounce curve as the
-   loading-overlay blob, so it reads as one consistent animation
-   language across the app rather than several different styles.
-========================================================= */
-
-@keyframes dashboard-pop-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.85) translateY(14px);
-  }
-  60% {
-    opacity: 1;
-    transform: scale(1.03) translateY(-2px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.load-in {
-  animation: dashboard-pop-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-/* Stagger the cards so they pop in one after another rather
-   than all at once. */
-.action-grid .action-card:nth-child(1) {
-  animation-delay: 0s;
-}
-.action-grid .action-card:nth-child(2) {
-  animation-delay: 0.08s;
-}
-.action-grid .action-card:nth-child(3) {
-  animation-delay: 0.16s;
-}
-
-.stats-grid .stat-card:nth-child(1) {
-  animation-delay: 0.1s;
-}
-.stats-grid .stat-card:nth-child(2) {
-  animation-delay: 0.18s;
-}
-
-.reveal {
-  opacity: 0;
-  transform: scale(0.92) translateY(20px);
-  transition:
-    opacity 0.5s ease,
-    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.reveal-visible {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-}
-
-/* Self-drawing score trend line: the path "draws itself" once
-   the chart is injected into the DOM. 1000 is a fixed value
-   comfortably longer than any realistic chart path — a common,
-   simple alternative to measuring the path's real length in JS. */
-.trend-line {
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
   animation: trend-draw 1.1s ease-out 0.15s forwards;
+}
+
+.trend-dot {
+  fill: var(--color-link);
+  stroke: #fff;
+  stroke-width: 2;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: trend-dot-pop 0.4s ease-out 1.1s forwards;
 }
 
 @keyframes trend-draw {
   to {
     stroke-dashoffset: 0;
   }
-}
-
-.trend-dot {
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: trend-dot-pop 0.4s ease-out 1.1s forwards;
 }
 
 @keyframes trend-dot-pop {
@@ -646,18 +846,107 @@
   }
 }
 
+/* =========================
+   RECENT ATTEMPTS LIST
+========================= */
+
+.attempts-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.attempt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--color-border-tint);
+}
+
+.attempt-item:first-child {
+  padding-top: 0;
+}
+
+.attempt-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.attempt-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.attempt-title {
+  font-weight: 700;
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.attempt-mode-badge {
+  background: var(--color-tint);
+  color: var(--color-link);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.attempt-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.attempt-score {
+  font-weight: 800;
+  color: var(--color-link);
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================
+   SHARED: .dashboard container + empty state
+   (Friend Groups and other pages still wrap themselves in
+   .dashboard.)
+========================= */
+
+.dashboard {
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 30px 20px 60px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 45px 20px;
+  color: var(--color-text-faint);
+  line-height: 1.8;
+}
+
+.sd .empty-state {
+  padding: 28px 8px;
+  color: var(--sd-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: left;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .load-in,
+  .sd .load-in,
   .trend-line,
   .trend-dot,
-  .notif-bell,
-  .stat-card.streak-active .stat-icon {
+  .notif-bell {
     animation: none;
   }
 
-  /* Without the animation running, the base "hidden" state
-     (stroke-dashoffset: 1000 / opacity: 0) would otherwise leave
-     the chart looking invisible instead of just unanimated. */
   .trend-line {
     stroke-dashoffset: 0;
   }
@@ -666,7 +955,7 @@
     opacity: 1;
   }
 
-  .reveal {
+  .sd .reveal {
     opacity: 1;
     transform: none;
     transition: none;
@@ -674,15 +963,128 @@
 }
 
 /* =========================
-   DESKTOP
+   TABLET (640px+)
 ========================= */
 
-@media (min-width: 768px) {
-  .action-grid {
-    grid-template-columns: repeat(3, 1fr);
+@media (min-width: 640px) {
+  .sd-main {
+    padding: 28px 28px calc(100px + env(safe-area-inset-bottom, 0px));
+    gap: 24px;
   }
 
-  .stats-grid {
+  .sd-stat-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .sd-stat,
+  .sd-stat:nth-child(2n),
+  .sd-stat:nth-last-child(-n + 2) {
+    border-bottom: 0;
+    border-right: 1px solid var(--sd-rule);
+  }
+  .sd-stat:last-child {
+    border-right: 0;
+  }
+
+  .sd-modules {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .sd-cta-text {
+    padding: 24px 28px;
+  }
+}
+
+/* =========================
+   DESKTOP (1024px+): sidebar layout
+========================= */
+
+@media (min-width: 1024px) {
+  .sd {
+    display: grid;
+    grid-template-columns: 252px minmax(0, 1fr);
+  }
+
+  .sd-side {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+    padding: 24px 12px 20px;
+    background: var(--color-surface);
+    border-right: 1px solid var(--sd-rule);
+    overflow-y: auto;
+  }
+
+  .sd-tabbar,
+  .sd-signout-mobile {
+    display: none;
+  }
+
+  .sd-main {
+    width: 100%;
+    max-width: 1240px;
+    margin: 0;
+    padding: 40px 48px 64px;
+    gap: 28px;
+  }
+
+  .sd-top {
+    padding-bottom: 20px;
+  }
+
+  .sd-panel {
+    padding: 24px;
+  }
+  .sd-stats {
+    padding: 0;
+  }
+  .sd-goal {
+    padding: 18px 24px;
+  }
+  .sd-stat {
+    padding: 22px 24px;
+  }
+
+  .sd-cta-text {
+    padding: 28px 32px;
+  }
+  .sd-cta-title {
+    font-size: 1.4rem;
+  }
+  .sd-cta-sub {
+    font-size: 15px;
+  }
+  .sd-cta-arrow {
+    flex-basis: 88px;
+  }
+  .sd-cta:hover .sd-cta-arrow {
+    flex-basis: 108px;
+  }
+
+  .sd-cols {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  .score-trend-chart {
+    height: 220px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .sd-modules {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .sd-module {
+    padding: 26px 24px 24px;
+  }
+}
+
+/* Redesigned screens sit on a cool white-teal page instead of the
+   app's cream background. */
+body:has(.sd, .quiz-layout, .practice-page, .quiz-result) {
+  background: var(--color-surface-2);
 }

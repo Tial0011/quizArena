@@ -1,0 +1,248 @@
+/* =========================================================
+   THEME.CSS  --  Quiz Arena design tokens (light + dark)
+   Loaded BEFORE base.css. Every other stylesheet reads these
+   variables, so switching theme = switching this one block.
+
+   Palette: teal + white. One warm accent (sand) is kept ONLY
+   for reward moments (pay button, confetti) so it still pulls
+   the eye when it appears.
+
+   Font: Lexend. Designed around reading-fluency research: wide,
+   open letterforms and even spacing lower visual stress, which
+   matters when a student is tired, nervous, or on a cracked
+   phone at 2am before a CBT. Friendly, not childish; calm, but
+   heavy weights (700-800) still hit hard for headlines and CTAs.
+========================================================= */
+
+:root {
+  color-scheme: light;
+
+  --font-ui: "Lexend", ui-rounded, "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* brand */
+  --color-primary: #27807f;        /* fills; white text = 4.7:1 */
+  --color-primary-light: #5ec4c1;
+  --color-primary-hover: #1d6a69;
+  --color-primary-deep: #155655;
+  --color-link: #1d6a69;           /* teal used as TEXT */
+  --color-accent: #eebf92;         /* reward moments only */
+  --color-accent-deep: #b9752f;
+  --color-ink: #0b2a2a;
+
+  /* surfaces */
+  --color-bg: #f2faf9;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4fafa;
+  --color-tint: #e3f4f3;
+  --color-tint-strong: #cbe8e6;
+  --color-ink-bg: #0b2a2a;         /* always-dark panels (cart bar, hero) */
+
+  /* text */
+  --color-text: #12302f;
+  --color-text-strong: #082322;
+  --color-text-soft: #2f4b4a;
+  --color-text-muted: #567170;
+  --color-text-faint: #7f9a98;
+
+  /* lines */
+  --color-border: #dcebea;
+  --color-border-tint: #cfe6e5;
+
+  /* status */
+  --color-success: #0d7a4f;
+  --color-success-solid: #10a26b;
+  --success-bg: #dcf7ea;
+  --success-border: #a7e8c8;
+  --color-danger: #b42318;
+  --color-danger-solid: #d92d20;
+  --danger-bg: #fdecea;
+  --danger-border: #f8c4be;
+  --color-warning: #a4560b;
+  --warn-bg: #fff4dc;
+  --warn-border: #f3d591;
+  --color-info: #1d5fc4;
+  --info-bg: #e8f1ff;
+
+  --shadow-sm: 0 2px 8px rgba(6, 36, 36, 0.06);
+  --shadow-md: 0 8px 24px rgba(6, 36, 36, 0.1);
+  --shadow-lg: 0 12px 32px rgba(6, 36, 36, 0.18);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-primary: #27807f;
+  --color-primary-light: #5ec4c1;
+  --color-primary-hover: #2f9b99;   /* hover gets LIGHTER on dark */
+  --color-primary-deep: #1d6a69;
+  --color-link: #6fd6d3;
+  --color-accent: #eebf92;
+  --color-accent-deep: #e3a566;
+  --color-ink: #e6f4f3;
+
+  --color-bg: #061616;
+  --color-surface: #0d2424;
+  --color-surface-2: #113030;
+  --color-tint: #153b3a;
+  --color-tint-strong: #1d5150;
+  --color-ink-bg: #031010;
+
+  --color-text: #dff0ef;
+  --color-text-strong: #f3fbfa;
+  --color-text-soft: #bcd9d7;
+  --color-text-muted: #93b3b1;
+  --color-text-faint: #688886;
+
+  --color-border: #1f3f3e;
+  --color-border-tint: #25504e;
+
+  --color-success: #4ade9b;
+  --color-success-solid: #10a26b;
+  --success-bg: rgba(74, 222, 155, 0.13);
+  --success-border: rgba(74, 222, 155, 0.35);
+  --color-danger: #ff8f86;
+  --color-danger-solid: #d92d20;
+  --danger-bg: rgba(255, 99, 88, 0.14);
+  --danger-border: rgba(255, 99, 88, 0.38);
+  --color-warning: #fbbf4a;
+  --warn-bg: rgba(251, 191, 74, 0.13);
+  --warn-border: rgba(251, 191, 74, 0.38);
+  --color-info: #8db8ff;
+  --info-bg: rgba(141, 184, 255, 0.13);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- global typography ---------- */
+html { -webkit-text-size-adjust: 100%; }
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-ui);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1.55;
+}
+h1, h2, h3, h4 {
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+/* Numbers that change (timer, score, price) must not jitter. */
+.quiz-timer, .mk-total, [class*="score"], [class*="price"], [class*="timer"], .stat h3 {
+  font-variant-numeric: tabular-nums;
+}
+::selection { background: var(--color-primary); color: #fff; }
+
+/* Inputs: 16px minimum stops iOS Safari zooming the page on focus. */
+input, select, textarea { font-size: max(16px, 1em); }
+input::placeholder, textarea::placeholder { color: var(--color-text-faint); opacity: 1; }
+input, select, textarea {
+  color: var(--color-text);
+}
+:root[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  background-color: var(--color-surface-2);
+  border-color: var(--color-border-tint);
+}
+:root[data-theme="dark"] option { background: var(--color-surface); color: var(--color-text); }
+
+/* Smooth theme change, but never on first paint or for reduced-motion users. */
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, fill 0.25s ease, stroke 0.25s ease !important;
+}
+
+/* ---------- theme toggle ---------- */
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-tint);
+  background: var(--color-surface);
+  color: var(--color-link);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.2s ease;
+}
+.theme-toggle:hover { background: var(--color-tint); }
+.theme-toggle:active { transform: scale(0.92); }
+.theme-toggle svg { width: 20px; height: 20px; }
+.theme-toggle .ico-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .ico-sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .ico-moon { display: none; }
+
+/* Floating copy: shown on pages that have no toggle in their own header.
+   Only the sign-in and verify screens use it. The dashboard and admin have
+   a toggle in their own header, and quiz screens stay free of extras so
+   nothing competes with the question for attention. */
+.theme-fab {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  z-index: 800;
+}
+.theme-fab { display: none; }
+body:has(.page) .theme-fab,
+body:has(.verify-gate) .theme-fab { display: block; }
+body:has(#welcomeGate) .theme-fab { display: none; }
+
+/* ---------- toast (replaces blocking alert()) ---------- */
+.qa-toast-host {
+  position: fixed;
+  left: 50%;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: grid;
+  gap: 8px;
+  width: min(92vw, 420px);
+  pointer-events: none;
+}
+.qa-toast {
+  pointer-events: auto;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: var(--color-ink-bg);
+  color: #f3fbfa;
+  border: 1px solid var(--color-primary);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.4;
+  animation: qa-toast-in 0.25s ease both;
+}
+.qa-toast.is-out { opacity: 0; transform: translateY(6px); transition: 0.25s ease; }
+@keyframes qa-toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after { transition: none !important; }
+  .qa-toast { animation: none; }
+}
+
+/* Dashboard header: toggle matches the bell and sign-out buttons. */
+.sd-top-actions { align-items: center; }
+.theme-toggle.sd-theme { border-radius: 12px; box-shadow: none; }
+
+.theme-toggle.admin-theme {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #fff;
+  box-shadow: none;
+  flex: 0 0 auto;
+}
+.theme-toggle.admin-theme:hover { background: rgba(255, 255, 255, 0.24); }
+.sd-eyebrow { color: var(--color-link) !important; }

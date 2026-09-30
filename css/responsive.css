@@ -15,94 +15,10 @@
 
 /* =========================================================
    1. STUDENT DASHBOARD
-   (dashboard.css)
+   Fully responsive on its own (see css/student/dashboard.css —
+   bottom tab bar under 1024px, sidebar above). Nothing to
+   override here.
 ========================================================= */
-
-@media (max-width: 768px) {
-  .dashboard {
-    padding: 20px 16px 40px;
-  }
-
-  /* Hero */
-  .dashboard-hero {
-    padding: 24px 20px;
-    border-radius: 18px;
-    margin-bottom: 20px;
-  }
-
-  .hero-text h1 {
-    font-size: 1.5rem;
-    margin-bottom: 8px;
-  }
-
-  .hero-text p {
-    font-size: 0.95rem;
-    max-width: 100%;
-  }
-
-  /* Action cards: stack vertically */
-  .action-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-
-  .action-card {
-    padding: 20px;
-    border-radius: 18px;
-  }
-
-  .action-icon {
-    width: 54px;
-    height: 54px;
-    font-size: 26px;
-    margin-bottom: 14px;
-  }
-
-  .action-card h3 {
-    font-size: 1.05rem;
-  }
-
-  .action-card p {
-    font-size: 0.9rem;
-  }
-
-  .action-link {
-    margin-top: 14px;
-  }
-
-  /* Stat cards: stack vertically */
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-
-  .stat-card {
-    padding: 20px;
-  }
-
-  .stat-card h2 {
-    font-size: 1.7rem;
-    margin: 10px 0 6px;
-  }
-
-  /* Recent activity */
-  .dashboard-section {
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-
-  .empty-state {
-    padding: 32px 16px;
-  }
-
-  /* Logout button already full width on desktop; just tighten padding */
-  .logout-btn {
-    padding: 14px;
-    font-size: 15px;
-  }
-}
 
 /* =========================================================
    2. AUTH / LANDING PAGE

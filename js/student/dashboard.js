@@ -1,4 +1,5 @@
 import { logoutUser } from "../auth.js";
+import { themeToggleButton } from "../theme.js";
 import { renderPracticeArena } from "./practice.js";
 import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
@@ -22,7 +23,6 @@ import {
 import {
   prefersReducedMotion,
   initScrollReveal,
-  initParallax,
   animateCountUp,
 } from "./scrollEffects.js";
 
@@ -55,218 +55,219 @@ let unsubscribeNotifications = null;
 let outsideClickHandler = null;
 let notifCloseHandler = null;
 
+/* Line icons (24px grid, 1.75 stroke) — sharp joins to match the
+   square-edged look, and they inherit colour from the parent. */
+const ICON = {
+  home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/>',
+  practice:
+    '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/>',
+  market:
+    '<path d="M4 8h16l-1.2 11H5.2L4 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+  quizzes: '<path d="M5 4h11l3 3v13H5V4Z"/><path d="M9 11h6M9 15h6"/>',
+  groups:
+    '<circle cx="9" cy="9" r="3"/><path d="M3.5 19v-1a5.5 5.5 0 0 1 11 0v1"/><path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 13.3A5.5 5.5 0 0 1 20.5 18v1"/>',
+  bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15L6 17Z"/><path d="M10 21h4"/>',
+  out: '<path d="M10 4H5v16h5"/><path d="M15 8l4 4-4 4M9 12h10"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+};
+
+function icon(name, size = 20) {
+  return `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">${ICON[name]}</svg>`;
+}
+
+const NAV_ITEMS = [
+  { go: "home", label: "Home", short: "Home", icon: "home" },
+  { go: "practice", label: "Practice Arena", short: "Practice", icon: "practice" },
+  { go: "marketplace", label: "Marketplace", short: "Market", icon: "market" },
+  { go: "quizzes", label: "My Quizzes", short: "Quizzes", icon: "quizzes" },
+  { go: "groups", label: "Friend Groups", short: "Groups", icon: "groups" },
+];
+
+const MODULES = [
+  {
+    go: "practice",
+    title: "Practice Arena",
+    text: "Timed, exam-style sets drawn from the quizzes you own. Choose the subject, question count and clock.",
+    cta: "Start a session",
+    accent: "var(--sd-teal)",
+  },
+  {
+    go: "quizzes",
+    title: "My Quizzes",
+    text: "Every weekly quiz you have purchased, ready to attempt whenever you are.",
+    cta: "Open library",
+    accent: "var(--color-primary-light)",
+  },
+  {
+    go: "marketplace",
+    title: "Marketplace",
+    text: "Browse this week's quizzes and add new ones to your library.",
+    cta: "Browse quizzes",
+    accent: "var(--color-primary-hover)",
+  },
+  {
+    go: "groups",
+    title: "Friend Groups",
+    text: "Squad up, climb the leaderboard and chase the weekly Global Challenge prize.",
+    cta: "Compete",
+    accent: "var(--color-primary-deep)",
+  },
+];
+
+function greetingForNow() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export function renderStudentDashboard(userData = {}) {
   const purchasedCount = userData.purchasedQuizzes?.length || 0;
+  const firstName = (userData.name || "").trim().split(/\s+/)[0];
+
+  const navMarkup = (variant) =>
+    NAV_ITEMS.map(
+      (item) => `
+        <button
+          type="button"
+          class="sd-nav-item${item.go === "home" ? " is-active" : ""}"
+          data-go="${item.go}"
+          ${item.go === "home" ? 'aria-current="page"' : ""}
+        >
+          ${icon(item.icon, variant === "side" ? 18 : 22)}
+          <span>${variant === "side" ? item.label : item.short}</span>
+        </button>`,
+    ).join("");
 
   app.innerHTML = `
-    <div class="dashboard">
+    <div class="sd">
 
-      <header class="dashboard-hero">
+      <aside class="sd-side" aria-label="Main navigation">
+        <div class="sd-brand">
+          <span class="sd-brand-mark">Q</span>
+          <span class="sd-brand-name">Quiz Arena</span>
+        </div>
 
-        <div class="dashboard-hero-shape dashboard-hero-shape-1" data-parallax-speed="0.1"></div>
-        <div class="dashboard-hero-shape dashboard-hero-shape-2" data-parallax-speed="0.18"></div>
+        <nav class="sd-side-nav">${navMarkup("side")}</nav>
 
-        <div class="hero-text">
+        <div class="sd-side-foot">
+          <div class="sd-user">
+            <span class="sd-avatar">${escapeHtml((firstName || "S").charAt(0).toUpperCase())}</span>
+            <span class="sd-user-name">${escapeHtml(userData.name || "Student")}</span>
+          </div>
+          <button type="button" class="sd-signout" data-logout>
+            ${icon("out", 16)}<span>Sign out</span>
+          </button>
+        </div>
+      </aside>
 
-          <div class="hero-top">
+      <main class="sd-main">
 
-            <h1>
-              👋 Welcome Back${userData.name ? `, ${userData.name}` : ""}
-            </h1>
+        <header class="sd-top">
+          <div class="sd-top-text">
+            <p class="sd-eyebrow">${greetingForNow()}</p>
+            <h1>${firstName ? escapeHtml(firstName) : "Welcome back"}</h1>
+          </div>
 
+          <div class="sd-top-actions">
+            ${themeToggleButton("sd-theme")}
+            <button type="button" class="sd-signout sd-signout-mobile" data-logout aria-label="Sign out">
+              ${icon("out", 18)}
+            </button>
             <div class="notif-bell-wrap">
-              <button
-                id="notifBell"
-                class="notif-bell"
-                aria-label="Notifications"
-              >
-                🔔
+              <button id="notifBell" class="notif-bell" aria-label="Notifications">
+                ${icon("bell", 20)}
                 <span id="notifBadge" class="notif-badge" hidden></span>
               </button>
             </div>
+          </div>
+        </header>
 
+        <section class="sd-panel sd-stats load-in" aria-label="Your progress">
+
+          <div class="sd-goal">
+            <div class="sd-goal-row">
+              <span class="sd-label">Daily goal · 1 quiz</span>
+              <span class="sd-goal-pct" id="goalPct">0%</span>
+            </div>
+            <div class="sd-goal-track"><div class="sd-goal-fill" id="goalFill"></div></div>
           </div>
 
-          <p id="heroMessage">
-            ${DEFAULT_HERO_MESSAGE}
-          </p>
+          <div class="sd-stat-row">
+            <div class="sd-stat">
+              <strong id="purchasedCountValue" data-count-target="${purchasedCount}">0</strong>
+              <span>Quizzes owned</span>
+            </div>
 
-        </div>
+            <div class="sd-stat stat-card streak-card" id="streakCard">
+              <strong id="streakValue">--</strong>
+              <span>Day streak</span>
+              <em class="streak-subtitle" id="streakSubtitle"></em>
+            </div>
 
-      </header>
+            <div class="sd-stat">
+              <strong id="lastScoreValue">--</strong>
+              <span>Last score</span>
+            </div>
 
-      <section class="action-grid">
-
-        <div
-          class="action-card load-in"
-          id="practiceBtn"
-        >
-
-          <div class="action-icon">
-            🎯
+            <div class="sd-stat">
+              <strong id="avgScoreValue">--</strong>
+              <span>Recent average</span>
+            </div>
           </div>
+        </section>
 
-          <h3>
-            Exam/Test Practice Arena
-          </h3>
-
-          <p>
-            Practice questions from quizzes you've purchased with custom time and question limits like exam stimulations.
-          </p>
-
-          <span class="action-link">
-            Open →
+        <button type="button" class="sd-cta load-in" data-go="practice">
+          <span class="sd-cta-text">
+            <span class="sd-cta-title">Start practising</span>
+            <span class="sd-cta-sub" id="heroMessage">${DEFAULT_HERO_MESSAGE}</span>
           </span>
+          <span class="sd-cta-arrow">${icon("arrow", 22)}</span>
+        </button>
 
-        </div>
-
-        <div
-          class="action-card load-in"
-          id="marketplaceBtn"
-        >
-
-          <div class="action-icon">
-            🛒
+        <section aria-label="Sections">
+          <div class="sd-head">
+            <h2>Jump in</h2>
           </div>
-
-          <h3>
-            Marketplace
-          </h3>
-
-          <p>
-            Browse available weekly quizzes and purchase new ones to expand your library.
-          </p>
-
-          <span class="action-link">
-            Browse →
-          </span>
-
-        </div>
-
-        <div
-          class="action-card load-in"
-          id="quizzesBtn"
-        >
-
-          <div class="action-icon">
-            📚
+          <div class="sd-modules">
+            ${MODULES.map(
+              (m, i) => `
+              <button type="button" class="sd-module load-in" data-go="${m.go}" style="--accent:${m.accent}">
+                <span class="sd-module-index">0${i + 1}</span>
+                <span class="sd-module-title">${m.title}</span>
+                <span class="sd-module-text">${m.text}</span>
+                <span class="sd-module-cta">${m.cta}${icon("arrow", 16)}</span>
+              </button>`,
+            ).join("")}
           </div>
+        </section>
 
-          <h3>
-            My Quizzes
-          </h3>
+        <div class="sd-cols">
 
-          <p>
-            View and attempt your purchased weekly quizzes anytime.
-          </p>
+          <section class="sd-panel reveal" data-reveal>
+            <div class="sd-head">
+              <h2>Score trend</h2>
+              <span class="sd-label">Last 5 attempts</span>
+            </div>
+            <div id="scoreTrendContainer" class="score-trend-container">
+              <p class="sd-loading">Loading…</p>
+            </div>
+          </section>
 
-          <span class="action-link">
-            Open →
-          </span>
-
-        </div>
-
-        <div
-          class="action-card load-in"
-          id="friendGroupsBtn"
-        >
-
-          <div class="action-icon">
-            🏆
-          </div>
-
-          <h3>
-            Friend Groups
-          </h3>
-
-          <p>
-            Create or join a squad and see who tops the leaderboard.
-          </p>
-
-          <span class="action-link">
-            Compete →
-          </span>
+          <section class="sd-panel reveal" data-reveal>
+            <div class="sd-head">
+              <h2>Recent activity</h2>
+            </div>
+            <div id="recentActivityContainer">
+              <p class="sd-loading">Loading…</p>
+            </div>
+          </section>
 
         </div>
 
-      </section>
+      </main>
 
-      <section class="stats-grid">
-
-        <div class="stat-card load-in">
-
-          <span class="stat-icon">
-            📦
-          </span>
-
-          <h2 id="purchasedCountValue" data-count-target="${purchasedCount}">
-            0
-          </h2>
-
-          <p>
-            Purchased Quizzes
-          </p>
-
-        </div>
-
-        <div class="stat-card load-in streak-card" id="streakCard">
-
-          <span class="stat-icon">
-            🔥
-          </span>
-
-          <h2 id="streakValue">
-            --
-          </h2>
-
-          <p>
-            Day Streak
-          </p>
-
-          <p class="streak-subtitle" id="streakSubtitle"></p>
-
-        </div>
-
-      </section>
-
-      <section class="dashboard-section reveal" data-reveal>
-
-        <div class="section-header">
-
-          <h2>
-            📊 Score Trend
-          </h2>
-
-        </div>
-
-        <div id="scoreTrendContainer" class="score-trend-container">
-          <p>Loading...</p>
-        </div>
-
-      </section>
-
-      <section class="dashboard-section reveal" data-reveal>
-
-        <div class="section-header">
-
-          <h2>
-            📈 Recent Activity
-          </h2>
-
-        </div>
-
-        <div id="recentActivityContainer">
-          <p>Loading...</p>
-        </div>
-
-      </section>
-
-      <button
-        id="logoutBtn"
-        class="logout-btn"
-      >
-        Logout
-      </button>
+      <nav class="sd-tabbar" aria-label="Main navigation">${navMarkup("tab")}</nav>
 
     </div>
   `;
@@ -309,6 +310,21 @@ async function loadAnalytics(userData) {
 
   if (heroMessage) {
     updateHeroMessage(heroMessage, attempts);
+  }
+
+  const lastEl = document.getElementById("lastScoreValue");
+  const avgEl = document.getElementById("avgScoreValue");
+  if (lastEl && avgEl) {
+    if (attempts && attempts.length) {
+      const avg = Math.round(
+        attempts.reduce((sum, a) => sum + a.percentage, 0) / attempts.length,
+      );
+      lastEl.textContent = `${attempts[0].percentage}%`;
+      avgEl.textContent = `${avg}%`;
+    } else {
+      lastEl.textContent = "—";
+      avgEl.textContent = "—";
+    }
   }
 
   if (streakEl) {
@@ -386,6 +402,14 @@ function updateStreakCard(streakEl, { streak, doneToday }) {
     card.classList.toggle("streak-active", streak > 0);
     card.classList.toggle("streak-done-today", streak > 0 && doneToday);
     card.classList.toggle("streak-at-risk", streak > 0 && !doneToday);
+  }
+
+  const goalFill = document.getElementById("goalFill");
+  const goalPct = document.getElementById("goalPct");
+  if (goalFill && goalPct) {
+    const pct = doneToday ? 100 : 0;
+    goalFill.style.width = `${pct}%`;
+    goalPct.textContent = `${pct}%`;
   }
 
   const subtitleEl = document.getElementById("streakSubtitle");
@@ -512,28 +536,23 @@ function handleDismiss(userData, id) {
 }
 
 function setupDashboardEvents(userData) {
-  document.getElementById("practiceBtn")?.addEventListener("click", () => {
-    renderPracticeArena(userData);
+  const routes = {
+    practice: () => renderPracticeArena(userData),
+    marketplace: () => renderMarketplace(userData),
+    quizzes: () => renderMyQuizzes(userData),
+    groups: () => renderFriendGroups(userData),
+    home: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+  };
+
+  document.querySelectorAll("[data-go]").forEach((el) => {
+    el.addEventListener("click", () => routes[el.dataset.go]?.());
   });
 
-  document.getElementById("marketplaceBtn")?.addEventListener("click", () => {
-    renderMarketplace(userData);
-  });
-
-  document.getElementById("quizzesBtn")?.addEventListener("click", () => {
-    renderMyQuizzes(userData);
-  });
-
-  document.getElementById("friendGroupsBtn")?.addEventListener("click", () => {
-    renderFriendGroups(userData);
-  });
-
-  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-    const confirmLogout = confirm("Are you sure you want to logout?");
-
-    if (!confirmLogout) return;
-
-    await logoutUser();
+  document.querySelectorAll("[data-logout]").forEach((el) => {
+    el.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to logout?")) return;
+      await logoutUser();
+    });
   });
 
   setupNotifBell(userData);
@@ -665,44 +684,13 @@ function escapeHtml(str) {
    VISUAL EFFECTS
    Reveal, parallax, and count-up now live in the shared
    scrollEffects.js module (also used by landing.js) — no longer
-   duplicated here. Only the action-card 3D tilt is
-   dashboard-specific, so it stays local.
+   duplicated here. 
 ========================================================= */
 function initDashboardEffects() {
-  initParallax();
   initScrollReveal();
-  initCardTilt();
 
   const countEl = document.getElementById("purchasedCountValue");
   if (countEl) {
     animateCountUp(countEl, Number(countEl.dataset.countTarget) || 0);
   }
-}
-
-/**
- * Subtle 3D tilt on the action cards, following the cursor.
- * Desktop only — touch devices don't fire mousemove anyway, but
- * the capability check keeps this from doing any work at all on
- * mobile rather than relying on that alone.
- */
-function initCardTilt() {
-  if (prefersReducedMotion()) return;
-  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-
-  document.querySelectorAll(".action-card").forEach((card) => {
-    card.addEventListener("mousemove", (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const rotateX = ((y - rect.height / 2) / (rect.height / 2)) * -3;
-      const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 3;
-
-      card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
-    });
-
-    card.addEventListener("mouseleave", () => {
-      card.style.transform = "";
-    });
-  });
 }
