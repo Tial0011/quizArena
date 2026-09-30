@@ -1,3 +1,4 @@
+import { pickRandomQuestions } from "../utils/random.js";
 import { db } from "../firebase/config.js";
 
 import {
@@ -25,7 +26,6 @@ import {
   timerClass,
   updateTimerEl,
   resultMarkup,
-  revealResultStreak,
 } from "./quizUi.js";
 
 let questions = [];
@@ -106,13 +106,13 @@ export async function startQuiz(subject, count, minutes, userData) {
     return false;
   }
 
-  questions = shuffle(allQuestions);
-
-  if (count > questions.length) {
-    count = questions.length;
+  if (count > allQuestions.length) {
+    count = allQuestions.length;
   }
 
-  questions = questions.slice(0, count);
+  // Uniform shuffle of the whole bank, take `count`, and shuffle
+  // each question's options too (answer index is remapped).
+  questions = pickRandomQuestions(allQuestions, count);
 
   answers = new Array(questions.length).fill(null);
 
@@ -127,9 +127,7 @@ export async function startQuiz(subject, count, minutes, userData) {
         renderQuestion();
       }
     },
-    next: () =>
-      currentQuestion < questions.length - 1 &&
-      goToQuestion(currentQuestion + 1),
+    next: () => currentQuestion < questions.length - 1 && goToQuestion(currentQuestion + 1),
     prev: () => currentQuestion > 0 && goToQuestion(currentQuestion - 1),
   });
 
@@ -402,7 +400,7 @@ function finishQuiz() {
   // Fire-and-forget: analytics should never delay or block the
   // student from seeing their result. recordQuizAttempt() already
   // swallows its own errors.
-  const streakAttempt = recordQuizAttempt({
+  recordQuizAttempt({
     userId: currentUserId,
     mode: "practice",
     subjectName: currentSubject,
@@ -429,8 +427,6 @@ function finishQuiz() {
     message,
   });
 
-  streakAttempt.then(revealResultStreak);
-
   document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
     renderReviewAnswers(questions, answers, () =>
       renderStudentDashboard(currentUserData),
@@ -448,22 +444,4 @@ function formatTime(seconds) {
   const secs = seconds % 60;
 
   return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-/**
- * Fisher-Yates shuffle — genuinely uniform (every permutation
- * equally likely), unlike sort(() => Math.random() - 0.5) which
- * is a known-biased trick. Matches the shuffle already used in
- * purchasedQuiz.js. Returns a new array — does not mutate the
- * one passed in.
- */
-function shuffle(array) {
-  const shuffled = [...array];
-
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-
-  return shuffled;
 }

@@ -355,17 +355,55 @@ async function submitForm() {
  */
 async function handleGoogleSignIn() {
   const btn = document.getElementById("googleSignInBtn");
-  btn.disabled = true;
+  if (!btn || btn.disabled) return; // already signing in
 
-  const result = await signInWithGoogle();
+  const originalHtml = btn.innerHTML;
+
+  // Block the button (and the email form's submit, so two sign-ins
+  // can't race) and show three moving dots in place of the label.
+  const submitBtn = document.getElementById("submitBtn");
+  const submitWasDisabled = submitBtn?.disabled;
+
+  btn.disabled = true;
+  btn.classList.add("is-loading");
+  btn.setAttribute("aria-busy", "true");
+  btn.setAttribute("aria-label", "Signing in with Google");
+  btn.innerHTML =
+    '<span class="btn-dots" aria-hidden="true"><span></span><span></span><span></span></span>';
+  if (submitBtn) submitBtn.disabled = true;
+
+  const restore = () => {
+    btn.disabled = false;
+    btn.classList.remove("is-loading");
+    btn.removeAttribute("aria-busy");
+    btn.removeAttribute("aria-label");
+    btn.innerHTML = originalHtml;
+    if (submitBtn) submitBtn.disabled = !!submitWasDisabled;
+  };
+
+  let result;
+  try {
+    result = await signInWithGoogle();
+  } catch (error) {
+    console.error(error);
+    result = { success: false, message: "Google sign-in failed. Please try again." };
+  }
 
   if (!result.success) {
-    btn.disabled = false;
-    alert(result.message);
+    restore();
+    if (result.message) alert(result.message);
     return;
   }
 
-  await routeAfterAuth(result.user);
+  // Keep the dots + blocked state while we route — the landing page
+  // is replaced by the dashboard, so there's nothing to restore.
+  try {
+    await routeAfterAuth(result.user);
+  } catch (error) {
+    console.error(error);
+    restore();
+    alert("Signed in, but something went wrong loading your dashboard. Please try again.");
+  }
 }
 
 async function handleForgotPassword() {

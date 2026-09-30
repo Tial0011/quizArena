@@ -43,11 +43,18 @@ const GATE_KEY = "qa_gate";
 const RETURNING_KEY = "qa_returning";
 const SKIP_DAYS = 3;
 
-const INSTALL_ESTIMATE_MS = 40000; // what we tell students to expect
-const INSTALL_GIVE_UP_MS = 25000; // then offer a manual "I can see it" button
+// On phones the OS keeps building the app (its own "installing" notice) for a
+// while AFTER the browser says "appinstalled", so that event fires too early
+// to trust. The loading screen therefore always runs its full course (about
+// 40s) and only then says "Installed". Desktop installs are near-instant, so
+// they get a short run instead.
+const INSTALL_ESTIMATE_MS = MOBILE_UA() ? 40000 : 4000;
 const PROMPT_WAIT_MS = 4000; // how long to wait for the browser to offer the install dialog
 
 const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+function MOBILE_UA() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+}
 
 /** WhatsApp/Facebook/Instagram/TikTok in-app browsers can't install anything. */
 function inAppBrowser() {
@@ -143,8 +150,8 @@ const STAGES = {
     ctaDisabled: true,
   },
   installing: {
-    h1: "Installing…",
-    sub: "We'll tell you the moment your phone confirms it.",
+    h1: "Downloading…",
+    sub: "Keep this screen open while Quiz Arena lands on your phone.",
     progress: true,
   },
   installed: {
@@ -237,6 +244,8 @@ let progressValue = 0;
 let precache = { done: 0, total: 0, failed: 0, ready: false };
 let cube = null;
 let verifyTimer = null;
+let osReportedInstall = false; // the browser said "appinstalled" (early signal only)
+let installRunning = false;
 let installedNow = false; // set synchronously so racing events can't double-handle
 let currentH1 = null;
 
@@ -250,6 +259,8 @@ function build() {
   root.tabIndex = -1;
   root.dataset.stage = "welcome";
   installedNow = false;
+  installRunning = false;
+  osReportedInstall = false;
   currentH1 = null;
 
   root.innerHTML = `
@@ -301,8 +312,11 @@ function build() {
   // Live signals from the browser and the service worker.
   cleanup.push(
     onAppInstalled(() => {
-      if (["installing", "confirming", "download", "waiting", "manualOther", "declined"].includes(stage)) {
-        showInstalled();
+      // Too early to trust on phones (see INSTALL_ESTIMATE_MS). Just make
+      // sure the loading screen is running; it finishes on its own clock.
+      osReportedInstall = true;
+      if (["confirming", "download", "waiting", "manualOther", "declined"].includes(stage)) {
+        startInstalling();
       }
     }),
     onInstallabilityChange(onInstallabilityUpdate),
@@ -521,8 +535,8 @@ async function onCta() {
       setStage("confirming");
       const { outcome } = await triggerInstallPrompt();
       if (!root) return;
-      if (installedNow) return; // appinstalled beat us to it (desktop Chrome installs instantly)
-      if (outcome === "accepted") startInstalling(); // "installed" is only shown once VERIFIED (see verifyInstall)
+      if (installedNow || installRunning) return; // already moved on
+      if (outcome === "accepted") startInstalling(); // "Installed" only appears when the loading screen finishes
       else if (outcome === "dismissed") setStage("declined");
       else setStage(isIOS() ? "manualIOS" : "manualOther");
       break;
@@ -554,21 +568,12 @@ async function onCta() {
 }
 
 function startInstalling() {
+  if (installRunning || installedNow || !root) return; // never restart the clock
+  installRunning = true;
   installStartedAt = performance.now();
   progressValue = 0;
   lastStatus = "";
   setStage("installing"); // starts the loading line once the stage switches
-
-  // VERIFY, don't assume: the browser's "appinstalled" event is one
-  // signal; asking the OS whether the app is really there is the other.
-  clearInterval(verifyTimer);
-  verifyTimer = setInterval(async () => {
-    if (!root || stage !== "installing" || installedNow) {
-      clearInterval(verifyTimer);
-      return;
-    }
-    if (await isInstalledElsewhere()) showInstalled();
-  }, 1500);
 }
 
 async function showInstalled() {
@@ -588,7 +593,7 @@ async function showInstalled() {
     }
     $("wgTrack")?.setAttribute("aria-valuenow", "100");
     const status = $("wgStatus");
-    if (status) status.textContent = "Confirmed.";
+    if (status) status.textContent = "Done.";
     await wait(quick ? 0 : 800);
     if (!root) return;
   }
@@ -604,33 +609,31 @@ async function showInstalled() {
 }
 
 /* ----- loading line -----
-   Estimate: eases toward ~94% over the time we told the student to
-   expect (40s) and never reaches 100% by itself -- only the browser's
-   "appinstalled" event (or the student) finishes it. */
+   Fills smoothly over INSTALL_ESTIMATE_MS (about 40s on phones). Reaching
+   the end is what says "Installed" -- never the browser's early
+   "appinstalled" event. Progress only moves forward. */
 function startProgress() {
   cancelAnimationFrame(progressRaf);
   const fill = () => $("wgFill");
   const track = () => $("wgTrack");
-  let shownGiveUp = false;
 
   const tick = () => {
     if (!root || stage !== "installing") return;
     const elapsed = performance.now() - installStartedAt;
-    const eased = 0.9 * (1 - Math.exp((-3 * elapsed) / INSTALL_ESTIMATE_MS));
+    const t = Math.min(1, elapsed / INSTALL_ESTIMATE_MS);
+    const eased = 1 - Math.pow(1 - t, 1.6); // quick start, gentle finish
     progressValue = Math.max(progressValue, eased);
 
     const f = fill();
     if (f) f.style.setProperty("--p", progressValue.toFixed(4));
     track()?.setAttribute("aria-valuenow", String(Math.round(progressValue * 100)));
 
-    if (!shownGiveUp && elapsed > INSTALL_GIVE_UP_MS) {
-      shownGiveUp = true;
-      const cta = $("wgCta");
-      cta.hidden = false;
-      cta.disabled = false;
-      cta.textContent = "Check again";
-    }
     updateStatusText(elapsed);
+
+    if (t >= 1) {
+      showInstalled();
+      return;
+    }
     progressRaf = requestAnimationFrame(tick);
   };
   progressRaf = requestAnimationFrame(tick);
@@ -641,18 +644,21 @@ function updateStatusText(elapsed = performance.now() - installStartedAt) {
   const el = $("wgStatus");
   if (!el) return;
 
+  const p = Math.min(1, elapsed / INSTALL_ESTIMATE_MS);
   let text;
-  if (elapsed > INSTALL_ESTIMATE_MS * 1.6) {
-    text = "Still waiting for your phone to confirm. Slow networks take longer.";
-  } else if (elapsed > INSTALL_ESTIMATE_MS) {
-    text = "Almost there. Waiting for your phone to confirm…";
-  } else if (precache.total && !precache.ready && precache.done + precache.failed < precache.total) {
-    text = `Saving for offline use: ${precache.done} of ${precache.total} files`;
-  } else if (precache.ready) {
-    text = "Saved for offline use. Waiting for your phone to confirm…";
+  if (p < 0.4) {
+    text =
+      precache.total && !precache.ready && precache.done + precache.failed < precache.total
+        ? `Downloading: ${precache.done} of ${precache.total} files`
+        : "Downloading Quiz Arena…";
+  } else if (p < 0.75) {
+    text = "Installing on your phone…";
+  } else if (p < 0.95) {
+    text = "Adding it to your home screen…";
   } else {
-    text = "Waiting for your phone to confirm the install…";
+    text = "Almost done…";
   }
+  if (!MOBILE) text = p < 0.95 ? "Installing Quiz Arena…" : "Almost done…";
   if (text !== lastStatus) {
     lastStatus = text;
     el.textContent = text;

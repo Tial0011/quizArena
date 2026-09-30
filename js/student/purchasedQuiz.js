@@ -1,3 +1,4 @@
+import { pickRandomQuestions } from "../utils/random.js";
 import { db } from "../firebase/config.js";
 
 import {
@@ -17,7 +18,6 @@ import {
   timerClass,
   updateTimerEl,
   resultMarkup,
-  revealResultStreak,
 } from "./quizUi.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
 import { renderReviewAnswers } from "./reviewAnswers.js";
@@ -101,7 +101,7 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
   // Shuffle the full question bank, then take up to CBT_QUESTION_LIMIT.
   // If the quiz has fewer questions than the limit, this naturally
   // just uses all of them (slice clamps to array length).
-  questions = shuffleArray(allQuestions).slice(0, CBT_QUESTION_LIMIT);
+  questions = pickRandomQuestions(allQuestions, CBT_QUESTION_LIMIT);
 
   answers = new Array(questions.length).fill(null);
 
@@ -130,21 +130,6 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
   renderQuestion(quizTitle);
 
   startTimer(quizTitle);
-}
-
-/**
- * Fisher-Yates shuffle. Returns a new array — does not mutate
- * the array passed in.
- */
-function shuffleArray(array) {
-  const shuffled = [...array];
-
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-
-  return shuffled;
 }
 
 function renderQuestion(quizTitle) {
@@ -409,7 +394,7 @@ function finishQuiz(quizTitle) {
   // Fire-and-forget: analytics should never delay or block the
   // student from seeing their result. recordQuizAttempt() already
   // swallows its own errors.
-  const streakAttempt = recordQuizAttempt({
+  recordQuizAttempt({
     userId: currentUserId,
     mode: "purchased",
     subjectName: questions[0]?.subjectName || "",
@@ -434,8 +419,6 @@ function finishQuiz(quizTitle) {
           ? "Good job"
           : "Keep practising",
   });
-
-  streakAttempt.then(revealResultStreak);
 
   document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
     renderReviewAnswers(questions, answers, () =>

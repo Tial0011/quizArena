@@ -56,6 +56,7 @@ let unsubscribeNotifications = null;
 // ends up with duplicate listeners stacked on document/window.
 let outsideClickHandler = null;
 let notifCloseHandler = null;
+let notifResizeHandler = null;
 
 /* Line icons (24px grid, 1.75 stroke) — sharp joins to match the
    square-edged look, and they inherit colour from the parent. */
@@ -79,12 +80,7 @@ function icon(name, size = 20) {
 
 const NAV_ITEMS = [
   { go: "home", label: "Home", short: "Home", icon: "home" },
-  {
-    go: "practice",
-    label: "Practice Arena",
-    short: "Practice",
-    icon: "practice",
-  },
+  { go: "practice", label: "Practice Arena", short: "Practice", icon: "practice" },
   { go: "marketplace", label: "Marketplace", short: "Market", icon: "market" },
   { go: "quizzes", label: "My Quizzes", short: "Quizzes", icon: "quizzes" },
   { go: "groups", label: "Friend Groups", short: "Groups", icon: "groups" },
@@ -172,13 +168,13 @@ export function renderStudentDashboard(userData = {}) {
       <main class="sd-main">
 
         <header class="sd-top">
-          <p class="sd-eyebrow">${greetingForNow()}</p>
+          <div class="sd-top-text">
+            <p class="sd-eyebrow">${greetingForNow()}</p>
+            <h1>${firstName ? escapeHtml(firstName) : "Welcome back"}${rank ? ` <span class="sd-rank-emoji" aria-hidden="true">${rank.emoji}</span>` : ""}</h1>
+            ${rank ? `<span class="sd-rank sd-rank-${rank.at}" title="Own ${rank.at}+ quizzes">${rank.emoji} ${rank.title}</span>` : ""}
+          </div>
 
           <div class="sd-top-actions">
-            <div class="sd-top-streak" role="status" aria-live="polite" aria-label="Current day streak">
-              <span aria-hidden="true">🔥</span>
-              <strong id="topbarStreakValue">--</strong>
-            </div>
             ${themeToggleButton("sd-theme")}
             <button type="button" class="sd-signout sd-signout-mobile" data-logout aria-label="Sign out">
               ${icon("out", 18)}
@@ -190,9 +186,6 @@ export function renderStudentDashboard(userData = {}) {
               </button>
             </div>
           </div>
-
-          <h1>${firstName ? escapeHtml(firstName) : "Welcome back"}${rank ? ` <span class="sd-rank-emoji" aria-hidden="true">${rank.emoji}</span>` : ""}</h1>
-          ${rank ? `<span class="sd-rank sd-rank-${rank.at}" title="Own ${rank.at}+ quizzes">${rank.emoji} ${rank.title}</span>` : ""}
         </header>
 
         <section class="sd-panel sd-stats load-in" aria-label="Your progress">
@@ -402,9 +395,6 @@ function pickHeroMessage(attempts) {
  */
 function updateStreakCard(streakEl, { streak, doneToday }) {
   const card = streakEl.closest(".stat-card");
-  const topbarStreak = document.getElementById("topbarStreakValue");
-
-  if (topbarStreak) topbarStreak.textContent = String(streak);
 
   if (prefersReducedMotion()) {
     streakEl.textContent = String(streak);
@@ -669,7 +659,9 @@ function setupNotifBell(userData) {
   // is to just close it, same as clicking outside.
   if (notifCloseHandler) {
     window.removeEventListener("scroll", notifCloseHandler, true);
-    window.removeEventListener("resize", notifCloseHandler);
+  }
+  if (notifResizeHandler) {
+    window.removeEventListener("resize", notifResizeHandler);
   }
 
   notifCloseHandler = (e) => {
@@ -687,20 +679,41 @@ function setupNotifBell(userData) {
   };
 
   window.addEventListener("scroll", notifCloseHandler, true);
-  window.addEventListener("resize", notifCloseHandler);
+
+  // Phones fire "resize" whenever the browser URL bar slides in/out or
+  // the keyboard opens — closing on that made the panel vanish (or
+  // look cut off) right after opening. Just re-fit it to the new size.
+  notifResizeHandler = () => {
+    const currentPanel = document.getElementById("notifPanel");
+    const currentBell = document.getElementById("notifBell");
+    if (!currentPanel || currentPanel.hidden || !currentBell) return;
+    positionNotifPanel(currentPanel, currentBell);
+  };
+  window.addEventListener("resize", notifResizeHandler);
 }
 
 function positionNotifPanel(panel, bell) {
   const rect = bell.getBoundingClientRect();
-  const width = Math.min(300, window.innerWidth * 0.8);
-  const gap = 8;
+  const vw = window.innerWidth;
+  const vh = window.visualViewport?.height || window.innerHeight;
   const margin = 12;
+  const gap = 8;
+  const width = Math.min(340, vw - margin * 2);
 
   let left = rect.right - width;
-  left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+  left = Math.max(margin, Math.min(left, vw - width - margin));
 
-  panel.style.top = `${rect.bottom + gap}px`;
+  // Size the panel to the space actually left under the bell, so the
+  // bottom of the list is never cut off by the screen edge or the
+  // bottom tab bar (phones: tab bar ~62px + safe area).
+  const top = rect.bottom + gap;
+  const bottomReserve = vw < 1024 ? 84 : margin;
+  const maxHeight = Math.max(160, Math.min(440, vh - top - bottomReserve));
+
+  panel.style.top = `${top}px`;
   panel.style.left = `${left}px`;
+  panel.style.width = `${width}px`;
+  panel.style.maxHeight = `${maxHeight}px`;
 }
 
 function escapeHtml(str) {

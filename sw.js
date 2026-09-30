@@ -32,7 +32,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "bbcc5e3f50";
+const PRECACHE_VERSION = "f9f6391b76";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",
@@ -104,6 +104,7 @@ const PRECACHE_URLS = [
   "/js/ui/landing.js",
   "/js/ui/toast.js",
   "/js/ui/welcomeGate.js",
+  "/js/utils/random.js",
   "/manifest.json"
 ];
 const PRECACHE_CDN = [

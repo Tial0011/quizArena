@@ -194,106 +194,35 @@
 }
 
 .sd-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "greeting actions"
-    "name name"
-    "rank rank";
-  align-items: center;
-  column-gap: 16px;
-  row-gap: 16px;
-  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
   padding-bottom: 16px;
 }
 
 .sd-eyebrow {
-  grid-area: greeting;
   margin: 0 0 4px;
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--sd-muted);
+  color: var(--sd-teal-dark);
 }
 
 .sd-top h1 {
-  grid-area: name;
   margin: 0;
   font-size: clamp(1.7rem, 4.5vw, 2.6rem);
   line-height: 1.05;
-  font-weight: 700;
-  letter-spacing: 0;
-  color: var(--color-text);
+  font-weight: 800;
+  letter-spacing: -0.03em;
   overflow-wrap: anywhere;
 }
 
 .sd-top-actions {
-  grid-area: actions;
   display: flex;
-  align-items: center;
   gap: 10px;
   flex: 0 0 auto;
-  flex-wrap: nowrap;
-}
-
-.sd-top-streak {
-  min-width: 54px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 0 10px;
-  border: 1px solid var(--sd-rule);
-  border-radius: 12px;
-  background: var(--color-surface);
-  color: var(--sd-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.sd-top-streak span {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.sd-top-streak strong {
-  font-size: 14px;
-  font-weight: 800;
-}
-
-@media (max-width: 480px) {
-  .sd-top {
-    column-gap: 8px;
-    row-gap: 12px;
-  }
-
-  .sd-top-actions {
-    gap: 6px;
-  }
-
-  .sd-top-streak {
-    min-width: 44px;
-    height: 40px;
-    gap: 3px;
-    padding: 0 6px;
-  }
-
-  .sd-top-streak span {
-    font-size: 16px;
-  }
-
-  .sd-top-actions .theme-toggle,
-  .sd-signout-mobile,
-  .sd-top-actions .notif-bell {
-    width: 40px;
-    height: 40px;
-  }
-
-  .sd-eyebrow {
-    font-size: 10px;
-    letter-spacing: 0.06em;
-  }
 }
 
 .sd-label {
@@ -614,12 +543,27 @@
   justify-content: center;
   gap: 4px;
   height: 62px;
+  min-width: 0; /* let 5 equal columns shrink on narrow phones */
+  padding: 0 2px;
   border: 0;
   background: transparent;
   font-size: 11px;
   font-weight: 700;
   color: var(--sd-muted);
   cursor: pointer;
+}
+
+.sd-tabbar .sd-nav-item span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 360px) {
+  .sd-tabbar .sd-nav-item {
+    font-size: 10px;
+  }
 }
 
 .sd-tabbar .sd-nav-item.is-active {
@@ -774,9 +718,12 @@
    can't be clipped by any page container. */
 .notif-panel {
   position: fixed;
-  width: min(340px, 90vw);
-  max-height: 380px;
+  width: min(340px, calc(100vw - 24px));
+  max-height: min(440px, calc(100dvh - 160px));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
   background: var(--color-surface);
   border: 1px solid var(--color-border-tint);
   border-radius: 16px;
@@ -830,8 +777,10 @@
   border: none;
   background: none;
   color: var(--color-text-faint);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
+  min-width: 40px;
+  min-height: 40px; /* finger-sized dismiss target */
   padding: 6px 8px;
   cursor: pointer;
 }
@@ -847,6 +796,7 @@
   font-size: 13px;
   line-height: 1.55;
   margin-bottom: 4px;
+  overflow-wrap: anywhere; /* long words/links can't push the panel wider */
 }
 
 .notif-time {
@@ -1095,7 +1045,7 @@
 
   .sd-main {
     width: 100%;
-    max-width: none;
+    max-width: 1240px;
     margin: 0;
     padding: 40px 48px 64px;
     gap: 28px;
@@ -1162,25 +1112,33 @@ body:has(.sd, .quiz-layout, .practice-page, .quiz-result) {
 
 /* Pack rank title (Quiz Arena Scholar, Legend, ...) */
 .sd-rank {
-  grid-area: rank;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--color-text-muted);
+  margin-top: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-text, inherit);
+  background: color-mix(in srgb, var(--color-primary, #6c5ce7) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary, #6c5ce7) 35%, transparent);
+  animation: sdRankIn 0.5s ease both;
 }
 
 .sd-rank-8 {
-  color: var(--color-accent-deep);
-  font-weight: 700;
+  background: linear-gradient(135deg, #fff2b8, #ffd24d);
+  border-color: #e6b422;
+  color: #5a4300;
+  box-shadow: 0 0 14px rgba(255, 200, 40, 0.45);
 }
 
 .sd-rank-emoji {
   font-size: 0.8em;
+}
+
+@keyframes sdRankIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.96); }
+  to { opacity: 1; transform: none; }
 }
