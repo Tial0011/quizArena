@@ -1,0 +1,54 @@
+/* =========================================================
+   LANDING (first sign-in page) -- js/ui/landing.js
+   Loaded after auth.css; only overrides what the redesign changes.
+   Same teal + Lexend identity. The hero's memorable part is a real
+   question the visitor can answer before signing up.
+========================================================= */
+.hero { padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem 2.5rem; }
+.hero::before { display: none; }
+
+.hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: clamp(1.5rem, 6vh, 3.5rem); }
+.hero .logo { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 1.1rem; letter-spacing: -0.01em; }
+.hero .logo img { border-radius: 8px; }
+.hero .install-app-btn { position: static; padding: 9px 16px; font-size: 0.88rem; }
+
+.hero-body { max-width: 34rem; }
+.hero h1 { font-size: clamp(2.3rem, 8vw, 3.8rem); line-height: 1.05; margin-bottom: 1rem; text-wrap: balance; }
+.hero-body > p { max-width: 38ch; font-size: 1.05rem; line-height: 1.6; color: rgba(241, 250, 249, 0.85); margin-bottom: 1.75rem; }
+
+/* sample question */
+.sample { padding: 1.1rem; border-radius: 18px; background: rgba(241, 250, 249, 0.08); border: 1px solid rgba(241, 250, 249, 0.18); }
+.sample-label { font-size: 0.85rem; color: rgba(241, 250, 249, 0.7); margin-bottom: 0.4rem; }
+.sample-q { font-size: 1.12rem; font-weight: 600; line-height: 1.4; margin-bottom: 0.9rem; }
+.sample-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sample-opt { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px; font: inherit; font-weight: 500; text-align: left; color: #fff; background: rgba(241, 250, 249, 0.07); border: 1.5px solid rgba(241, 250, 249, 0.22); border-radius: 12px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.sample-opt b { display: grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 8px; font-size: 0.8rem; background: rgba(241, 250, 249, 0.14); }
+.sample-opt:hover:not(:disabled) { background: rgba(241, 250, 249, 0.16); }
+.sample-opt:disabled { cursor: default; }
+.sample-opt.is-right { background: var(--color-success-solid); border-color: var(--color-success-solid); }
+.sample-opt.is-wrong { background: var(--color-danger-solid); border-color: var(--color-danger-solid); }
+.sample-note { margin-top: 0.8rem; font-size: 0.92rem; line-height: 1.5; }
+.sample-note .link-btn { color: var(--color-accent); }
+
+/* sign-in card */
+.auth-card h2 { font-size: 1.6rem; letter-spacing: -0.02em; margin-bottom: 1.1rem; }
+.form-group input { min-height: 48px; }
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.pw-wrap { position: relative; }
+.pw-wrap input { width: 100%; padding-right: 4.5rem; }
+.pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); height: 36px; padding: 0 12px; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--color-link); background: none; border: 0; border-radius: 8px; cursor: pointer; }
+.link-btn { padding: 0; font: inherit; font-weight: 600; color: var(--color-link); background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.switch { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.auth-error { margin-bottom: 1rem; padding: 0.7rem 0.9rem; border-radius: 12px; font-size: 0.92rem; line-height: 1.45; color: var(--color-danger); background: var(--danger-bg); border: 1px solid var(--danger-border); }
+.auth-error[data-tone="info"] { color: var(--color-success); background: var(--success-bg); border-color: var(--success-border); }
+.auth-error[hidden] { display: none; }
+
+/* story section: plain text rows instead of emoji cards */
+.story-feature-icon { display: none; }
+
+@media (min-width: 900px) {
+  .hero { padding: 2.25rem 4.5rem; justify-content: flex-start; }
+  .hero-top { margin-bottom: auto; }
+  .hero-body { margin-block: auto; padding-block: 3rem; }
+}
+@media (max-width: 420px) { .sample-opts { grid-template-columns: 1fr; } }
