@@ -41,39 +41,3 @@ All motion respects `prefers-reduced-motion`.
 2. `firebase deploy --only functions` (multi-quiz verification lives there; deploy it BEFORE the frontend)
 3. Deploy the frontend
 4. Google Search: favicon updates are slow (days to weeks). Speed it up with Search Console > URL Inspection > Request indexing for `https://quizarena.name.ng/` and `/favicon.ico`.
-
----
-
-# Pass 2: light/dark mode, new font, teal + white, front-end audit
-
-## What was added
-| Area | Change |
-|---|---|
-| Light / dark mode | `css/theme.css` holds every colour as a token; `js/theme.js` toggles and saves the choice (`qa-theme`). No saved choice = follows the phone/laptop setting live. A tiny inline script in `index.html` sets the theme before first paint, so dark users never see a white flash. Toggle lives in the dashboard header, admin header, and top-right of the sign-in screen. |
-| Font | **Lexend** (one family, weights 400-800). Why: designed around reading-fluency research, wide open letterforms and even spacing lower visual strain for tired or anxious readers, which is exactly a student before a CBT. Heavy weights still hit hard on headlines and buttons. Timer, score and price use tabular numerals so they do not jitter. One font = one request = fast first paint. Cached by the service worker for offline. |
-| Palette | Teal + white. Sand is now only the pay/reward accent. Brown removed from text, panels, shadows, manifest and theme-color. ~600 hardcoded colours across 22 stylesheets were moved to tokens. |
-| Contrast | Teal fills darkened from #389695 to #27807f so white text passes 4.5:1. Teal used as text is #1d6a69 (light) / #6fd6d3 (dark). Dark-mode hover goes lighter, not darker. |
-| Alerts | Every `alert()` (about 40) now shows a non-blocking toast. `confirm()` is untouched because it must return an answer. |
-
-## Bugs and design mishaps fixed
-1. Hero headline lines overlapped (line-height 0.95 at weight 900); now 1.08 at 800 with fluid size.
-2. `background: white` keyword was invisible to the old token system; 13 panels would have stayed white in dark mode.
-3. `100vh` on phones hides content under the browser bar; now `100dvh` with fallback (base, auth, verify gate, dashboard).
-4. `overflow-x: hidden` on both html and body breaks `position: sticky`; now `clip`.
-5. Inputs under 16px make iOS Safari zoom the page on focus; forced to 16px minimum.
-6. Dashboard cards used brown, blue and green accents; now all teal shades.
-7. Error and offline pages (boot, main, service worker) still used the old brown; fixed and theme-aware.
-8. Confetti colours swapped from brown to teal and white.
-9. Service worker now caches Lexend (CSS + font files) so offline keeps the look.
-
-## Attention (5-second rule), applied
-Bold headline, one clear primary button per screen, single accent for reward moments, no motion that blocks the first tap, toggle never appears during a quiz.
-
-## Still worth doing
-- Landing: put a "Try a free quiz" button above the fold with no sign-up (biggest 5-second win).
-- Self-host Lexend (woff2 in /fonts) to remove the Google Fonts dependency.
-- Admin title truncates on very narrow phones.
-- Admin is still identified by a hardcoded email; move to a custom claim.
-
-## Deploy
-`node tools/build-sw.mjs` (already run), then deploy as before. Users get the new look on the second load (service worker update).

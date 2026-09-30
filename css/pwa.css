@@ -33,8 +33,8 @@ body {
   line-height: 1.3;
   text-align: center;
   color: #fff;
-  background: var(--color-ink-bg);
-  box-shadow: 0 8px 24px rgba(6, 36, 36, 0.28);
+  background: #2d190b;
+  box-shadow: 0 8px 24px rgba(45, 25, 11, 0.28);
   transform: translate(-50%, -180%);
   opacity: 0;
   pointer-events: none;
@@ -44,7 +44,7 @@ body {
 }
 
 .qa-net[data-tone="online"] {
-  background: var(--color-success-solid);
+  background: #059669;
 }
 
 .qa-net.qa-net-show {

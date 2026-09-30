@@ -7,11 +7,11 @@
 ========================================================= */
 
 .practice-page {
-  --p-ink: var(--color-text-strong);
-  --p-teal: var(--color-primary);
-  --p-teal-dark: var(--color-primary-hover);
-  --p-rule: var(--color-border-tint);
-  --p-muted: var(--color-text-muted);
+  --p-ink: #16302f;
+  --p-teal: #389695;
+  --p-teal-dark: #2b7a79;
+  --p-rule: #d9e9e8;
+  --p-muted: #587270;
 
   max-width: 1080px;
   margin: 0 auto;
@@ -61,7 +61,7 @@
 ========================= */
 
 .practice-card {
-  background: var(--color-surface);
+  background: #fff;
   border: 1px solid var(--p-rule);
   border-radius: 20px;
   padding: 22px 18px;
@@ -87,12 +87,12 @@
   width: 100%;
   height: 52px;
   padding: 0 14px;
-  border: 1.5px solid var(--color-border-tint);
+  border: 1.5px solid #c3dad8;
   border-radius: 14px;
   font-size: 16px;
   font-weight: 600;
   color: var(--p-ink);
-  background: var(--color-surface);
+  background: #fff;
   box-sizing: border-box;
   transition:
     border-color 0.15s ease,
@@ -131,7 +131,7 @@
   padding: 10px 12px;
   border: 1px solid var(--p-rule);
   border-radius: 14px;
-  background: var(--color-surface);
+  background: #fff;
   color: var(--p-ink);
   text-align: left;
   cursor: pointer;
@@ -160,7 +160,7 @@
 .practice-preset.is-active {
   border-color: var(--p-teal);
   box-shadow: 0 0 0 1px var(--p-teal);
-  background: var(--color-surface-2);
+  background: #eef7f6;
 }
 
 /* Questions + time */
@@ -196,7 +196,7 @@
   gap: 8px;
   margin: -6px 0 22px;
   padding: 10px 14px;
-  background: var(--color-tint);
+  background: #e6f4f3;
   border-radius: 12px;
   font-size: 13px;
   font-weight: 700;
@@ -227,7 +227,7 @@
 }
 
 #startPracticeBtn:active {
-  background: var(--color-primary-deep);
+  background: #1f6f6e;
 }
 
 /* =========================
@@ -236,7 +236,7 @@
 
 .practice-summary {
   display: none;
-  background: linear-gradient(160deg, var(--color-primary), var(--color-primary-deep));
+  background: linear-gradient(160deg, #389695, #1f6f6e);
   color: #fff;
   padding: 28px 28px 24px;
   border-radius: 20px;

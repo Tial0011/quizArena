@@ -6,9 +6,9 @@
 ========================= */
 
 .quiz-result {
-  --r-ink: var(--color-text-strong);
-  --r-rule: var(--color-border-tint);
-  --r-accent: var(--color-primary);
+  --r-ink: #16302f;
+  --r-rule: #d9e9e8;
+  --r-accent: #389695;
 
   max-width: 980px;
   margin: 24px auto 48px;
@@ -17,7 +17,7 @@
   overflow: hidden;
   border-radius: 22px;
   border: 1px solid var(--r-rule);
-  background: var(--color-surface);
+  background: #fff;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
@@ -26,17 +26,17 @@
 }
 
 .quiz-result.tier-high {
-  --r-accent: var(--color-primary);
+  --r-accent: #10b981;
 }
 .quiz-result.tier-mid {
-  --r-accent: var(--color-primary);
+  --r-accent: #389695;
 }
 .quiz-result.tier-low {
-  --r-accent: var(--color-primary);
+  --r-accent: #c98a4b;
 }
 
 .result-hero {
-  background: linear-gradient(160deg, var(--color-primary), var(--color-primary-deep));
+  background: linear-gradient(160deg, #389695, #1f6f6e);
   color: #fff;
   padding: 28px 24px 30px;
   border-top: 6px solid var(--r-accent);
@@ -91,7 +91,7 @@
 }
 
 .result-detail {
-  background: var(--color-surface);
+  background: #fff;
   display: flex;
   flex-direction: column;
 }
@@ -127,7 +127,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: #587270;
 }
 
 .quiz-result .result-actions {
@@ -155,24 +155,24 @@
 }
 
 .quiz-result .review-answers-btn {
-  background: var(--color-surface);
-  color: var(--color-link);
-  border: 1.5px solid var(--color-primary);
+  background: #fff;
+  color: #2b7a79;
+  border: 1.5px solid #389695;
 }
 
 .quiz-result .review-answers-btn:hover {
-  background: var(--color-tint);
+  background: #e6f4f3;
 }
 
 .quiz-result .result-back-btn {
-  background: var(--color-primary);
+  background: #389695;
   color: #fff;
-  border: 1px solid var(--color-primary);
+  border: 1px solid #389695;
 }
 
 .quiz-result .result-back-btn:hover {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
+  background: #2b7a79;
+  border-color: #2b7a79;
 }
 
 @media (min-width: 900px) {

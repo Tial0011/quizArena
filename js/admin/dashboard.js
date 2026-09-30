@@ -3,7 +3,6 @@ import { renderQuizzes } from "./quizzes.js";
 import { renderQuestions } from "./questions.js";
 import { renderNotifications } from "./notifications.js";
 import { logoutUser } from "../auth.js";
-import { themeToggleButton } from "../theme.js";
 import { db } from "../firebase/config.js";
 import { initParallax, initScrollReveal } from "../student/scrollEffects.js";
 
@@ -49,7 +48,6 @@ export function renderAdminDashboard() {
           <p>Manage quizzes, subjects and students.</p>
         </div>
 
-        ${themeToggleButton("admin-theme")}
         <button id="adminLogoutBtn" class="admin-logout-btn">
           Logout
         </button>

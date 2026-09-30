@@ -5,7 +5,7 @@
 .quizzes-header {
   margin-bottom: 20px;
   padding-top: 24px;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid #eee;
 }
 
 .quizzes-header h2 {
@@ -14,7 +14,7 @@
 
 .quizzes-subtitle {
   margin: 0;
-  color: var(--color-text-muted);
+  color: #6b7280;
   font-size: 14px;
 }
 
@@ -48,23 +48,23 @@
 .quiz-search {
   width: 100%;
   padding: 14px 18px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   border-radius: 14px;
-  background: var(--color-surface);
+  background: #fff;
   font-size: 15px;
-  color: var(--color-text);
+  color: #111827;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 .quiz-search::placeholder {
-  color: var(--color-text-faint);
+  color: #9ca3af;
 }
 
 .quiz-search:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: #389695;
   box-shadow: 0 0 0 4px rgba(56, 150, 149, 0.12);
 }
 
@@ -82,8 +82,8 @@
 
 .quiz-filter-btn {
   border: none;
-  background: var(--color-surface-2);
-  color: var(--color-text-soft);
+  background: #f3f4f6;
+  color: #374151;
   padding: 10px 18px;
   border-radius: 999px;
   font-size: 14px;
@@ -94,13 +94,13 @@
 }
 
 .quiz-filter-btn:hover {
-  background: var(--color-tint);
-  color: var(--color-link);
+  background: #e1f2f1;
+  color: #2b7a79;
   transform: translateY(-1px);
 }
 
 .quiz-filter-btn.active {
-  background: var(--color-primary);
+  background: #389695;
   color: #fff;
   box-shadow: 0 6px 18px rgba(56, 150, 149, 0.25);
 }
@@ -126,7 +126,7 @@
 .quiz-semester-filter label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: #6b7280;
 }
 
 .quiz-level-filter select,
@@ -135,9 +135,9 @@
   height: 48px;
   padding: 0 14px;
   border-radius: 14px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #111827;
   font-size: 15px;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -146,13 +146,13 @@
 
 .quiz-level-filter select:hover,
 .quiz-semester-filter select:hover {
-  border-color: var(--color-border-tint);
+  border-color: #a5d5d4;
 }
 
 .quiz-level-filter select:focus,
 .quiz-semester-filter select:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: #389695;
   box-shadow: 0 0 0 4px rgba(56, 150, 149, 0.12);
 }
 
@@ -160,8 +160,8 @@
    FORM CARD
 ========================= */
 .quiz-form {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
+  background: #fafafa;
+  border: 1px solid #eee;
   border-radius: 16px;
   padding: 20px;
   margin: 20px 0 28px 0;
@@ -190,7 +190,7 @@
 .form-field label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-text);
+  color: #444;
 }
 
 .quiz-form select,
@@ -201,10 +201,10 @@
                               included in it, pushing inputs past
                               the form's edge. */
   padding: 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #ddd;
   border-radius: 10px;
   font-size: 14px;
-  background: var(--color-surface);
+  background: #fff;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -213,7 +213,7 @@
 .quiz-form select:focus,
 .quiz-form input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: #389695;
   box-shadow: 0 0 0 3px rgba(56, 150, 149, 0.15);
 }
 
@@ -225,7 +225,7 @@
 
 .btn-primary {
   border: none;
-  background: var(--color-primary);
+  background: #389695;
   color: white;
   padding: 12px 20px;
   border-radius: 10px;
@@ -238,7 +238,7 @@
 }
 
 .btn-primary:hover {
-  background: var(--color-primary-hover);
+  background: #2b7a79;
 }
 
 .btn-primary:active {
@@ -246,9 +246,9 @@
 }
 
 .btn-secondary {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #444;
   padding: 12px 20px;
   border-radius: 10px;
   cursor: pointer;
@@ -258,7 +258,7 @@
 }
 
 .btn-secondary:hover {
-  background: var(--color-surface-2);
+  background: #f3f3f3;
 }
 
 /* =========================
@@ -280,8 +280,8 @@
   gap: 10px;
   padding: 18px;
   border-radius: 16px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: #fff;
+  border: 1px solid #eee;
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 8px 20px rgba(0, 0, 0, 0.03);
@@ -307,13 +307,13 @@
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: var(--color-text);
+  color: #1a1a1a;
 }
 
 .quiz-card-week {
   margin: 0;
   font-size: 13px;
-  color: var(--color-text-muted);
+  color: #777;
 }
 
 .quiz-card-footer {
@@ -343,23 +343,23 @@
 }
 
 .badge-subject {
-  background: var(--color-tint);
-  color: var(--color-link);
+  background: #e1f2f1;
+  color: #2b7a79;
 }
 
 .badge-price {
-  background: var(--success-bg);
-  color: var(--color-success);
+  background: #ecfdf5;
+  color: #047857;
 }
 
 .badge-active {
-  background: var(--success-bg);
-  color: var(--color-success);
+  background: #dcfce7;
+  color: #15803d;
 }
 
 .badge-inactive {
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 /* =========================
@@ -367,8 +367,8 @@
 ========================= */
 .btn-edit {
   border: none;
-  background: var(--color-tint);
-  color: var(--color-link);
+  background: #e1f2f1;
+  color: #2b7a79;
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -378,13 +378,13 @@
 }
 
 .btn-edit:hover {
-  background: var(--color-tint-strong);
+  background: #cfe6e5;
 }
 
 .btn-delete {
   border: none;
-  background: var(--danger-bg);
-  color: var(--color-danger);
+  background: #fee2e2;
+  color: #b91c1c;
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -394,7 +394,7 @@
 }
 
 .btn-delete:hover {
-  background: var(--danger-bg);
+  background: #fecaca;
 }
 
 /* =========================
@@ -403,10 +403,10 @@
 .quiz-empty-state {
   text-align: center;
   padding: 48px 20px;
-  border: 1px dashed var(--color-border);
+  border: 1px dashed #ddd;
   border-radius: 16px;
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
+  background: #fafafa;
+  color: #888;
   font-size: 15px;
   font-weight: 500;
 }

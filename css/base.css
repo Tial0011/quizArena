@@ -6,10 +6,33 @@
    migrated over time without a risky full rewrite.
 ========================= */
 :root {
+  --color-primary: #389695;
+  --color-primary-light: #6fbab9;
+  --color-primary-dark: #2b7a79;
+  --color-accent: #eebf92; /* sand: warmth + reward moments */
+  --color-accent-deep: #c98a4b;
+  --color-ink: #2d190b;
+  --color-success: #10b981;
+  --color-success-dark: #059669;
+  --color-danger: #dc2626;
+  --color-warning: #b45309;
+
+  --color-bg: #fbf6f0;
+  --color-surface: #ffffff;
+  --color-text: #111827;
+  --color-text-strong: #2d190b;
+  --color-text-muted: #6b7280;
+  --color-text-faint: #9ca3af;
+  --color-border: #e5e7eb;
+
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
+
+  --shadow-sm: 0 2px 8px rgba(45, 25, 11, 0.06);
+  --shadow-md: 0 8px 24px rgba(45, 25, 11, 0.1);
+  --shadow-lg: 0 12px 32px rgba(45, 25, 11, 0.18);
 
   --transition-fast: 0.15s ease;
   --transition-base: 0.25s ease;
@@ -32,20 +55,17 @@ html {
      any element that overflows its container causing sideways
      scroll, on top of the specific fixes already made per-page. */
   overflow-x: hidden;
-  overflow-x: clip;
 }
 
 body {
-  font-family: var(--font-ui);
+  font-family: Inter, system-ui, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   min-height: 100vh;
-  min-height: 100dvh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
-  overflow-x: clip;
 }
 
 button,

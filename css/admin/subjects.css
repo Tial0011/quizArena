@@ -16,7 +16,7 @@
 
 .subjects-subtitle {
   margin: 0;
-  color: var(--color-text-muted);
+  color: #6b7280;
   font-size: 14px;
 }
 
@@ -31,8 +31,8 @@
 }
 
 .count-badge {
-  background: var(--color-tint);
-  color: var(--color-link);
+  background: #e1f2f1;
+  color: #2b7a79;
   padding: 8px 16px;
   border-radius: 999px;
   font-weight: 600;
@@ -76,7 +76,7 @@
 .subject-form-field label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-text);
+  color: #444;
 }
 
 .subject-form-field input,
@@ -84,10 +84,10 @@
   width: 100%;
   box-sizing: border-box;
   padding: 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #ddd;
   border-radius: 10px;
   font-size: 14px;
-  background: var(--color-surface);
+  background: #fff;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -96,7 +96,7 @@
 .subject-form-field input:focus,
 .subject-form-field select:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: #389695;
   box-shadow: 0 0 0 3px rgba(56, 150, 149, 0.15);
 }
 
@@ -106,7 +106,7 @@
 
 .subject-add-btn {
   border: none;
-  background: var(--color-primary);
+  background: #389695;
   color: white;
   padding: 12px 20px;
   border-radius: 10px;
@@ -119,7 +119,7 @@
 }
 
 .subject-add-btn:hover {
-  background: var(--color-primary-hover);
+  background: #2b7a79;
 }
 
 .subject-add-btn:active {
@@ -133,7 +133,7 @@
 .subjects-header {
   margin-bottom: 20px;
   padding-top: 24px;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid #eee;
 }
 
 /* =========================
@@ -153,8 +153,8 @@
 ========================= */
 
 .subject-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: #fff;
+  border: 1px solid #eee;
   border-radius: 16px;
   padding: 18px;
 
@@ -182,11 +182,11 @@
   margin: 0 0 6px 0;
   font-size: 17px;
   font-weight: 700;
-  color: var(--color-text);
+  color: #1a1a1a;
 }
 
 .subject-card small {
-  color: var(--color-text-muted);
+  color: #777;
 }
 
 /* =========================
@@ -217,13 +217,13 @@
 }
 
 .subject-tag.level {
-  background: var(--color-tint);
-  color: var(--color-link);
+  background: #e1f2f1;
+  color: #2b7a79;
 }
 
 .subject-tag.semester {
-  background: var(--info-bg);
-  color: var(--color-info);
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 /* =========================
@@ -235,8 +235,8 @@
 .delete-subject {
   flex: 0 0 auto;
   border: none;
-  background: var(--danger-bg);
-  color: var(--color-danger);
+  background: #fee2e2;
+  color: #b91c1c;
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -246,7 +246,7 @@
 }
 
 .delete-subject:hover {
-  background: var(--danger-bg);
+  background: #fecaca;
 }
 
 /* =========================
@@ -256,10 +256,10 @@
 .empty-state {
   text-align: center;
   padding: 48px 20px;
-  border: 1px dashed var(--color-border);
+  border: 1px dashed #ddd;
   border-radius: 16px;
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
+  background: #fafafa;
+  color: #888;
   font-size: 15px;
   font-weight: 500;
 }

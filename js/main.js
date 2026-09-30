@@ -46,17 +46,17 @@ function renderLoadError(user) {
   app.innerHTML = `
     <div style="min-height:100dvh;display:grid;place-items:center;padding:24px;text-align:center">
       <div style="max-width:22rem">
-        <h1 style="font-size:1.4rem;color:var(--color-text-strong);margin-bottom:8px">
+        <h1 style="font-size:1.4rem;color:#2d190b;margin-bottom:8px">
           ${offline ? "You're offline" : "Something went wrong"}
         </h1>
-        <p style="color:var(--color-text-muted);margin-bottom:20px">
+        <p style="color:#6b7280;margin-bottom:20px">
           ${
             offline
               ? "Connect to the internet once so Quiz Arena can save your data for offline use."
               : "We couldn't load your account. Please try again."
           }
         </p>
-        <button id="retryLoad" style="font:inherit;font-weight:700;padding:14px 22px;border:0;border-radius:14px;background:var(--color-primary);color:#fff">Try again</button>
+        <button id="retryLoad" style="font:inherit;font-weight:700;padding:14px 22px;border:0;border-radius:14px;background:#389695;color:#fff">Try again</button>
       </div>
     </div>`;
   document.getElementById("retryLoad")?.addEventListener("click", () => location.reload());

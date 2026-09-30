@@ -3,9 +3,9 @@
 ========================================================= */
 
 .friend-group-info-card {
-  background: linear-gradient(135deg, var(--color-surface), var(--color-surface-2));
-  border: 1px solid var(--warn-border);
-  border-left: 5px solid var(--color-primary);
+  background: linear-gradient(135deg, #ffffff, #fcf8f3);
+  border: 1px solid #f6e2cd;
+  border-left: 5px solid #389695;
   border-radius: 18px;
   padding: 18px;
   margin: 18px 0 22px;
@@ -15,13 +15,13 @@
 .info-title {
   font-size: 16px;
   font-weight: 700;
-  color: var(--color-link);
+  color: #2b7a79;
   margin-bottom: 12px;
 }
 
 .friend-group-info-card p {
   margin: 0;
-  color: var(--color-text);
+  color: #4b5563;
   line-height: 1.6;
   font-size: 14px;
 }
@@ -33,13 +33,13 @@
 
 .friend-group-info-card li {
   margin-bottom: 10px;
-  color: var(--color-text);
+  color: #4b5563;
   line-height: 1.6;
   font-size: 14px;
 }
 
 .friend-group-info-card strong {
-  color: var(--color-text);
+  color: #111827;
 }
 
 /* =========================================================
@@ -57,7 +57,7 @@
   padding: 18px 20px;
   margin: 18px 0;
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-deep));
+  background: linear-gradient(135deg, #389695, #1f5c5b);
   color: white;
   box-shadow: 0 15px 35px rgba(56, 150, 149, 0.25);
 }
@@ -118,12 +118,12 @@
   flex-wrap: wrap;
   margin: 0 0 6px;
   font-size: 1.05rem;
-  color: var(--color-text);
+  color: #111827;
 }
 
 .challenge-badge {
-  background: var(--color-tint);
-  color: var(--color-link);
+  background: #e1f2f1;
+  color: #2b7a79;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 11px;
@@ -132,7 +132,7 @@
 
 .challenge-subtitle {
   margin: 0 0 14px;
-  color: var(--color-text-muted);
+  color: #6b7280;
   font-size: 13px;
 }
 
@@ -144,8 +144,8 @@
   margin-left: 8px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--color-tint);
-  color: var(--color-link);
+  background: #e1f2f1;
+  color: #2b7a79;
   font-size: 11px;
   font-weight: 700;
 }
@@ -161,23 +161,23 @@
 }
 
 .friend-group-form-card {
-  background: var(--color-surface);
+  background: white;
   border-radius: 18px;
   padding: 20px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #ececec;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
 }
 
 .friend-group-form-card h3 {
   margin: 0 0 12px 0;
   font-size: 1rem;
-  color: var(--color-text);
+  color: #111827;
 }
 
 .friend-group-form-card input {
   width: 100%;
   padding: 13px 14px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #d1d5db;
   border-radius: 12px;
   font-size: 15px;
   margin-bottom: 12px;
@@ -185,7 +185,7 @@
 
 .friend-group-form-card input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: #389695;
   box-shadow: 0 0 0 3px rgba(56, 150, 149, 0.15);
 }
 
@@ -201,21 +201,21 @@
 }
 
 .friend-group-form-card .btn-primary {
-  background: var(--color-primary);
+  background: #389695;
   color: white;
 }
 
 .friend-group-form-card .btn-primary:hover {
-  background: var(--color-primary-hover);
+  background: #2b7a79;
 }
 
 .friend-group-form-card .btn-secondary {
-  background: var(--color-surface-2);
-  color: var(--color-text-soft);
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .friend-group-form-card .btn-secondary:hover {
-  background: var(--color-border);
+  background: #e5e7eb;
 }
 
 .friend-group-form-card button:disabled {
@@ -225,7 +225,7 @@
 
 .group-limits-note {
   margin: -4px 0 20px;
-  color: var(--color-text-faint);
+  color: #9ca3af;
   font-size: 12px;
   text-align: center;
 }
@@ -241,10 +241,10 @@
 }
 
 .friend-group-card {
-  background: var(--color-surface);
+  background: white;
   border-radius: 20px;
   padding: 22px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #ececec;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
 }
 
@@ -256,7 +256,7 @@
   gap: 12px;
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #f1f1f1;
 }
 .group-title-row {
   display: flex;
@@ -274,40 +274,40 @@
 }
 
 .group-status.qualified {
-  background: var(--success-bg);
-  color: var(--color-success);
+  background: #dcfce7;
+  color: #15803d;
 }
 
 .group-status.not-qualified {
-  background: var(--warn-bg);
-  color: var(--color-warning);
+  background: #fef3c7;
+  color: #b45309;
 }
 
 .group-meta {
   margin-top: 10px;
-  color: var(--color-text-muted);
+  color: #6b7280;
   font-size: 13px;
 }
 
 .friend-group-card-header h3 {
   margin: 0 0 4px 0;
-  color: var(--color-text);
+  color: #111827;
 }
 
 .friend-group-code {
   font-size: 13px;
-  color: var(--color-text-muted);
+  color: #6b7280;
 }
 
 .friend-group-code strong {
-  color: var(--color-link);
+  color: #389695;
   letter-spacing: 0.05em;
 }
 
 .btn-share-code {
   border: none;
-  background: var(--success-bg);
-  color: var(--color-success);
+  background: #dcfce7;
+  color: #15803d;
   padding: 10px 16px;
   border-radius: 10px;
   font-weight: 600;
@@ -318,7 +318,7 @@
 }
 
 .btn-share-code:hover {
-  background: var(--success-bg);
+  background: #bbf7d0;
 }
 
 /* =========================
@@ -326,8 +326,8 @@
 ========================= */
 
 .pending-requests-box {
-  background: var(--warn-bg);
-  border: 1px solid var(--warn-border);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
   border-radius: 14px;
   padding: 14px 16px;
   margin-bottom: 16px;
@@ -336,7 +336,7 @@
 .pending-requests-box h4 {
   margin: 0 0 10px 0;
   font-size: 0.85rem;
-  color: var(--color-warning);
+  color: #92400e;
 }
 
 .pending-request-item {
@@ -349,13 +349,13 @@
 }
 
 .pending-request-item + .pending-request-item {
-  border-top: 1px solid var(--warn-border);
+  border-top: 1px solid #fde68a;
 }
 
 .pending-request-email {
   display: block;
   font-size: 12px;
-  color: var(--color-warning);
+  color: #92400e;
   opacity: 0.8;
 }
 
@@ -366,7 +366,7 @@
 
 .btn-accept {
   border: none;
-  background: var(--color-success-solid);
+  background: #22c55e;
   color: white;
   padding: 7px 14px;
   border-radius: 8px;
@@ -376,13 +376,13 @@
 }
 
 .btn-accept:hover {
-  background: var(--color-success-solid);
+  background: #16a34a;
 }
 
 .btn-reject {
   border: none;
-  background: var(--danger-bg);
-  color: var(--color-danger);
+  background: #fee2e2;
+  color: #b91c1c;
   padding: 7px 14px;
   border-radius: 8px;
   font-weight: 600;
@@ -391,7 +391,7 @@
 }
 
 .btn-reject:hover {
-  background: var(--danger-bg);
+  background: #fecaca;
 }
 
 .btn-accept:disabled,
@@ -414,7 +414,7 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-link);
+  color: #389695;
   padding: 6px 0;
   list-style: none;
 }
@@ -434,7 +434,7 @@
 }
 
 .group-leaderboard-details summary:hover {
-  color: var(--color-link);
+  color: #2b7a79;
 }
 
 .group-leaderboard-details .group-leaderboard {
@@ -459,8 +459,8 @@
   gap: 12px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
+  background: #fafafa;
+  border: 1px solid #ececec;
 }
 .leaderboard-row {
   transition: 0.25s ease;
@@ -471,23 +471,23 @@
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 }
 .first-place {
-  background: linear-gradient(90deg, var(--warn-bg), var(--color-surface-2));
-  border-color: var(--warn-border);
+  background: linear-gradient(90deg, #fff7cc, #fffdf4);
+  border-color: #facc15;
 }
 
 .second-place {
-  background: linear-gradient(90deg, var(--color-surface-2), var(--color-surface));
-  border-color: var(--color-border);
+  background: linear-gradient(90deg, #f3f4f6, #ffffff);
+  border-color: #d1d5db;
 }
 
 .third-place {
-  background: linear-gradient(90deg, var(--warn-bg), var(--color-surface));
-  border-color: var(--warn-border);
+  background: linear-gradient(90deg, #fce7d6, #ffffff);
+  border-color: #fdba74;
 }
 
 .leaderboard-row-me {
-  background: var(--color-surface-2);
-  border: 2px solid var(--color-primary-light);
+  background: #f1f9f8;
+  border: 2px solid #4aa9a8;
   box-shadow: 0 0 0 4px rgba(74, 169, 168, 0.1);
 }
 
@@ -499,14 +499,14 @@
 .leaderboard-name {
   flex: 1;
   font-weight: 600;
-  color: var(--color-text);
+  color: #111827;
   font-size: 14px;
 }
 
 .leaderboard-score {
   font-size: 16px;
   font-weight: 800;
-  color: var(--color-link);
+  color: #389695;
 }
 
 /* Generic empty-state used by the challenge list, group
@@ -514,10 +514,10 @@
 .empty-state {
   text-align: center;
   padding: 24px 16px;
-  border: 1px dashed var(--color-border);
+  border: 1px dashed #ddd;
   border-radius: 14px;
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
+  background: #fafafa;
+  color: #888;
   font-size: 14px;
 }
 
