@@ -671,7 +671,7 @@ function syncCartUI({ silent = false } = {}) {
 function celebrate(anchor, n = 28) {
   if (calm()) return;
   const rect = anchor.getBoundingClientRect();
-  const colors = ["#389695", "#eebf92", "#2d190b", "#6fbab9", "#c98a4b"];
+  const colors = ["#27807f", "#eebf92", "#0b2a2a", "#5ec4c1", "#ffffff"];
   const layer = document.createElement("div");
   layer.className = "mk-confetti";
   for (let i = 0; i < n; i++) {

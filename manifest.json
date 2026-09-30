@@ -9,8 +9,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#fbf6f0",
-  "theme_color": "#2d190b",
+  "background_color": "#f2faf9",
+  "theme_color": "#27807f",
   "prefer_related_applications": false,
   "related_applications": [
     {

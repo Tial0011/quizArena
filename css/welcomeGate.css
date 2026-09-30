@@ -16,15 +16,15 @@
 ========================================================= */
 
 .wg {
-  --wg-bg-hi: #2b7a79;
-  --wg-bg-mid: #2d190b;
-  --wg-bg-lo: #1a0f06;
+  --wg-bg-hi: #1d6a69;
+  --wg-bg-mid: #0b2a2a;
+  --wg-bg-lo: #051717;
   --wg-violet: #6fbab9;
   --wg-ice: #f1f9f8;
-  --wg-ice-soft: rgba(251, 246, 240, 0.85);
+  --wg-ice-soft: rgba(241, 250, 249, 0.85);
   --wg-amber: #eebf92;
   --wg-amber-deep: #ff8a3d;
-  --wg-ink: #2d190b;
+  --wg-ink: #0b2a2a;
   --wg-cyan: #22bfe8;
   --wg-green: #3fd296;
   --wg-pad-x: 22px;
@@ -370,7 +370,7 @@ html.wg-lock body {
 }
 .wg-face--bottom {
   transform: rotateX(-90deg) translateZ(calc(var(--s) / 2));
-  background: rgba(45, 25, 11, 0.8);
+  background: rgba(6, 36, 36, 0.8);
 }
 
 .wg-face svg {

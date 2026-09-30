@@ -9,11 +9,11 @@
 ========================================================= */
 
 .quiz-layout {
-  --q-ink: #16302f;
-  --q-teal: #389695;
-  --q-teal-dark: #2b7a79;
-  --q-rule: #d9e9e8;
-  --q-muted: #587270;
+  --q-ink: var(--color-text-strong);
+  --q-teal: var(--color-primary);
+  --q-teal-dark: var(--color-primary-hover);
+  --q-rule: var(--color-border-tint);
+  --q-muted: var(--color-text-muted);
 
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -49,7 +49,7 @@
   z-index: 50;
   margin: 0;
   padding: 14px 16px 16px;
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--q-rule);
   border-radius: 18px;
 }
@@ -90,7 +90,7 @@
 }
 
 .quiz-timer.is-low {
-  background: #dc2626;
+  background: var(--color-danger-solid);
   animation: quiz-timer-pulse 1s ease-in-out infinite;
 }
 
@@ -118,7 +118,7 @@
 .quiz-progress-track {
   width: 100%;
   height: 6px;
-  background: #e3efee;
+  background: var(--color-tint);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -135,7 +135,7 @@
 ========================= */
 
 .quiz-card {
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--q-rule);
   border-radius: 18px;
   box-shadow: none;
@@ -169,7 +169,7 @@
   gap: 14px;
   text-align: left;
   border: 1.5px solid var(--q-rule);
-  background: #fff;
+  background: var(--color-surface);
   padding: 14px 16px;
   border-radius: 14px;
   font-size: 15px;
@@ -184,7 +184,7 @@
 @media (hover: hover) and (pointer: fine) {
   .option-btn:hover {
     border-color: var(--q-teal);
-    background: #f3f9f8;
+    background: var(--color-surface-2);
     transform: none;
     box-shadow: none;
   }
@@ -197,7 +197,7 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: #e3efee;
+  background: var(--color-tint);
   color: var(--q-ink);
   font-weight: 800;
   font-size: 14px;
@@ -216,7 +216,7 @@
 .option-btn.selected {
   border-color: var(--q-teal);
   box-shadow: 0 0 0 1px var(--q-teal);
-  background: #eef7f6;
+  background: var(--color-surface-2);
   color: var(--q-ink);
 }
 
@@ -238,7 +238,7 @@
   padding: 1px 5px;
   border: 1px solid var(--q-rule);
   border-bottom-width: 2px;
-  background: #f3f9f8;
+  background: var(--color-surface-2);
   font: 700 11px/1.4 inherit;
   text-align: center;
 }
@@ -268,13 +268,13 @@
 }
 
 #prevBtn {
-  background: #fff;
+  background: var(--color-surface);
   color: var(--q-teal-dark);
 }
 
 @media (hover: hover) and (pointer: fine) {
   #prevBtn:hover:not(:disabled) {
-    background: #e6f4f3;
+    background: var(--color-tint);
   }
 }
 
@@ -302,7 +302,7 @@
 
 .question-navigator-sidebar {
   display: none;
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--q-rule);
   border-radius: 18px;
   box-shadow: none;
@@ -344,7 +344,7 @@
 }
 
 .nav-question-btn.nav-current {
-  background: #fff;
+  background: var(--color-surface);
   border: 2px solid var(--q-teal);
   color: var(--q-teal-dark);
   box-shadow: none;
@@ -357,7 +357,7 @@
 }
 
 .nav-question-btn.nav-unanswered {
-  background: #fff;
+  background: var(--color-surface);
   color: var(--q-muted);
 }
 
@@ -384,7 +384,7 @@
 }
 
 .legend-dot.nav-current {
-  background: #fff;
+  background: var(--color-surface);
   border-color: var(--q-teal);
 }
 
@@ -394,7 +394,7 @@
 }
 
 .legend-dot.nav-unanswered {
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .rail-summary {
@@ -419,7 +419,7 @@
   padding: 13px;
   border: 1.5px solid var(--q-teal);
   border-radius: 12px;
-  background: #fff;
+  background: var(--color-surface);
   color: var(--q-teal-dark);
   font-size: 13px;
   font-weight: 800;
@@ -451,7 +451,7 @@
   align-items: center;
   gap: 10px;
   border: none;
-  background: #389695;
+  background: var(--color-primary);
   color: white;
   padding: 14px 20px;
   border-radius: 999px;
@@ -465,7 +465,7 @@
 }
 
 .nav-toggle-btn:hover {
-  background: #2b7a79;
+  background: var(--color-primary-hover);
 }
 
 .nav-toggle-btn:active {
@@ -498,7 +498,7 @@
   width: 88%;
   max-width: 360px;
   height: 100%;
-  background: #fff;
+  background: var(--color-surface);
   padding: 20px;
   overflow-y: auto;
   border-radius: 18px 0 0 18px;
@@ -534,9 +534,9 @@
 }
 
 .navigator-close-btn {
-  border: 1px solid #d9e9e8;
-  background: #fff;
-  color: #16302f;
+  border: 1px solid var(--color-border-tint);
+  background: var(--color-surface);
+  color: var(--color-text-strong);
   width: 34px;
   height: 34px;
   border-radius: 10px;

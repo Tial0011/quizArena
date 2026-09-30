@@ -13,7 +13,7 @@
 .review-title {
   text-align: center;
   margin-bottom: 24px;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .review-list {
@@ -28,22 +28,22 @@
 ========================= */
 
 .review-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 20px;
   padding: 22px;
-  border: 1px solid #ececec;
+  border: 1px solid var(--color-border);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
 }
 
 .review-question-number {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #389695;
+  color: var(--color-link);
   margin-bottom: 6px;
 }
 
 .review-question-text {
-  color: #111827;
+  color: var(--color-text);
   margin-bottom: 16px;
   line-height: 1.5;
 }
@@ -64,7 +64,7 @@
   gap: 10px;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   font-size: 0.95rem;
   line-height: 1.4;
 }
@@ -88,23 +88,23 @@
 
 /* Neutral: unselected, incorrect options */
 .normal-option {
-  background: #ffffff;
-  border-color: #e5e7eb;
-  color: #374151;
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-soft);
 }
 
 /* Correct answer, whether or not the student picked it */
 .correct-option {
-  background: #dcfce7;
-  border-color: #22c55e;
-  color: #166534;
+  background: var(--success-bg);
+  border-color: var(--color-success-solid);
+  color: var(--color-success);
 }
 
 /* Student's selected answer, when it's wrong */
 .wrong-option {
-  background: #fee2e2;
-  border-color: #ef4444;
-  color: #991b1b;
+  background: var(--danger-bg);
+  border-color: var(--color-danger-solid);
+  color: var(--color-danger);
 }
 
 /* =========================
@@ -116,7 +116,7 @@
   border: none;
   padding: 16px;
   border-radius: 14px;
-  background: #389695;
+  background: var(--color-primary);
   color: white;
   font-size: 16px;
   font-weight: 700;
@@ -125,7 +125,7 @@
 }
 
 .review-back-btn:hover {
-  background: #2b7a79;
+  background: var(--color-primary-hover);
 }
 
 .review-back-btn:active {
@@ -149,11 +149,11 @@
 
 .review-answers-btn {
   width: 100%;
-  border: 1px solid #389695;
+  border: 1px solid var(--color-primary);
   padding: 16px;
   border-radius: 14px;
-  background: white;
-  color: #389695;
+  background: var(--color-surface);
+  color: var(--color-link);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
@@ -161,7 +161,7 @@
 }
 
 .review-answers-btn:hover {
-  background: #f1f9f8;
+  background: var(--color-surface-2);
 }
 
 .result-back-btn {
@@ -169,7 +169,7 @@
   border: none;
   padding: 16px;
   border-radius: 14px;
-  background: #389695;
+  background: var(--color-primary);
   color: white;
   font-size: 16px;
   font-weight: 700;
@@ -178,7 +178,7 @@
 }
 
 .result-back-btn:hover {
-  background: #2b7a79;
+  background: var(--color-primary-hover);
 }
 
 /* =========================

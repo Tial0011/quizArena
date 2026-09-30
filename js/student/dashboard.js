@@ -1,4 +1,5 @@
 import { logoutUser } from "../auth.js";
+import { themeToggleButton } from "../theme.js";
 import { renderPracticeArena } from "./practice.js";
 import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
@@ -95,21 +96,21 @@ const MODULES = [
     title: "My Quizzes",
     text: "Every weekly quiz you have purchased, ready to attempt whenever you are.",
     cta: "Open library",
-    accent: "var(--sd-sand)",
+    accent: "var(--color-primary-light)",
   },
   {
     go: "marketplace",
     title: "Marketplace",
     text: "Browse this week's quizzes and add new ones to your library.",
     cta: "Browse quizzes",
-    accent: "#4f9fc0",
+    accent: "var(--color-primary-hover)",
   },
   {
     go: "groups",
     title: "Friend Groups",
     text: "Squad up, climb the leaderboard and chase the weekly Global Challenge prize.",
     cta: "Compete",
-    accent: "var(--sd-green)",
+    accent: "var(--color-primary-deep)",
   },
 ];
 
@@ -169,6 +170,7 @@ export function renderStudentDashboard(userData = {}) {
           </div>
 
           <div class="sd-top-actions">
+            ${themeToggleButton("sd-theme")}
             <button type="button" class="sd-signout sd-signout-mobile" data-logout aria-label="Sign out">
               ${icon("out", 18)}
             </button>

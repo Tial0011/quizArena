@@ -6,9 +6,9 @@
 ========================= */
 
 .quiz-result {
-  --r-ink: #16302f;
-  --r-rule: #d9e9e8;
-  --r-accent: #389695;
+  --r-ink: var(--color-text-strong);
+  --r-rule: var(--color-border-tint);
+  --r-accent: var(--color-primary);
 
   max-width: 980px;
   margin: 24px auto 48px;
@@ -17,7 +17,7 @@
   overflow: hidden;
   border-radius: 22px;
   border: 1px solid var(--r-rule);
-  background: #fff;
+  background: var(--color-surface);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
@@ -26,17 +26,17 @@
 }
 
 .quiz-result.tier-high {
-  --r-accent: #10b981;
+  --r-accent: var(--color-primary);
 }
 .quiz-result.tier-mid {
-  --r-accent: #389695;
+  --r-accent: var(--color-primary);
 }
 .quiz-result.tier-low {
-  --r-accent: #c98a4b;
+  --r-accent: var(--color-primary);
 }
 
 .result-hero {
-  background: linear-gradient(160deg, #389695, #1f6f6e);
+  background: linear-gradient(160deg, var(--color-primary), var(--color-primary-deep));
   color: #fff;
   padding: 28px 24px 30px;
   border-top: 6px solid var(--r-accent);
@@ -91,7 +91,7 @@
 }
 
 .result-detail {
-  background: #fff;
+  background: var(--color-surface);
   display: flex;
   flex-direction: column;
 }
@@ -127,7 +127,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #587270;
+  color: var(--color-text-muted);
 }
 
 .quiz-result .result-actions {
@@ -155,24 +155,24 @@
 }
 
 .quiz-result .review-answers-btn {
-  background: #fff;
-  color: #2b7a79;
-  border: 1.5px solid #389695;
+  background: var(--color-surface);
+  color: var(--color-link);
+  border: 1.5px solid var(--color-primary);
 }
 
 .quiz-result .review-answers-btn:hover {
-  background: #e6f4f3;
+  background: var(--color-tint);
 }
 
 .quiz-result .result-back-btn {
-  background: #389695;
+  background: var(--color-primary);
   color: #fff;
-  border: 1px solid #389695;
+  border: 1px solid var(--color-primary);
 }
 
 .quiz-result .result-back-btn:hover {
-  background: #2b7a79;
-  border-color: #2b7a79;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 @media (min-width: 900px) {

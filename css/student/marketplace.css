@@ -6,12 +6,12 @@
    screen and gives every section below a stable "surface" to sit on.
 ========================= */
 .marketplace-page {
-  background: #ffffff;
-  border: 1px solid #efe6dc;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 24px;
   padding: 28px;
   box-shadow:
-    0 1px 2px rgba(45, 25, 11, 0.04),
+    0 1px 2px rgba(6, 36, 36, 0.04),
     0 16px 40px rgba(23, 73, 74, 0.06);
 }
 
@@ -23,8 +23,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #389695;
-  background: #e8f5f4;
+  color: var(--color-link);
+  background: var(--color-tint);
   padding: 5px 12px;
   border-radius: 999px;
   font-size: 12px;
@@ -42,13 +42,13 @@
   margin: 0 0 4px 0;
   font-size: 26px;
   font-weight: 800;
-  color: #2d190b;
+  color: var(--color-text-strong);
   letter-spacing: -0.01em;
 }
 
 .marketplace-subtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -63,8 +63,8 @@
    single "filter your results" unit instead of loose floating rows.
 ========================= */
 .marketplace-toolbar-panel {
-  background: #fcf8f3;
-  border: 1px solid #efe6dc;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
   padding: 18px;
   margin-bottom: 24px;
@@ -85,8 +85,8 @@
   gap: 10px;
   padding: 18px;
   border-radius: 16px;
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 8px 20px rgba(0, 0, 0, 0.03);
@@ -112,7 +112,7 @@
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--color-text);
 }
 
 .marketplace-card-footer {
@@ -144,23 +144,23 @@
 }
 
 .badge-subject {
-  background: #e1f2f1;
-  color: #2b7a79;
+  background: var(--color-tint);
+  color: var(--color-link);
 }
 
 .badge-week {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--info-bg);
+  color: var(--color-info);
 }
 
 .badge-price {
-  background: #ecfdf5;
-  color: #047857;
+  background: var(--success-bg);
+  color: var(--color-success);
 }
 
 .badge-owned {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--success-bg);
+  color: var(--color-success);
 }
 
 /* =========================
@@ -168,7 +168,7 @@
 ========================= */
 .btn-buy {
   border: none;
-  background: #389695;
+  background: var(--color-primary);
   color: white;
   padding: 10px 18px;
   border-radius: 10px;
@@ -181,7 +181,7 @@
 }
 
 .btn-buy:hover {
-  background: #2b7a79;
+  background: var(--color-primary-hover);
 }
 
 .btn-buy:active {
@@ -190,8 +190,8 @@
 
 .btn-open {
   border: none;
-  background: #e1f2f1;
-  color: #2b7a79;
+  background: var(--color-tint);
+  color: var(--color-link);
   padding: 10px 18px;
   border-radius: 10px;
   cursor: pointer;
@@ -201,12 +201,12 @@
 }
 
 .btn-open:hover {
-  background: #cfe6e5;
+  background: var(--color-tint-strong);
 }
 
 .btn-primary {
   border: none;
-  background: #389695;
+  background: var(--color-primary);
   color: white;
   padding: 12px 20px;
   border-radius: 10px;
@@ -217,18 +217,18 @@
 }
 
 .btn-primary:hover {
-  background: #2b7a79;
+  background: var(--color-primary-hover);
 }
 
 .btn-primary:disabled {
-  background: #a5d5d4;
+  background: var(--color-tint-strong);
   cursor: not-allowed;
 }
 
 .btn-secondary {
-  border: 1px solid #ddd;
-  background: #fff;
-  color: #444;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
   padding: 12px 20px;
   border-radius: 10px;
   cursor: pointer;
@@ -238,7 +238,7 @@
 }
 
 .btn-secondary:hover {
-  background: #f3f3f3;
+  background: var(--color-surface-2);
 }
 
 /* =========================
@@ -247,10 +247,10 @@
 .marketplace-empty-state {
   text-align: center;
   padding: 48px 20px;
-  border: 1px dashed #ddd;
+  border: 1px dashed var(--color-border);
   border-radius: 16px;
-  background: #fafafa;
-  color: #888;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
   font-size: 15px;
   font-weight: 500;
 }
@@ -274,7 +274,7 @@
 }
 
 .purchase-dialog {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 16px;
   padding: 24px;
   width: 100%;
@@ -287,8 +287,8 @@
 }
 
 .purchase-dialog-details {
-  background: #fafafa;
-  border: 1px solid #eee;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 14px;
@@ -298,20 +298,20 @@
   margin: 0 0 6px 0;
   font-weight: 700;
   font-size: 15px;
-  color: #1a1a1a;
+  color: var(--color-text);
 }
 
 .purchase-dialog-price {
   margin: 0;
   font-weight: 600;
-  color: #047857;
+  color: var(--color-success);
 }
 
 .purchase-dialog-notice {
   font-size: 12px;
-  color: #b45309;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  color: var(--color-warning);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
   border-radius: 8px;
   padding: 8px 10px;
   margin: 0 0 18px 0;
@@ -345,7 +345,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #34d399);
+  background: linear-gradient(135deg, var(--color-success-solid), var(--color-success-solid));
   color: #fff;
   font-size: 32px;
   font-weight: 700;
@@ -373,30 +373,30 @@
 
 .purchase-success h3 {
   margin: 0 0 6px 0;
-  color: #065f46;
+  color: var(--color-success);
 }
 
 .purchase-success-quiz {
   font-weight: 700;
   font-size: 15px;
-  color: #1a1a1a;
+  color: var(--color-text);
   margin: 0 0 10px 0;
 }
 
 .purchase-success-note {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   line-height: 1.5;
   margin: 0 0 20px 0;
 }
 
 .purchase-success .btn-primary {
   width: 100%;
-  background: #10b981;
+  background: var(--color-success-solid);
 }
 
 .purchase-success .btn-primary:hover {
-  background: #059669;
+  background: var(--color-success-solid);
 }
 
 /* =========================
@@ -414,11 +414,11 @@
 .marketplace-search {
   width: 100%;
   padding: 14px 18px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--color-surface);
   font-size: 15px;
-  color: #111827;
+  color: var(--color-text);
   box-sizing: border-box;
   transition:
     border-color 0.2s ease,
@@ -426,12 +426,12 @@
 }
 
 .marketplace-search::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-faint);
 }
 
 .marketplace-search:focus {
   outline: none;
-  border-color: #389695;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 4px rgba(56, 150, 149, 0.12);
 }
 
@@ -453,8 +453,8 @@
 .marketplace-filter-btn,
 .filter-chip {
   border: none;
-  background: #fff;
-  color: #374151;
+  background: var(--color-surface);
+  color: var(--color-text-soft);
   padding: 10px 18px;
   border-radius: 999px;
   font-size: 14px;
@@ -462,21 +462,21 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
-  border: 1px solid #efe6dc;
+  border: 1px solid var(--color-border);
 }
 
 .marketplace-filter-btn:hover,
 .filter-chip:hover {
-  background: #e8f5f4;
-  color: #2b7a79;
-  border-color: #cfe6e5;
+  background: var(--color-tint);
+  color: var(--color-link);
+  border-color: var(--color-border-tint);
 }
 
 .marketplace-filter-btn.active,
 .filter-chip.active {
-  background: #389695;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #389695;
+  border-color: var(--color-primary);
   box-shadow: 0 6px 18px rgba(56, 150, 149, 0.25);
 }
 
@@ -498,19 +498,19 @@
   justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ececec;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .marketplace-section-title {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .marketplace-section-count {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-weight: 600;
 }
 
@@ -528,8 +528,8 @@
 }
 
 .marketplace-stat {
-  background: #fff;
-  border: 1px solid #ececec;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 18px;
   text-align: center;
@@ -547,13 +547,13 @@
   display: block;
   font-size: 28px;
   font-weight: 700;
-  color: #389695;
+  color: var(--color-link);
 }
 
 .marketplace-stat-label {
   display: block;
   margin-top: 6px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -582,7 +582,7 @@
 .marketplace-semester-filter label {
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .marketplace-level-filter select,
@@ -591,9 +591,9 @@
   height: 48px;
   padding: 0 14px;
   border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  color: #111827;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 15px;
   font-weight: 500;
   box-sizing: border-box;
@@ -603,13 +603,13 @@
 
 .marketplace-level-filter select:hover,
 .marketplace-semester-filter select:hover {
-  border-color: #a5d5d4;
+  border-color: var(--color-border-tint);
 }
 
 .marketplace-level-filter select:focus,
 .marketplace-semester-filter select:focus {
   outline: none;
-  border-color: #389695;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 4px rgba(56, 150, 149, 0.12);
 }
 
@@ -710,8 +710,8 @@
 }
 
 .marketplace-card.is-selected {
-  border-color: #389695;
-  background: linear-gradient(180deg, #f1f9f8, #ffffff);
+  border-color: var(--color-primary);
+  background: linear-gradient(180deg, var(--color-surface-2), var(--color-surface));
   box-shadow:
     0 0 0 2px rgba(56, 150, 149, 0.35),
     0 10px 24px rgba(56, 150, 149, 0.16);
@@ -731,7 +731,7 @@
   min-height: 44px;
   padding: 0 18px;
   border-radius: 12px;
-  background: #389695;
+  background: var(--color-primary);
   color: #fff;
   font-weight: 700;
   font-size: 14px;
@@ -744,8 +744,8 @@
 }
 
 .marketplace-card.is-selected .mk-add {
-  background: #2d190b;
-  color: #eebf92;
+  background: var(--color-ink-bg);
+  color: var(--color-accent);
 }
 
 .marketplace-card .btn-open {
@@ -756,17 +756,17 @@
   margin-left: auto;
   min-height: 36px;
   padding: 0 14px;
-  border: 1.5px solid #389695;
+  border: 1.5px solid var(--color-primary);
   border-radius: 999px;
   background: transparent;
-  color: #2b7a79;
+  color: var(--color-link);
   font-weight: 700;
   font-size: 13px;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .mk-select-all:hover {
-  background: #389695;
+  background: var(--color-primary);
   color: #fff;
 }
 
@@ -790,10 +790,10 @@
   gap: 10px;
   padding: 10px;
   border-radius: 20px;
-  background: #2d190b;
+  background: var(--color-ink-bg);
   color: #fbf6f0;
   box-shadow:
-    0 14px 40px rgba(45, 25, 11, 0.45),
+    0 14px 40px rgba(6, 36, 36, 0.45),
     0 0 0 1px rgba(238, 191, 146, 0.18);
   animation: mk-bar-in 0.32s cubic-bezier(0.34, 1.3, 0.64, 1);
 }
@@ -840,7 +840,7 @@
   height: 100%;
   width: 8%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #389695, #6fbab9);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
   transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -860,8 +860,8 @@
   padding: 8px 16px;
   border: 0;
   border-radius: 14px;
-  background: #eebf92;
-  color: #2d190b;
+  background: var(--color-accent);
+  color: var(--color-text-strong);
   text-align: center;
   font-weight: 800;
   transition: transform 0.12s ease, filter 0.15s ease;
@@ -887,8 +887,8 @@
   margin-bottom: 12px;
 }
 
-.mk-sheet-head h3 { margin: 0; color: #2d190b; }
-.mk-sheet-count { font-size: 13px; font-weight: 700; color: #2b7a79; }
+.mk-sheet-head h3 { margin: 0; color: var(--color-text-strong); }
+.mk-sheet-count { font-size: 13px; font-weight: 700; color: var(--color-link); }
 
 .mk-sheet-list {
   list-style: none;
@@ -896,7 +896,7 @@
   padding: 0;
   max-height: 38dvh;
   overflow-y: auto;
-  border: 1px solid #efe6dc;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
 }
 
@@ -905,14 +905,14 @@
   align-items: center;
   gap: 10px;
   padding: 10px 6px 10px 14px;
-  border-bottom: 1px solid #efe6dc;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .mk-sheet-item:last-child { border-bottom: 0; }
 .mk-sheet-item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.mk-sheet-item-text strong { font-size: 14px; color: #2d190b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mk-sheet-item-text span { font-size: 12px; color: #6b7280; }
-.mk-sheet-item-price { font-weight: 700; font-size: 14px; color: #2b7a79; }
+.mk-sheet-item-text strong { font-size: 14px; color: var(--color-text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mk-sheet-item-text span { font-size: 12px; color: var(--color-text-muted); }
+.mk-sheet-item-price { font-weight: 700; font-size: 14px; color: var(--color-link); }
 
 .mk-sheet-remove {
   width: 44px;
@@ -920,11 +920,11 @@
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #9ca3af;
+  color: var(--color-text-faint);
   font-size: 16px;
 }
 
-.mk-sheet-remove:hover { background: #fee2e2; color: #b91c1c; }
+.mk-sheet-remove:hover { background: var(--danger-bg); color: var(--color-danger); }
 
 .mk-sheet-total {
   display: flex;
@@ -932,7 +932,7 @@
   align-items: baseline;
   padding: 4px 4px 14px;
   font-size: 15px;
-  color: #2d190b;
+  color: var(--color-text-strong);
 }
 
 .mk-sheet-total strong { font-size: 24px; font-variant-numeric: tabular-nums; }
@@ -941,9 +941,9 @@
   margin: 0 0 12px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--color-danger);
   font-size: 13px;
 }
 
@@ -966,13 +966,13 @@
   padding: 6px 10px;
   font-size: 14px;
   font-weight: 600;
-  color: #2d190b;
-  border-bottom: 1px dashed #efe6dc;
+  color: var(--color-text-strong);
+  border-bottom: 1px dashed var(--color-border);
 }
 
-.purchase-success .btn-primary { background: #389695; min-height: 50px; font-size: 15px; }
-.purchase-success .btn-primary:hover { background: #2b7a79; }
-.mk-later { width: 100%; margin-top: 8px; border: 0; background: transparent; color: #6b7280; }
+.purchase-success .btn-primary { background: var(--color-primary); min-height: 50px; font-size: 15px; }
+.purchase-success .btn-primary:hover { background: var(--color-primary-hover); }
+.mk-later { width: 100%; margin-top: 8px; border: 0; background: transparent; color: var(--color-text-muted); }
 
 /* ---------- confetti ---------- */
 .mk-confetti {

@@ -14,11 +14,11 @@
   align-items: center;
   gap: 12px;
   padding: 14px 14px 14px 16px;
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 16px;
   box-shadow:
-    0 12px 32px rgba(45, 25, 11, 0.18),
-    0 2px 8px rgba(45, 25, 11, 0.08);
+    0 12px 32px rgba(6, 36, 36, 0.18),
+    0 2px 8px rgba(6, 36, 36, 0.08);
   border: 1px solid rgba(56, 150, 149, 0.12);
   opacity: 0;
   transform: translateY(16px);
@@ -49,12 +49,12 @@
 
 .install-nudge-text strong {
   font-size: 14px;
-  color: #2d190b;
+  color: var(--color-text-strong);
 }
 
 .install-nudge-text span {
   font-size: 12.5px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -63,7 +63,7 @@
 .install-nudge-btn {
   flex-shrink: 0;
   border: none;
-  background: linear-gradient(135deg, #389695, #6fbab9);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   color: #fff;
   font-weight: 600;
   font-size: 13.5px;
@@ -80,14 +80,14 @@
   flex-shrink: 0;
   border: none;
   background: transparent;
-  color: #9ca3af;
+  color: var(--color-text-faint);
   font-size: 18px;
   line-height: 1;
   padding: 4px 2px;
 }
 
 .install-nudge-close:hover {
-  color: #4b5563;
+  color: var(--color-text);
 }
 
 @media (min-width: 640px) {

@@ -37,7 +37,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: linear-gradient(135deg, #389695, #1f5c5b);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-deep));
   color: white;
   border-radius: 14px;
   padding: 14px 16px;
@@ -67,7 +67,7 @@
 .admin-wrap .admin-header-shape-2 {
   width: 44px;
   height: 44px;
-  background: rgba(238, 191, 146, 0.1);
+  background: rgba(94, 196, 193, 0.12);
   bottom: -14px;
   left: 30%;
 }
@@ -187,8 +187,8 @@
   scrollbar-width: none;
   margin: 0 -14px 18px;
   padding: 0 14px;
-  background: #fcf8f3;
-  border-bottom: 1px solid #e8dfd4;
+  background: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .admin-wrap .admin-tabs::-webkit-scrollbar {
@@ -200,7 +200,7 @@
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: #6b7280;
+  color: var(--color-text-muted);
   padding: 13px 14px 11px;
   min-height: 44px;
   font-weight: 600;
@@ -215,13 +215,13 @@
 
 @media (hover: hover) and (pointer: fine) {
   .admin-wrap .tab-btn:hover {
-    color: #17494a;
+    color: var(--color-link);
   }
 }
 
 .admin-wrap .tab-btn.active {
-  color: #1f5c5b;
-  border-bottom-color: #389695;
+  color: var(--color-link);
+  border-bottom-color: var(--color-primary);
 }
 
 /* =========================
@@ -232,11 +232,11 @@
 ========================= */
 
 .admin-wrap .admin-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 14px;
   padding: 18px;
   box-shadow: 0 3px 10px rgba(17, 24, 39, 0.04);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   margin-bottom: 16px;
 }
 
@@ -245,11 +245,11 @@
   font-weight: 700;
   letter-spacing: -0.005em;
   margin-bottom: 4px;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .admin-wrap .admin-card > p {
-  color: #6b7280;
+  color: var(--color-text-muted);
   line-height: 1.6;
   font-size: 13.5px;
   margin-bottom: 16px;
@@ -274,8 +274,8 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: #fafafa;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 13px;
 }
@@ -285,7 +285,7 @@
   height: 34px;
   flex-shrink: 0;
   border-radius: 8px;
-  background: #f1f0f4;
+  background: var(--color-surface-2);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -295,7 +295,7 @@
 .admin-wrap .overview-info h3 {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text);
   margin-bottom: 2px;
   word-break: break-word;
 }
@@ -305,7 +305,7 @@
 }
 
 .admin-wrap .overview-info p {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -328,10 +328,10 @@
   gap: 10px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: #fafafa;
-  border: 1px solid #e5e7eb;
-  border-left: 3px solid #cfe6e5;
-  color: #4b5563;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border-tint);
+  color: var(--color-text);
   font-size: 13px;
   line-height: 1.55;
 }
@@ -349,15 +349,15 @@
 
 .admin-wrap .activity-time {
   flex: 0 0 auto;
-  color: #9ca3af;
+  color: var(--color-text-faint);
   font-size: 11px;
   white-space: nowrap;
 }
 
 .admin-wrap .activity-item-loading {
-  color: #9ca3af;
+  color: var(--color-text-faint);
   font-style: italic;
-  border-left-color: #e5e7eb;
+  border-left-color: var(--color-border);
 }
 
 /* =========================================================
@@ -375,7 +375,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   font: inherit;
   font-size: 14px;
@@ -388,7 +388,7 @@
 
 .admin-wrap .notification-textarea:focus {
   outline: none;
-  border-color: #389695;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(56, 150, 149, 0.15);
 }
 
@@ -399,8 +399,8 @@
   gap: 12px;
   padding: 13px;
   border-radius: 12px;
-  background: #fafafa;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   margin-bottom: 8px;
 }
 
@@ -410,7 +410,7 @@
 }
 
 .admin-wrap .notification-row-message {
-  color: #111827;
+  color: var(--color-text);
   font-size: 13.5px;
   line-height: 1.55;
   margin-bottom: 6px;
@@ -420,15 +420,15 @@
 .admin-wrap .notification-row-meta {
   display: flex;
   gap: 6px;
-  color: #9ca3af;
+  color: var(--color-text-faint);
   font-size: 11px;
 }
 
 .admin-wrap .delete-notification {
   flex: 0 0 auto;
-  border: 1px solid #fecaca;
-  background: #fff;
-  color: #dc2626;
+  border: 1px solid var(--danger-border);
+  background: var(--color-surface);
+  color: var(--color-danger);
   padding: 7px 12px;
   border-radius: 8px;
   font-size: 12px;
@@ -439,7 +439,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .admin-wrap .delete-notification:hover {
-    background: #fef2f2;
+    background: var(--danger-bg);
   }
 }
 
@@ -587,7 +587,7 @@
 }
 
 .danger-dialog {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 16px;
   padding: 24px;
   width: 100%;
@@ -599,12 +599,12 @@
   margin: 0 0 14px;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .danger-dialog-warning {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
   border-radius: 10px;
   padding: 12px 14px;
   margin-bottom: 16px;
@@ -613,7 +613,7 @@
 .danger-dialog-warning p {
   margin: 0;
   font-size: 13px;
-  color: #7f1d1d;
+  color: var(--color-danger);
   line-height: 1.5;
 }
 
@@ -628,7 +628,7 @@
 .danger-dialog-confirm-label {
   display: block;
   font-size: 13px;
-  color: #444;
+  color: var(--color-text);
   margin-bottom: 8px;
 }
 
@@ -636,7 +636,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 14px;
   margin-bottom: 18px;
@@ -647,7 +647,7 @@
 
 .danger-dialog-input:focus {
   outline: none;
-  border-color: #ef4444;
+  border-color: var(--color-danger-solid);
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 
@@ -670,9 +670,9 @@
    convention of each stylesheet owning its own copy of shared
    button styles rather than depending on another file's. */
 .btn-secondary {
-  border: 1px solid #ddd;
-  background: #fff;
-  color: #444;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
   padding: 12px 20px;
   border-radius: 10px;
   cursor: pointer;
@@ -682,12 +682,12 @@
 }
 
 .btn-secondary:hover {
-  background: #f3f3f3;
+  background: var(--color-surface-2);
 }
 
 .btn-danger {
   border: none;
-  background: #ef4444;
+  background: var(--color-danger-solid);
   color: white;
   padding: 12px 20px;
   border-radius: 10px;
@@ -700,7 +700,7 @@
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #dc2626;
+  background: var(--color-danger-solid);
 }
 
 .btn-danger:disabled {

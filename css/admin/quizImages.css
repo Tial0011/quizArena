@@ -11,7 +11,7 @@
   object-fit: contain;
   border-radius: 12px;
   margin: 16px 0;
-  background: #f9fafb;
+  background: var(--color-surface-2);
 }
 
 @media (max-width: 768px) {

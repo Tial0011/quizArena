@@ -32,7 +32,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "b57ad48107";
+const PRECACHE_VERSION = "b8957bc78c";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",
@@ -54,6 +54,7 @@ const PRECACHE_URLS = [
   "/css/student/quiz.css",
   "/css/student/result.css",
   "/css/student/reviewAnswers.css",
+  "/css/theme.css",
   "/css/verifyGate.css",
   "/css/welcomeGate.css",
   "/favicon.ico",
@@ -98,7 +99,9 @@ const PRECACHE_URLS = [
   "/js/student/quizUi.js",
   "/js/student/reviewAnswers.js",
   "/js/student/scrollEffects.js",
+  "/js/theme.js",
   "/js/ui/landing.js",
+  "/js/ui/toast.js",
   "/js/ui/welcomeGate.js",
   "/manifest.json"
 ];
@@ -113,6 +116,7 @@ const PRECACHE_CDN = [
 /* </precache-manifest> */
 
 const SHELL_CACHE = `qa-shell-${PRECACHE_VERSION}`;
+const FONT_CACHE = "qa-fonts-v1";
 const CDN_CACHE = "qa-cdn-v1"; // URLs contain the SDK version, so they never go stale
 const META_KEY = "/__qa_precache_meta";
 const NAV_TIMEOUT_MS = 3500;
@@ -327,10 +331,10 @@ self.addEventListener("message", (event) => {
 const OFFLINE_HTML = `<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Quiz Arena is offline</title>
-<body style="margin:0;min-height:100dvh;display:grid;place-items:center;background:#2d190b;color:#f1f9f8;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px">
+<body style="margin:0;min-height:100dvh;display:grid;place-items:center;background:#061616;color:#f1f9f8;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px">
 <div><h1 style="font-size:1.6rem;margin:0 0 8px">You're offline</h1>
 <p style="margin:0 0 20px;opacity:.8">Connect to the internet once and Quiz Arena will be saved on your phone.</p>
-<button onclick="location.reload()" style="font:inherit;font-weight:700;padding:14px 22px;border:0;border-radius:14px;background:#eebf92;color:#2d190b">Try again</button></div>`;
+<button onclick="location.reload()" style="font:inherit;font-weight:700;padding:14px 22px;border:0;border-radius:14px;background:#27807f;color:#fff">Try again</button></div>`;
 
 function offlinePage() {
   return new Response(OFFLINE_HTML, {
@@ -405,6 +409,25 @@ self.addEventListener("fetch", (event) => {
 
   if (url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/")) {
     event.respondWith(cacheFirst(req, CDN_CACHE));
+    return;
+  }
+
+  // Lexend: the CSS (fonts.googleapis.com) and the font files (fonts.gstatic.com).
+  // Cached after the first visit so the app keeps its look offline.
+  // Opaque (no-cors) responses are fine to store, so we don't check res.ok.
+  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
+    event.respondWith(
+      caches.open(FONT_CACHE).then(async (cache) => {
+        const hit = await cache.match(req);
+        const net = fetch(req)
+          .then((res) => {
+            if (res && (res.ok || res.type === "opaque")) cache.put(req, res.clone());
+            return res;
+          })
+          .catch(() => null);
+        return hit || (await net) || Response.error();
+      })
+    );
   }
   // anything else: not intercepted
 });

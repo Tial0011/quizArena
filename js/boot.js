@@ -13,9 +13,13 @@
      3. start loading main.js; it waits for the gate before it
         shows the sign-in page (see whenGateDone in main.js)
 ========================================================= */
+import { initTheme } from "./theme.js";
+import { installToastAlert } from "./ui/toast.js";
 import { registerServiceWorker, initConnectivityBanner } from "./pwa.js";
 import { mountWelcomeGateIfNeeded } from "./ui/welcomeGate.js";
 
+initTheme();
+installToastAlert();
 registerServiceWorker();
 initConnectivityBanner();
 
@@ -37,11 +41,11 @@ function showStartupError() {
   const app = document.getElementById("app");
   if (!app) return;
   app.innerHTML = `
-    <div style="min-height:100dvh;display:grid;place-items:center;padding:24px;text-align:center;background:#2d190b;color:#f1f9f8;font-family:system-ui,sans-serif">
+    <div style="min-height:100dvh;display:grid;place-items:center;padding:24px;text-align:center;background:#061616;color:#f1f9f8;font-family:var(--font-ui,system-ui,sans-serif)">
       <div>
         <h1 style="font-size:1.5rem;margin-bottom:8px">Can't reach Quiz Arena</h1>
         <p style="opacity:.8;margin-bottom:20px">Check your connection and try again.</p>
-        <button onclick="location.reload()" style="font:inherit;font-weight:700;padding:14px 22px;border:0;border-radius:14px;background:#eebf92;color:#2d190b">Try again</button>
+        <button onclick="location.reload()" style="font:inherit;font-weight:700;padding:14px 22px;border:0;border-radius:14px;background:#27807f;color:#fff">Try again</button>
       </div>
     </div>`;
 }
