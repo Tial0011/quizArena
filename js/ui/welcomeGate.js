@@ -45,7 +45,16 @@ const SKIP_DAYS = 3;
 
 const INSTALL_ESTIMATE_MS = 40000; // what we tell students to expect
 const INSTALL_GIVE_UP_MS = 25000; // then offer a manual "I can see it" button
-const PROMPT_WAIT_MS = 2500; // how long to wait for the browser to offer the install dialog
+const PROMPT_WAIT_MS = 4000; // how long to wait for the browser to offer the install dialog
+
+const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+
+/** WhatsApp/Facebook/Instagram/TikTok in-app browsers can't install anything. */
+function inAppBrowser() {
+  const ua = navigator.userAgent || "";
+  if (/FBAN|FBAV|FB_IAB|Instagram|Line\/|Twitter|TikTok|musical_ly|Bytedance|Snapchat|LinkedInApp|; wv\)/i.test(ua)) return true;
+  return /iPhone|iPad|iPod/.test(ua) && !/Safari\//.test(ua); // iOS webview
+}
 
 const reduceMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
@@ -139,8 +148,8 @@ const STAGES = {
     progress: true,
   },
   installed: {
-    h1: "Installed. It's on your phone.",
-    sub: "Find Quiz Arena on your home screen.",
+    h1: MOBILE ? "Installed. It's on your phone." : "Installed. You're all set.",
+    sub: MOBILE ? "Find Quiz Arena on your home screen." : "Find Quiz Arena in your apps.",
     cta: "Continue to sign in",
   },
   unconfirmed: {
@@ -160,8 +169,17 @@ const STAGES = {
   },
   manualOther: {
     h1: "One more tap to download.",
-    sub: "Open your browser menu (the three dots at the top), then tap Install app or Add to Home screen.",
+    sub: "Open your browser menu (the three dots), then tap Install app or Add to Home screen. Don't see it? Tap Open in Chrome first.",
     cta: "Done, continue",
+    skip: true,
+  },
+  inApp: {
+    h1: "Open this in your browser.",
+    steps: [
+      "Tap the menu (three dots or the share icon) in this app.",
+      "Choose Open in Chrome (or Open in Safari).",
+      "Then tap Download app. Apps can't install from inside chat apps.",
+    ],
     skip: true,
   },
   declined: {
@@ -243,19 +261,16 @@ function build() {
     <main class="wg-copy" id="wgCopy">
       <h1 class="wg-h1" id="wgH1"></h1>
       <p class="wg-sub" id="wgSub"></p>
+      <ul class="wg-perks"><li>Opens instantly</li><li>Works offline</li><li>Timed CBT practice</li></ul>
     </main>
 
     <div class="wg-scene" aria-hidden="true">
       <div class="wg-floor"><div class="wg-grid"></div></div>
       <div class="wg-glow"></div>
-      <div class="wg-stage3d">
-        <div class="wg-cube" id="wgCube">
-          <div class="wg-face wg-face--front">A</div>
-          <div class="wg-face wg-face--right">B</div>
-          <div class="wg-face wg-face--back">C</div>
-          <div class="wg-face wg-face--left">D</div>
-          <div class="wg-face wg-face--top">${CHECK_ICON}</div>
-          <div class="wg-face wg-face--bottom"></div>
+      <div class="wg-hero">
+        <div class="wg-icon">
+          <img src="/icons/icon-512.png" alt="" width="150" height="150" />
+          <i class="wg-badge">${CHECK_ICON}</i>
         </div>
       </div>
     </div>
@@ -277,7 +292,7 @@ function build() {
   document.documentElement.classList.add("wg-lock");
 
   // If Firebase auth turns out to have a signed-in user, main.js closes us.
-  cube = createCube(root.querySelector("#wgCube"));
+  cube = createCube();
 
   on(root.querySelector("#wgCta"), "click", onCta);
   on(root.querySelector("#wgSkip"), "click", () => finish("skipped"));
@@ -430,7 +445,8 @@ async function setStage(name) {
   root.classList.add("wg-typed");
   after(name);
 
-  if (!cta.hidden && !cta.disabled) cta.focus({ preventScroll: true });
+  // Only pull focus to the button for keyboard/mouse users; on touch it just draws a ring.
+  if (!cta.hidden && !cta.disabled && window.matchMedia?.("(pointer: fine)").matches) cta.focus({ preventScroll: true });
   else if (name !== "confirming") root.focus({ preventScroll: true });
 }
 
@@ -475,6 +491,8 @@ async function enterDownload() {
 
   if (canInstall()) {
     setStage("download");
+  } else if (inAppBrowser()) {
+    setStage("inApp");
   } else if (isIOS()) {
     setStage("manualIOS");
   } else {
@@ -489,7 +507,7 @@ async function enterDownload() {
 /** The browser just (re)offered the install dialog. */
 function onInstallabilityUpdate() {
   if (!root) return;
-  if (canInstall() && (stage === "waiting" || stage === "manualOther")) {
+  if (canInstall() && ["waiting", "manualOther", "declined"].includes(stage)) {
     clearTimeout(promptTimer);
     setStage("download");
   }
@@ -701,92 +719,7 @@ async function typeChars(chars, perChar, myRun) {
   }
 }
 
-/* ---------------------------------------------------------
-   3D cube: slow spin, follows the finger / cursor / tilt, and when
-   the app is installed it turns to show the lit check face.
---------------------------------------------------------- */
-function createCube(el) {
-  const still = reduceMotion();
-  let ry = -28;
-  let rx = -18;
-  const vr = 24; // degrees per second
-  let tiltX = 0;
-  let tiltY = 0;
-  let curX = 0;
-  let curY = 0;
-  let celebrating = false;
-  let target = { rx: -90, ry: 0 };
-  let raf = 0;
-  let last = performance.now();
-
-  const apply = () => {
-    el.style.transform = `rotateX(${(rx + curY).toFixed(2)}deg) rotateY(${(ry + curX).toFixed(2)}deg)`;
-  };
-
-  const frame = (now) => {
-    const dt = Math.min(0.05, (now - last) / 1000);
-    last = now;
-
-    if (celebrating) {
-      const k = Math.min(1, dt * 4);
-      ry += (target.ry - ry) * k;
-      rx += (target.rx - rx) * k;
-    } else {
-      ry += vr * dt;
-    }
-    curX += (tiltX - curX) * Math.min(1, dt * 6);
-    curY += (tiltY - curY) * Math.min(1, dt * 6);
-
-    apply();
-    raf = requestAnimationFrame(frame);
-  };
-
-  const start = () => {
-    last = performance.now();
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(frame);
-  };
-  const onVisibility = () => (document.hidden ? cancelAnimationFrame(raf) : start());
-
-  const onPointer = (e) => {
-    tiltX = (e.clientX / window.innerWidth - 0.5) * 26;
-    tiltY = -(e.clientY / window.innerHeight - 0.5) * 18;
-  };
-  const onOrient = (e) => {
-    if (e.gamma == null || e.beta == null) return;
-    tiltX = Math.max(-1, Math.min(1, e.gamma / 35)) * 13;
-    tiltY = Math.max(-1, Math.min(1, (e.beta - 50) / 30)) * -9;
-  };
-
-  if (still) {
-    apply(); // a static pose; no animation loop at all
-  } else {
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("pointermove", onPointer, { passive: true });
-    // iOS asks permission for motion data; only use it where it's free.
-    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== "function") {
-      window.addEventListener("deviceorientation", onOrient, { passive: true });
-    }
-    start();
-  }
-
-  return {
-    celebrate() {
-      celebrating = true;
-      target = { rx: -90, ry: Math.round(ry / 360) * 360 };
-      tiltX = 0;
-      tiltY = 0;
-      if (still) {
-        rx = target.rx;
-        ry = target.ry;
-        apply();
-      }
-    },
-    destroy() {
-      cancelAnimationFrame(raf);
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("pointermove", onPointer);
-      window.removeEventListener("deviceorientation", onOrient);
-    },
-  };
+/* The installed check is a CSS badge on the app icon (see .wg-done). */
+function createCube() {
+  return { celebrate() {}, destroy() {} };
 }

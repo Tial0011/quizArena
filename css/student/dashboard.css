@@ -221,8 +221,34 @@
 
 .sd-top-actions {
   display: flex;
+  align-items: center;
   gap: 10px;
   flex: 0 0 auto;
+}
+
+.sd-top-streak {
+  min-width: 54px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 1px solid var(--sd-rule);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--sd-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.sd-top-streak span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sd-top-streak strong {
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .sd-label {
@@ -1087,4 +1113,48 @@
    app's cream background. */
 body:has(.sd, .quiz-layout, .practice-page, .quiz-result) {
   background: var(--color-surface-2);
+}
+
+/* Pack rank title (Quiz Arena Scholar, Legend, ...) */
+.sd-rank {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-text, inherit);
+  background: color-mix(
+    in srgb,
+    var(--color-primary, #6c5ce7) 14%,
+    transparent
+  );
+  border: 1px solid
+    color-mix(in srgb, var(--color-primary, #6c5ce7) 35%, transparent);
+  animation: sdRankIn 0.5s ease both;
+}
+
+.sd-rank-8 {
+  background: linear-gradient(135deg, #fff2b8, #ffd24d);
+  border-color: #e6b422;
+  color: #5a4300;
+  box-shadow: 0 0 14px rgba(255, 200, 40, 0.45);
+}
+
+.sd-rank-emoji {
+  font-size: 0.8em;
+}
+
+@keyframes sdRankIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

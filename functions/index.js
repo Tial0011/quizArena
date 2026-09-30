@@ -7,6 +7,19 @@ const fetch = require("node-fetch");
 admin.initializeApp();
 const db = admin.firestore();
 
+/* Keep in step with js/student/packRank.js */
+const RANKS = [
+  { at: 1, title: "Quiz Arena Rookie", emoji: "🌱" },
+  { at: 3, title: "Quiz Arena Scholar", emoji: "📘" },
+  { at: 5, title: "Quiz Arena Topper", emoji: "🔥" },
+  { at: 8, title: "Quiz Arena Legend", emoji: "👑" },
+];
+function rankFor(count) {
+  let found = null;
+  RANKS.forEach((r) => count >= r.at && (found = r));
+  return found;
+}
+
 /* =========================================================
    PAYMENTS — Flutterwave purchase verification
 ========================================================= */
@@ -138,18 +151,42 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
       purchasedQuizzes: admin.firestore.FieldValue.arrayUnion(...purchaseIds),
     });
 
-    // Personal in-app + push notification, written server-side after
-    // verification so it can't be spoofed. sendNotificationPush (below)
-    // handles delivery.
-    t.set(db.collection("notifications").doc(), {
-      message:
-        toGrant.length === 1
-          ? `🎉 You now own "${toGrant[0].title}"! Find it under My Quizzes.`
-          : `🎉 ${toGrant.length} quizzes unlocked! Find them under My Quizzes.`,
-      createdBy: "System",
-      targetUserId: userId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    // One personal in-app notification PER quiz, written server-side after
+    // verification so it can't be spoofed. (Before, a multi-quiz pack wrote
+    // a single "N quizzes unlocked" line, so the bell only ever showed one
+    // entry.) To avoid a burst of N phone pushes, only the first doc sends
+    // a push (with a summary); the rest are marked skipPush.
+    // sendNotificationPush (below) handles delivery.
+    const summary =
+      toGrant.length === 1
+        ? `🎉 You now own "${toGrant[0].title}"! Find it under My Quizzes.`
+        : `🎉 ${toGrant.length} quizzes unlocked! Find them under My Quizzes.`;
+
+    toGrant.forEach((q, i) => {
+      const notif = {
+        message: `🎉 You now own "${q.title}"! Find it under My Quizzes.`,
+        createdBy: "System",
+        targetUserId: userId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      if (i === 0) notif.pushMessage = summary;
+      else notif.skipPush = true;
+      t.set(db.collection("notifications").doc(), notif);
     });
+
+    // Rank-up: same steps as js/student/packRank.js. Tell the student
+    // when this purchase moved them up a rank.
+    const before = rankFor(owned.size);
+    const after = rankFor(owned.size + toGrant.length);
+    if (after && (!before || after.at > before.at)) {
+      t.set(db.collection("notifications").doc(), {
+        message: `${after.emoji} You're now a ${after.title}! Check your dashboard.`,
+        createdBy: "System",
+        targetUserId: userId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        skipPush: true,
+      });
+    }
 
     return { purchasedIds: toGrant.map((q) => q.id) };
   });
@@ -207,7 +244,10 @@ exports.sendNotificationPush = onDocumentCreated(
     const data = event.data?.data();
     if (!data?.message) return;
 
-    const { message, targetUserId } = data;
+    if (data.skipPush) return;
+
+    const { targetUserId } = data;
+    const message = data.pushMessage || data.message;
 
     const tokens = await collectTokens(targetUserId);
     if (tokens.length === 0) return;

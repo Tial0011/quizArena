@@ -128,6 +128,10 @@ export function resultMarkup({
         <h1>${title}</h1>
         <div class="score-circle">${percentage}<small>%</small></div>
         <p class="result-message">${message}</p>
+        <div class="result-streak" id="resultStreak" role="status" hidden>
+          <span class="result-streak-flame" aria-hidden="true">🔥</span>
+          <span class="result-streak-copy"><strong id="resultStreakCount">0</strong><span id="resultStreakLabel">day streak</span></span>
+        </div>
       </section>
 
       <section class="result-detail">
@@ -150,4 +154,20 @@ export function resultMarkup({
 
     </div>
   `;
+}
+
+export function revealResultStreak(streakInfo) {
+  if (!streakInfo) return;
+
+  const streakEl = document.getElementById("resultStreak");
+  const countEl = document.getElementById("resultStreakCount");
+  const labelEl = document.getElementById("resultStreakLabel");
+  if (!streakEl || !countEl || !labelEl) return;
+
+  countEl.textContent = String(streakInfo.streak);
+  labelEl.textContent = streakInfo.extended
+    ? "day streak · extended!"
+    : "day streak · today complete";
+  streakEl.hidden = false;
+  streakEl.classList.add("is-visible");
 }

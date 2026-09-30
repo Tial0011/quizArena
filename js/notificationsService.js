@@ -62,7 +62,7 @@ import {
      reload or relying on a push arriving.
 ========================================================= */
 
-const FETCH_LIMIT = 20;
+const FETCH_LIMIT = 40;
 const BROADCAST_TARGET = "all";
 
 /**
@@ -213,9 +213,12 @@ export function listenToNotificationsForUser(
   return onSnapshot(
     q,
     (snapshot) => {
+      // "estimate": a doc just written by this client has a pending
+      // (null) serverTimestamp; without this it would show no time and
+      // sort/count wrongly until the server confirmed it.
       const notifications = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
-        ...docSnap.data(),
+        ...docSnap.data({ serverTimestamps: "estimate" }),
       }));
       callback(notifications);
     },

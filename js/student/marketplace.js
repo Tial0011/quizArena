@@ -14,6 +14,7 @@ import {
 import { getUserData } from "../auth.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
+import { RANKS } from "./packRank.js";
 
 /* =========================================================
    FLUTTERWAVE CONFIG
@@ -491,12 +492,7 @@ function renderQuizCard(quiz) {
    - a pack-rank level-up gets a small celebration
    Nothing here changes prices; the total is always the plain sum.
 ========================================================= */
-const TIERS = [
-  { at: 1, name: "Warm-up Pack", emoji: "🌱" },
-  { at: 3, name: "Scholar Pack", emoji: "📘" },
-  { at: 5, name: "Topper Pack", emoji: "🔥" },
-  { at: 8, name: "Legend Pack", emoji: "👑" },
-];
+const TIERS = RANKS; // shared with the dashboard title (see packRank.js)
 
 const cartKey = () => `qa_cart_${currentUserId}`;
 

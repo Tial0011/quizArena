@@ -1,5 +1,7 @@
+import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { logoutUser } from "../auth.js";
 import { themeToggleButton } from "../theme.js";
+import { getRank } from "./packRank.js";
 import { renderPracticeArena } from "./practice.js";
 import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
@@ -35,7 +37,7 @@ const DEFAULT_HERO_MESSAGE =
 // listener (see startNotificationsListener) fetches a larger batch
 // than this since some of what comes back may already be dismissed
 // and get filtered out.
-const NOTIF_DISPLAY_LIMIT = 7;
+const NOTIF_DISPLAY_LIMIT = 30;
 
 // The notifications currently rendered in the panel — kept around
 // so dismissing one can update the badge/list in place without
@@ -77,7 +79,12 @@ function icon(name, size = 20) {
 
 const NAV_ITEMS = [
   { go: "home", label: "Home", short: "Home", icon: "home" },
-  { go: "practice", label: "Practice Arena", short: "Practice", icon: "practice" },
+  {
+    go: "practice",
+    label: "Practice Arena",
+    short: "Practice",
+    icon: "practice",
+  },
   { go: "marketplace", label: "Marketplace", short: "Market", icon: "market" },
   { go: "quizzes", label: "My Quizzes", short: "Quizzes", icon: "quizzes" },
   { go: "groups", label: "Friend Groups", short: "Groups", icon: "groups" },
@@ -124,6 +131,7 @@ function greetingForNow() {
 export function renderStudentDashboard(userData = {}) {
   const purchasedCount = userData.purchasedQuizzes?.length || 0;
   const firstName = (userData.name || "").trim().split(/\s+/)[0];
+  const rank = getRank(purchasedCount);
 
   const navMarkup = (variant) =>
     NAV_ITEMS.map(
@@ -153,7 +161,7 @@ export function renderStudentDashboard(userData = {}) {
         <div class="sd-side-foot">
           <div class="sd-user">
             <span class="sd-avatar">${escapeHtml((firstName || "S").charAt(0).toUpperCase())}</span>
-            <span class="sd-user-name">${escapeHtml(userData.name || "Student")}</span>
+            <span class="sd-user-name">${escapeHtml(userData.name || "Student")}${rank ? ` ${rank.emoji}` : ""}</span>
           </div>
           <button type="button" class="sd-signout" data-logout>
             ${icon("out", 16)}<span>Sign out</span>
@@ -166,10 +174,15 @@ export function renderStudentDashboard(userData = {}) {
         <header class="sd-top">
           <div class="sd-top-text">
             <p class="sd-eyebrow">${greetingForNow()}</p>
-            <h1>${firstName ? escapeHtml(firstName) : "Welcome back"}</h1>
+            <h1>${firstName ? escapeHtml(firstName) : "Welcome back"}${rank ? ` <span class="sd-rank-emoji" aria-hidden="true">${rank.emoji}</span>` : ""}</h1>
+            ${rank ? `<span class="sd-rank sd-rank-${rank.at}" title="Own ${rank.at}+ quizzes">${rank.emoji} ${rank.title}</span>` : ""}
           </div>
 
           <div class="sd-top-actions">
+            <div class="sd-top-streak" aria-label="Current day streak">
+              <span aria-hidden="true">🔥</span>
+              <strong id="topbarStreakValue">--</strong>
+            </div>
             ${themeToggleButton("sd-theme")}
             <button type="button" class="sd-signout sd-signout-mobile" data-logout aria-label="Sign out">
               ${icon("out", 18)}
@@ -390,6 +403,9 @@ function pickHeroMessage(attempts) {
  */
 function updateStreakCard(streakEl, { streak, doneToday }) {
   const card = streakEl.closest(".stat-card");
+  const topbarStreak = document.getElementById("topbarStreakValue");
+
+  if (topbarStreak) topbarStreak.textContent = String(streak);
 
   if (prefersReducedMotion()) {
     streakEl.textContent = String(streak);
@@ -442,11 +458,21 @@ function startNotificationsListener(userData) {
     userData.createdAt,
     (notifications) => {
       const dismissed = userData.dismissedNotificationIds || [];
+      const panelOpen = !document.getElementById("notifPanel")?.hidden;
       const visible = notifications
         .filter((n) => !dismissed.includes(n.id))
         .slice(0, NOTIF_DISPLAY_LIMIT);
 
       renderedNotifications = visible;
+
+      // If the panel is already open the student is looking at these, so
+      // they count as seen straight away (no badge, and the seen-stamp
+      // moves forward instead of going stale).
+      if (panelOpen && document.getElementById("notifPanel")) {
+        userData.lastNotificationsSeenAt = Timestamp.now();
+        markNotificationsSeen(userData.id);
+      }
+
       renderNotifications(userData, visible);
     },
   );
@@ -613,6 +639,10 @@ function setupNotifBell(userData) {
 
     if (opening) {
       document.getElementById("notifBadge")?.setAttribute("hidden", "");
+      // Keep the local copy in step with Firestore. Before, it stayed at the
+      // old value, so the next live update counted every notification as
+      // unread again and the badge came back with the wrong number.
+      userData.lastNotificationsSeenAt = Timestamp.now();
       markNotificationsSeen(userData.id);
     }
   });

@@ -25,6 +25,7 @@ import {
   timerClass,
   updateTimerEl,
   resultMarkup,
+  revealResultStreak,
 } from "./quizUi.js";
 
 let questions = [];
@@ -126,7 +127,9 @@ export async function startQuiz(subject, count, minutes, userData) {
         renderQuestion();
       }
     },
-    next: () => currentQuestion < questions.length - 1 && goToQuestion(currentQuestion + 1),
+    next: () =>
+      currentQuestion < questions.length - 1 &&
+      goToQuestion(currentQuestion + 1),
     prev: () => currentQuestion > 0 && goToQuestion(currentQuestion - 1),
   });
 
@@ -399,7 +402,7 @@ function finishQuiz() {
   // Fire-and-forget: analytics should never delay or block the
   // student from seeing their result. recordQuizAttempt() already
   // swallows its own errors.
-  recordQuizAttempt({
+  const streakAttempt = recordQuizAttempt({
     userId: currentUserId,
     mode: "practice",
     subjectName: currentSubject,
@@ -425,6 +428,8 @@ function finishQuiz() {
     answeredCount: answers.filter((a) => a !== null).length,
     message,
   });
+
+  streakAttempt.then(revealResultStreak);
 
   document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
     renderReviewAnswers(questions, answers, () =>

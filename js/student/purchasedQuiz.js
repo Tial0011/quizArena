@@ -17,6 +17,7 @@ import {
   timerClass,
   updateTimerEl,
   resultMarkup,
+  revealResultStreak,
 } from "./quizUi.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
 import { renderReviewAnswers } from "./reviewAnswers.js";
@@ -408,7 +409,7 @@ function finishQuiz(quizTitle) {
   // Fire-and-forget: analytics should never delay or block the
   // student from seeing their result. recordQuizAttempt() already
   // swallows its own errors.
-  recordQuizAttempt({
+  const streakAttempt = recordQuizAttempt({
     userId: currentUserId,
     mode: "purchased",
     subjectName: questions[0]?.subjectName || "",
@@ -433,6 +434,8 @@ function finishQuiz(quizTitle) {
           ? "Good job"
           : "Keep practising",
   });
+
+  streakAttempt.then(revealResultStreak);
 
   document.getElementById("reviewAnswersBtn").addEventListener("click", () => {
     renderReviewAnswers(questions, answers, () =>

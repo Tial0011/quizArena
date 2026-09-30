@@ -155,7 +155,7 @@ quizArena/
 │   ├── auth.css             Landing/login/register page
 │   ├── responsive.css       Mobile overrides — loaded LAST, see file header
 │   ├── installNudge.css     The recurring install banner
-│   ├── welcomeGate.css      Welcome/download screen + CSS 3D cube
+│   ├── welcomeGate.css      Welcome/download screen (app icon hero)
 │   ├── pwa.css              App-feel rules, offline pill
 │   ├── student/*.css        One file per student page, named to match
 │   └── admin/*.css          One file per admin page, named to match

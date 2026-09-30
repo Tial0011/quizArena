@@ -32,7 +32,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "b8957bc78c";
+const PRECACHE_VERSION = "bbcc5e3f50";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",
@@ -91,6 +91,7 @@ const PRECACHE_URLS = [
   "/js/student/marketplace.js",
   "/js/student/myQuizzes.js",
   "/js/student/navigation.js",
+  "/js/student/packRank.js",
   "/js/student/practice.js",
   "/js/student/purchaseService.js",
   "/js/student/purchasedQuiz.js",

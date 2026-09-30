@@ -43,7 +43,7 @@ export async function recordQuizAttempt({
   score,
   totalQuestions,
 }) {
-  if (!userId || !totalQuestions) return;
+  if (!userId || !totalQuestions) return null;
 
   const percentage = Math.round((score / totalQuestions) * 100);
 
@@ -53,9 +53,8 @@ export async function recordQuizAttempt({
     // actually extends the streak) versus a second/third quiz taken
     // later the same day, which shouldn't fire another "streak"
     // notification on top of the first.
-    const { streak: streakBeforeToday, doneToday } = await getStreakInfo(
-      userId,
-    );
+    const { streak: streakBeforeToday, doneToday } =
+      await getStreakInfo(userId);
 
     await addDoc(collection(db, "attempts"), {
       userId,
@@ -86,8 +85,13 @@ export async function recordQuizAttempt({
         console.error("Failed to send streak notification:", err),
       );
     }
+    return {
+      streak: streakBeforeToday + (doneToday ? 0 : 1),
+      extended: !doneToday,
+    };
   } catch (err) {
     console.error("Failed to record quiz attempt:", err);
+    return null;
   }
 }
 
