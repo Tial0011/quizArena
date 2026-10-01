@@ -64,6 +64,24 @@ export function setTheme(theme, { persist = true, animate = true } = {}) {
   }
 }
 
+/** "light" | "dark" | "system" -- what the student picked (system = no saved choice). */
+export function getThemeChoice() {
+  return saved() || "system";
+}
+
+export function setThemeChoice(choice) {
+  if (choice === "light" || choice === "dark") {
+    setTheme(choice);
+    return;
+  }
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
+  }
+  setTheme(systemDark() ? "dark" : "light", { persist: false });
+}
+
 export function toggleTheme() {
   setTheme(currentTheme() === "dark" ? "light" : "dark");
 }

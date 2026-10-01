@@ -32,7 +32,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "f9f6391b76";
+const PRECACHE_VERSION = "f6716b45ed";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",
@@ -54,6 +54,8 @@ const PRECACHE_URLS = [
   "/css/student/quiz.css",
   "/css/student/result.css",
   "/css/student/reviewAnswers.css",
+  "/css/student/settings.css",
+  "/css/student/streak.css",
   "/css/theme.css",
   "/css/verifyGate.css",
   "/css/welcomeGate.css",
@@ -100,10 +102,13 @@ const PRECACHE_URLS = [
   "/js/student/quizUi.js",
   "/js/student/reviewAnswers.js",
   "/js/student/scrollEffects.js",
+  "/js/student/settings.js",
+  "/js/student/streakCelebration.js",
   "/js/theme.js",
   "/js/ui/landing.js",
   "/js/ui/toast.js",
   "/js/ui/welcomeGate.js",
+  "/js/utils/desktopMode.js",
   "/js/utils/random.js",
   "/manifest.json"
 ];

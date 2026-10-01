@@ -85,10 +85,16 @@ export async function recordQuizAttempt({
       }).catch((err) =>
         console.error("Failed to send streak notification:", err),
       );
+
+      // Tell the caller this attempt extended the streak, so the quiz
+      // result screen can play the fire celebration.
+      return { streakExtended: true, newStreak };
     }
   } catch (err) {
     console.error("Failed to record quiz attempt:", err);
   }
+
+  return { streakExtended: false, newStreak: null };
 }
 
 function streakEncouragement(streak) {

@@ -8,6 +8,12 @@ import { renderMyQuizzes } from "./myQuizzes.js";
 import { renderFriendGroups } from "./friendGroups.js";
 import { getRecentAttempts, getStreakInfo } from "./attemptsService.js";
 import {
+  streakButtonMarkup,
+  updateStreakButton,
+  showStreakSheet,
+} from "./streakCelebration.js";
+import { renderSettings } from "./settings.js";
+import {
   listenToNotificationsForUser,
   markNotificationsSeen,
   dismissNotificationForUser,
@@ -55,6 +61,7 @@ let unsubscribeNotifications = null;
 // bouncing back to the dashboard a few times in one session never
 // ends up with duplicate listeners stacked on document/window.
 let outsideClickHandler = null;
+let latestStreakInfo = { streak: 0, doneToday: false };
 let notifCloseHandler = null;
 let notifResizeHandler = null;
 
@@ -70,6 +77,8 @@ const ICON = {
   groups:
     '<circle cx="9" cy="9" r="3"/><path d="M3.5 19v-1a5.5 5.5 0 0 1 11 0v1"/><path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 13.3A5.5 5.5 0 0 1 20.5 18v1"/>',
   bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15L6 17Z"/><path d="M10 21h4"/>',
+  gear:
+    '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>',
   out: '<path d="M10 4H5v16h5"/><path d="M15 8l4 4-4 4M9 12h10"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
 };
@@ -159,6 +168,9 @@ export function renderStudentDashboard(userData = {}) {
             <span class="sd-avatar">${escapeHtml((firstName || "S").charAt(0).toUpperCase())}</span>
             <span class="sd-user-name">${escapeHtml(userData.name || "Student")}${rank ? ` ${rank.emoji}` : ""}</span>
           </div>
+          <button type="button" class="sd-signout" data-go="settings">
+            ${icon("gear", 16)}<span>Settings</span>
+          </button>
           <button type="button" class="sd-signout" data-logout>
             ${icon("out", 16)}<span>Sign out</span>
           </button>
@@ -176,9 +188,10 @@ export function renderStudentDashboard(userData = {}) {
 
           <div class="sd-top-actions">
             ${themeToggleButton("sd-theme")}
-            <button type="button" class="sd-signout sd-signout-mobile" data-logout aria-label="Sign out">
-              ${icon("out", 18)}
+            <button type="button" class="sd-signout sd-signout-mobile" data-go="settings" aria-label="Settings">
+              ${icon("gear", 20)}
             </button>
+            ${streakButtonMarkup()}
             <div class="notif-bell-wrap">
               <button id="notifBell" class="notif-bell" aria-label="Notifications">
                 ${icon("bell", 20)}
@@ -335,6 +348,9 @@ async function loadAnalytics(userData) {
   if (streakEl) {
     updateStreakCard(streakEl, streakInfo);
   }
+
+  latestStreakInfo = streakInfo;
+  updateStreakButton(streakInfo);
 }
 
 /**
@@ -556,6 +572,7 @@ function setupDashboardEvents(userData) {
     marketplace: () => renderMarketplace(userData),
     quizzes: () => renderMyQuizzes(userData),
     groups: () => renderFriendGroups(userData),
+    settings: () => renderSettings(userData),
     home: () => window.scrollTo({ top: 0, behavior: "smooth" }),
   };
 
@@ -605,6 +622,10 @@ function setupNotifBell(userData) {
     </div>
   `;
   document.body.appendChild(panel);
+
+  document.getElementById("streakBtn")?.addEventListener("click", () => {
+    showStreakSheet(latestStreakInfo);
+  });
 
   const bell = document.getElementById("notifBell");
 

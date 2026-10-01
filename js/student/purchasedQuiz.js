@@ -26,6 +26,7 @@ import {
   attachNavigatorEvents,
 } from "./questionNavigator.js";
 import { recordQuizAttempt } from "./attemptsService.js";
+import { showStreakCelebration } from "./streakCelebration.js";
 import { showLoadingOverlay } from "./loadingOverlay.js";
 
 /* =========================================================
@@ -402,6 +403,9 @@ function finishQuiz(quizTitle) {
     quizTitle,
     score,
     totalQuestions: questions.length,
+  }).then((res) => {
+    // First quiz of the day = streak extended -> fire celebration.
+    if (res?.streakExtended) showStreakCelebration(res.newStreak);
   });
 
   clearQuizKeys();

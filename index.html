@@ -44,6 +44,26 @@
       });
     </script>
 
+    <!-- DESKTOP MODE: re-applies the student's saved "Desktop mode" choice
+         before first paint (logic mirrors js/utils/desktopMode.js). -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("qa-desktop-mode") !== "1") return;
+          var m = document.querySelector('meta[name="viewport"]');
+          if (!m) return;
+          var fit = Math.min(1, (window.innerWidth || screen.width || 390) / 1100);
+          m.setAttribute(
+            "content",
+            "width=1100, initial-scale=" + fit.toFixed(3) +
+              ", minimum-scale=" + Math.min(fit, 0.25).toFixed(3) +
+              ", maximum-scale=5, user-scalable=yes, viewport-fit=cover"
+          );
+          document.documentElement.className += " qa-desktop-mode";
+        } catch (e) {}
+      })();
+    </script>
+
     <title>Quiz Arena | CBT Practice for UNIMED Students</title>
 
     <meta
@@ -237,6 +257,8 @@
     <link rel="stylesheet" href="css/student/practice.css" />
     <link rel="stylesheet" href="css/student/quiz.css" />
     <link rel="stylesheet" href="css/student/result.css" />
+    <link rel="stylesheet" href="css/student/streak.css" />
+    <link rel="stylesheet" href="css/student/settings.css" />
     <link rel="stylesheet" href="css/student/myQuizzes.css" />
     <link rel="stylesheet" href="css/student/reviewAnswers.css" />
     <link rel="stylesheet" href="css/installNudge.css" />

@@ -14,11 +14,13 @@
         shows the sign-in page (see whenGateDone in main.js)
 ========================================================= */
 import { initTheme } from "./theme.js";
+import { initDesktopMode } from "./utils/desktopMode.js";
 import { installToastAlert } from "./ui/toast.js";
 import { registerServiceWorker, initConnectivityBanner } from "./pwa.js";
 import { mountWelcomeGateIfNeeded } from "./ui/welcomeGate.js";
 
 initTheme();
+initDesktopMode();
 installToastAlert();
 registerServiceWorker();
 initConnectivityBanner();

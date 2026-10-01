@@ -16,6 +16,7 @@ import {
   attachNavigatorEvents,
 } from "./questionNavigator.js";
 import { recordQuizAttempt } from "./attemptsService.js";
+import { showStreakCelebration } from "./streakCelebration.js";
 import { renderStudentDashboard } from "./dashboard.js";
 import {
   setQuizKeys,
@@ -406,6 +407,9 @@ function finishQuiz() {
     subjectName: currentSubject,
     score,
     totalQuestions: questions.length,
+  }).then((res) => {
+    // First quiz of the day = streak extended -> fire celebration.
+    if (res?.streakExtended) showStreakCelebration(res.newStreak);
   });
 
   let message = "Keep Practicing 💪";
