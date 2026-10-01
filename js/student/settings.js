@@ -14,7 +14,7 @@ import {
   setDesktopMode,
   desktopModeUseful,
 } from "../utils/desktopMode.js";
-import { requestPushPermission } from "../pushNotifications.js";
+import { enablePush, disablePush, getPushStatus } from "../pushNotifications.js";
 import {
   canInstall,
   isInstalled,
@@ -48,11 +48,6 @@ function signInMethods() {
     password: ids.includes("password"),
     google: ids.includes("google.com"),
   };
-}
-
-function pushState() {
-  if (!("Notification" in window) || !("serviceWorker" in navigator)) return "unsupported";
-  return Notification.permission; // "default" | "granted" | "denied"
 }
 
 export function renderSettings(userData = {}) {
@@ -156,7 +151,10 @@ export function renderSettings(userData = {}) {
               <strong>Push notifications</strong>
               <p class="st-hint st-hint-tight" id="stPushText"></p>
             </div>
-            <button type="button" class="st-btn st-btn-ghost" id="stPushBtn" hidden>Turn on</button>
+            <button type="button" class="st-switch" id="stPushSwitch"
+                    role="switch" aria-checked="false" aria-label="Push notifications">
+              <i></i>
+            </button>
           </div>
         </section>
 
@@ -280,32 +278,53 @@ function wire(userData, email) {
     showToast(on ? "Desktop mode on. Pinch to zoom." : "Desktop mode off");
   });
 
-  /* ----- push ----- */
+  /* ----- push (on/off switch) ----- */
   const pushText = $("stPushText");
-  const pushBtn = $("stPushBtn");
-  const paintPush = () => {
-    const state = pushState();
-    pushBtn.hidden = true;
+  const pushSwitch = $("stPushSwitch");
 
-    if (state === "granted") {
-      pushText.textContent = "On. You'll get streak reminders and updates on this device.";
-    } else if (state === "default") {
-      pushText.textContent = "Off. Turn on to get streak reminders and updates.";
-      pushBtn.hidden = false;
-    } else if (state === "denied") {
-      pushText.textContent =
-        "Blocked in your browser. Open your browser's site settings for Quiz Arena and allow notifications.";
-    } else {
-      pushText.textContent = "Not supported in this browser.";
-    }
+  const paintPush = () => {
+    const status = getPushStatus();
+    const on = status === "on";
+
+    pushSwitch.classList.toggle("is-on", on);
+    pushSwitch.setAttribute("aria-checked", String(on));
+    pushSwitch.disabled = status === "denied" || status === "unsupported";
+
+    pushText.textContent = {
+      on: "On. You'll get streak reminders and updates on this device.",
+      off: "Off. You won't get push alerts on this device. The bell in the app still works.",
+      ask: "Off. Turn on to get streak reminders and updates.",
+      denied:
+        "Blocked in your browser. Open your browser's site settings for Quiz Arena and allow notifications.",
+      unsupported: "Not supported in this browser.",
+    }[status];
   };
   paintPush();
 
-  pushBtn.addEventListener("click", async () => {
-    pushBtn.disabled = true;
-    await requestPushPermission(userData.id);
-    pushBtn.disabled = false;
+  pushSwitch.addEventListener("click", async () => {
+    if (pushSwitch.disabled || pushSwitch.dataset.busy) return;
+
+    pushSwitch.dataset.busy = "1";
+    pushSwitch.classList.add("is-busy");
+
+    const turningOn = getPushStatus() !== "on";
+    const status = turningOn
+      ? await enablePush(userData.id)
+      : await disablePush(userData.id);
+
+    delete pushSwitch.dataset.busy;
+    pushSwitch.classList.remove("is-busy");
     paintPush();
+
+    if (turningOn && status !== "on") {
+      showToast(
+        status === "denied"
+          ? "Notifications are blocked in your browser settings."
+          : "Notifications weren't turned on.",
+      );
+    } else {
+      showToast(status === "on" ? "Push notifications on" : "Push notifications off");
+    }
   });
 
   /* ----- install ----- */

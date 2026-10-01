@@ -3,10 +3,12 @@ import {
   doc,
   updateDoc,
   arrayUnion,
+  arrayRemove,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getMessaging,
   getToken,
+  deleteToken,
   onMessage,
   isSupported,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
@@ -46,18 +48,91 @@ import { registerServiceWorker } from "./pwa.js";
 const VAPID_KEY =
   "BALAQn75y9VflszHDHT3I4yMUzhZ_TF_wouH6aBo1oQvOzHXgWz-8KKolrcyVJNWWUu0PJuyBbo7rYU5NxKvizo";
 
+const OFF_KEY = "qa-push-off";
+
 let messagingInstance = null;
 let foregroundListenerBound = false;
+
+/* ---- in-app on/off switch (Settings) ----
+   Browsers don't let a page revoke notification permission, so
+   "off" here means: remove THIS device's token from the student's
+   account (the server then has nowhere to send pushes) and
+   remember the choice so we don't silently re-register on the next
+   load. Turning it back on re-registers; no browser prompt is
+   needed because permission was never taken away. */
+function offFlag() {
+  try {
+    return localStorage.getItem(OFF_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setOffFlag(off) {
+  try {
+    if (off) localStorage.setItem(OFF_KEY, "1");
+    else localStorage.removeItem(OFF_KEY);
+  } catch {
+    /* private mode: only lasts this visit */
+  }
+}
+
+/** "unsupported" | "denied" | "off" | "on" | "ask" */
+export function getPushStatus() {
+  if (!canUsePush()) return "unsupported";
+  if (Notification.permission === "denied") return "denied";
+  if (Notification.permission === "default") return "ask";
+  return offFlag() ? "off" : "on";
+}
+
+/** Turns push on for this device. Resolves with the new status. */
+export async function enablePush(userId) {
+  await requestPushPermission(userId); // clears the off flag + registers
+  return getPushStatus();
+}
+
+/** Turns push off for this device. Resolves with the new status. */
+export async function disablePush(userId) {
+  setOffFlag(true);
+
+  try {
+    const messaging = await getMessagingInstance();
+    const registration = messaging && (await registerServiceWorker());
+
+    if (messaging && registration && userId) {
+      // Same token registerDevice() saved (getToken returns the existing
+      // one when permission is already granted -- no prompt).
+      const token = await getToken(messaging, {
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration,
+      }).catch(() => null);
+
+      if (token) {
+        await updateDoc(doc(db, "users", userId), {
+          fcmTokens: arrayRemove(token),
+        });
+      }
+      await deleteToken(messaging).catch(() => {});
+    }
+  } catch (err) {
+    console.error("Failed to turn push off cleanly:", err);
+  }
+
+  return getPushStatus();
+}
 
 export async function initPushNotifications(userId) {
   if (!canUsePush()) return;
   if (Notification.permission !== "granted") return;
+  if (offFlag()) return; // student switched push off in Settings
 
   await registerDevice(userId);
 }
 
 export async function requestPushPermission(userId) {
   if (!canUsePush()) return;
+
+  setOffFlag(false); // an explicit "turn on" gesture
 
   if (Notification.permission === "default") {
     const permission = await Notification.requestPermission();
@@ -146,6 +221,7 @@ function listenForForegroundMessages(messaging) {
   foregroundListenerBound = true;
 
   onMessage(messaging, (payload) => {
+    if (offFlag()) return;
     const { title, body } = payload.data || {};
     if (title) {
       new Notification(title, { body, icon: "/icons/icon-192.png" });
