@@ -14,11 +14,19 @@ import {
   where,
   orderBy,
   limit,
+  getCountFromServer,
+  Timestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { ONLINE_WINDOW_MS } from "../activityTracker.js";
 
 const app = document.getElementById("app");
 
 let activeTab = "dashboard";
+
+// Live user-activity numbers refresh on their own while the Dashboard
+// tab is open. Cleared whenever the tab content is re-rendered.
+const USER_STATS_REFRESH_MS = 60 * 1000;
+let userStatsTimer = null;
 
 // Icon + copy for each activity source. Keyed by the same "type"
 // tag pushed onto events in loadRecentActivity() below.
@@ -137,6 +145,9 @@ function setupTabs() {
 async function renderTabContent() {
   const content = document.getElementById("adminContent");
 
+  clearInterval(userStatsTimer);
+  userStatsTimer = null;
+
   switch (activeTab) {
     case "dashboard":
       content.innerHTML = `
@@ -199,6 +210,57 @@ async function renderTabContent() {
 
         </div>
 
+        <div class="admin-card load-in">
+
+          <div class="admin-card-head">
+            <h2>User Activity</h2>
+            <button id="refreshUserStats" class="admin-refresh-btn" type="button">
+              ↻ Refresh
+            </button>
+          </div>
+          <p>
+            <span class="live-dot"></span>
+            Live numbers — updates every minute.
+          </p>
+
+          <div class="overview-grid">
+            ${[
+              ["🟢", "statOnline", "Online now", "last 5 min"],
+              ["⚡", "statActive24h", "Active users", "last 24 hours"],
+              ["📅", "statActive7d", "Active users", "last 7 days"],
+              ["🔑", "statLoginsToday", "Logins", "today"],
+              ["🔐", "statLogins7d", "Logins", "last 7 days"],
+              ["🆕", "statNewToday", "New users", "today"],
+              ["✨", "statNew7d", "New users", "last 7 days"],
+              ["📈", "statNew30d", "New users", "last 30 days"],
+            ]
+              .map(
+                ([icon, id, label, sub]) => `
+            <div class="overview-card load-in">
+              <div class="overview-icon">${icon}</div>
+              <div class="overview-info">
+                <h3 id="${id}">--</h3>
+                <p>${label}<span class="overview-sub"> · ${sub}</span></p>
+              </div>
+            </div>`,
+              )
+              .join("")}
+          </div>
+
+        </div>
+
+        <div class="admin-card reveal" data-reveal>
+
+          <h2>Recent Logins</h2>
+
+          <div class="activity-list" id="loginList">
+            <div class="activity-item activity-item-loading">
+              Loading recent logins…
+            </div>
+          </div>
+
+        </div>
+
         <div class="admin-card reveal" data-reveal>
 
           <h2>Recent Activity</h2>
@@ -216,7 +278,17 @@ async function renderTabContent() {
       // own .reveal / data-parallax-speed nodes) exists in the DOM.
       initAdminEffects();
 
-      await Promise.all([loadDashboardStats(), loadRecentActivity()]);
+      document
+        .getElementById("refreshUserStats")
+        ?.addEventListener("click", loadUserActivityStats);
+
+      userStatsTimer = setInterval(loadUserActivityStats, USER_STATS_REFRESH_MS);
+
+      await Promise.all([
+        loadDashboardStats(),
+        loadRecentActivity(),
+        loadUserActivityStats(),
+      ]);
 
       break;
 
@@ -299,6 +371,97 @@ async function loadDashboardStats() {
     topQuizEl.textContent = topEntry
       ? (quizById[topEntry[0]]?.title ?? "Unknown quiz")
       : "No sales yet";
+  }
+}
+
+// ---- User activity (online / active / logins / new users) ----
+//
+// Uses server-side count queries (1 read per 1000 index entries rather
+// than one read per doc), so this stays cheap even with many students.
+// Sources: users.lastActiveAt (heartbeat), users.createdAt (signup) and
+// loginEvents.at (one doc per sign-in) — all written by
+// js/activityTracker.js / js/auth.js. Accounts that haven't signed in
+// since this feature shipped have no lastActiveAt yet, so "active"
+// numbers fill in as people return.
+async function loadUserActivityStats() {
+  if (activeTab !== "dashboard") return;
+
+  const now = Date.now();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const ago = (ms) => Timestamp.fromMillis(now - ms);
+  const DAY = 24 * 60 * 60 * 1000;
+
+  const count = async (col, field, since) => {
+    const snap = await getCountFromServer(
+      query(collection(db, col), where(field, ">=", since)),
+    );
+    return snap.data().count;
+  };
+
+  const today = Timestamp.fromDate(startOfToday);
+
+  const jobs = {
+    statOnline: count("users", "lastActiveAt", ago(ONLINE_WINDOW_MS)),
+    statActive24h: count("users", "lastActiveAt", ago(DAY)),
+    statActive7d: count("users", "lastActiveAt", ago(7 * DAY)),
+    statLoginsToday: count("loginEvents", "at", today),
+    statLogins7d: count("loginEvents", "at", ago(7 * DAY)),
+    statNewToday: count("users", "createdAt", today),
+    statNew7d: count("users", "createdAt", ago(7 * DAY)),
+    statNew30d: count("users", "createdAt", ago(30 * DAY)),
+  };
+
+  // Each tile settles on its own so one failing query (e.g. a missing
+  // security rule) shows "!" on that tile instead of blanking the rest.
+  await Promise.all(
+    Object.entries(jobs).map(async ([id, job]) => {
+      try {
+        const value = await job;
+        if (activeTab === "dashboard") setStatText(id, value.toLocaleString());
+      } catch (err) {
+        console.error(`User activity stat ${id} failed:`, err);
+        if (activeTab === "dashboard") setStatText(id, "!");
+      }
+    }),
+  );
+
+  await loadRecentLogins();
+}
+
+async function loadRecentLogins() {
+  const listEl = document.getElementById("loginList");
+  if (!listEl) return;
+
+  try {
+    const snap = await getDocs(
+      query(collection(db, "loginEvents"), orderBy("at", "desc"), limit(8)),
+    );
+
+    if (activeTab !== "dashboard") return;
+
+    if (snap.empty) {
+      listEl.innerHTML = `<div class="activity-item">No logins recorded yet.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = snap.docs
+      .map((docSnap) => {
+        const { email, at } = docSnap.data();
+        return `
+        <div class="activity-item">
+          <span class="activity-icon">🔑</span>
+          <span class="activity-text">${escapeHtml(email || "Unknown user")}</span>
+          <span class="activity-time">${formatRelativeTime(at)}</span>
+        </div>`;
+      })
+      .join("");
+  } catch (err) {
+    console.error("Failed to load recent logins:", err);
+    if (activeTab === "dashboard") {
+      listEl.innerHTML = `<div class="activity-item">Couldn't load recent logins right now.</div>`;
+    }
   }
 }
 

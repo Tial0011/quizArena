@@ -1,5 +1,6 @@
 import { auth, db } from "./firebase/config.js";
 import { stopSessionManager } from "./sessionManager.js";
+import { recordLogin } from "./activityTracker.js";
 import { sendWelcomeNotification } from "./notificationsService.js";
 
 import {
@@ -48,6 +49,7 @@ export async function registerUser(name, email, password) {
     // Fire-and-forget: a welcome ping failing to send should never
     // hold up registration or surface as a signup error.
     sendWelcomeNotification(user.uid, name);
+    recordLogin(user);
 
     // Send the email-verification link. This is a real Firebase email
     // send (not a Cloud Function) — it can genuinely fail (rate limits,
@@ -105,6 +107,8 @@ export async function loginUser(email, password) {
       role = snap.data().role || "student";
     }
 
+    recordLogin(user);
+
     return { success: true, user, role };
   } catch (error) {
     console.error(error);
@@ -141,6 +145,8 @@ export async function signInWithGoogle() {
     } else {
       role = snap.data().role || "student";
     }
+
+    recordLogin(user);
 
     return { success: true, user, role };
   } catch (error) {

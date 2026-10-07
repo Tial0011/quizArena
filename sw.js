@@ -32,7 +32,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "f17f2e985c";
+const PRECACHE_VERSION = "eb2b28f52f";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",
@@ -65,6 +65,7 @@ const PRECACHE_URLS = [
   "/icons/favicon-32.png",
   "/icons/favicon-48.png",
   "/icons/icon-192.png",
+  "/js/activityTracker.js",
   "/js/admin/cascadeDelete.js",
   "/js/admin/dangerDialog.js",
   "/js/admin/dashboard.js",

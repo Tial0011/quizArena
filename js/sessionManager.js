@@ -1,5 +1,7 @@
 import { auth } from "./firebase/config.js";
 
+import { startPresence, stopPresence } from "./activityTracker.js";
+
 import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // 1 hour
@@ -42,6 +44,8 @@ export function startSessionManager() {
 
   started = true;
 
+  startPresence();
+
   activityEvents.forEach((event) => {
     document.addEventListener(event, resetTimer);
   });
@@ -53,6 +57,8 @@ export function stopSessionManager() {
   if (!started) return;
 
   started = false;
+
+  stopPresence();
 
   clearTimeout(inactivityTimer);
   inactivityTimer = null;

@@ -1,0 +1,15 @@
+// Add these inside `match /databases/{database}/documents { ... }` in your Firestore rules.
+// (Merge with your existing rules — don't replace them.)
+
+// 1) Students may write ONLY these activity fields on their own user doc.
+//    If your existing `users/{uid}` rule already lets the owner update their doc, you're covered.
+//    Admin must be able to read `users` (the dashboard already does this for the Students count).
+
+// 2) New collection: one doc per sign-in.
+match /loginEvents/{id} {
+  allow create: if request.auth != null
+                && request.resource.data.uid == request.auth.uid;
+  allow read: if request.auth != null
+              && request.auth.token.email == "admin@test.com";
+  allow update, delete: if false;
+}
