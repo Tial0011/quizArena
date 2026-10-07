@@ -105,28 +105,43 @@ html.sk-lock body {
   filter: drop-shadow(0 0 5px rgba(255, 140, 0, 0.7));
 }
 
-/* make room in the top bar on narrow phones */
+/* Top bar: greeting on the left, the four buttons pinned to the
+   top-right on the same row (they no longer wrap underneath). */
 .sd-top {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: flex-start;
 }
 .sd-top-text {
   min-width: 0;
-  flex: 1 1 140px;
+  flex: 1 1 auto;
 }
 .sd-top-actions {
   align-items: center;
+  align-self: flex-start;
+  margin-left: auto;
+  flex: 0 0 auto;
 }
-@media (max-width: 400px) {
-  .sd-top-actions {
-    gap: 8px;
+@media (max-width: 480px) {
+  .sd-top {
+    gap: 10px;
   }
+  .sd-top-actions {
+    gap: 6px;
+  }
+  .sd-top-actions .theme-toggle,
   .sd-top-actions .sd-signout-mobile,
   .sd-top-actions .notif-bell {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
   }
   .sd-streak-btn {
-    height: 40px;
+    height: 38px;
+    min-width: 38px;
+    padding: 0 8px 0 7px;
+    font-size: 14px;
+  }
+  .sd-streak-btn .fl {
+    height: 22px;
   }
 }
 

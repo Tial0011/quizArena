@@ -74,6 +74,7 @@ export async function sendNotification({
   message,
   createdBy = "Admin",
   targetUserId = BROADCAST_TARGET,
+  skipPush = false,
 }) {
   const trimmed = (message || "").trim();
 
@@ -87,6 +88,9 @@ export async function sendNotification({
       createdBy,
       targetUserId,
       createdAt: serverTimestamp(),
+      // In-app (bell) entry only. The Cloud Function that sends phone
+      // pushes ignores docs with this flag.
+      ...(skipPush ? { skipPush: true } : {}),
     });
 
     return { success: true };

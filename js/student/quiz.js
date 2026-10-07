@@ -17,6 +17,7 @@ import {
 } from "./questionNavigator.js";
 import { recordQuizAttempt } from "./attemptsService.js";
 import { showStreakCelebration } from "./streakCelebration.js";
+import { showToast } from "../ui/toast.js";
 import { renderStudentDashboard } from "./dashboard.js";
 import {
   setQuizKeys,
@@ -408,8 +409,15 @@ function finishQuiz() {
     score,
     totalQuestions: questions.length,
   }).then((res) => {
-    // First quiz of the day = streak extended -> fire celebration.
-    if (res?.streakExtended) showStreakCelebration(res.newStreak);
+    // Today's quiz goal met = streak extended -> fire celebration.
+    if (res?.streakExtended) {
+      showStreakCelebration(res.newStreak, { nextTarget: res.nextTarget });
+    } else if (res?.remaining > 0) {
+      // Counted, but the streak needs more quizzes today.
+      showToast(
+        `✅ ${res.progress}/${res.target} quizzes today — ${res.remaining} more to ${res.target > 1 ? "keep" : "extend"} your streak 🔥`,
+      );
+    }
   });
 
   let message = "Keep Practicing 💪";

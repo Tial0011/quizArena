@@ -205,7 +205,7 @@ export function renderStudentDashboard(userData = {}) {
 
           <div class="sd-goal">
             <div class="sd-goal-row">
-              <span class="sd-label">Daily goal · 1 quiz</span>
+              <span class="sd-label" id="goalLabel">Daily goal · 1 quiz</span>
               <span class="sd-goal-pct" id="goalPct">0%</span>
             </div>
             <div class="sd-goal-track"><div class="sd-goal-fill" id="goalFill"></div></div>
@@ -409,7 +409,10 @@ function pickHeroMessage(attempts) {
  *     before it resets — same calendar-day logic as
  *     getStreakInfo()/attemptsService.js, not a 24-hour countdown.
  */
-function updateStreakCard(streakEl, { streak, doneToday }) {
+function updateStreakCard(
+  streakEl,
+  { streak, doneToday, todayCount = 0, target = 1, remaining = 1 },
+) {
   const card = streakEl.closest(".stat-card");
 
   if (prefersReducedMotion()) {
@@ -428,21 +431,29 @@ function updateStreakCard(streakEl, { streak, doneToday }) {
   const goalFill = document.getElementById("goalFill");
   const goalPct = document.getElementById("goalPct");
   if (goalFill && goalPct) {
-    const pct = doneToday ? 100 : 0;
+    const pct = doneToday
+      ? 100
+      : Math.min(100, Math.round((todayCount / target) * 100));
     goalFill.style.width = `${pct}%`;
     goalPct.textContent = `${pct}%`;
   }
 
+  const goalLabel = document.getElementById("goalLabel");
+  if (goalLabel) {
+    const shown = doneToday ? target : Math.min(todayCount, target);
+    goalLabel.textContent = `Daily goal · ${shown}/${target} quiz${target === 1 ? "" : "zes"}`;
+  }
+
   const subtitleEl = document.getElementById("streakSubtitle");
   if (subtitleEl) {
-    subtitleEl.textContent = streakSubtitleText(streak, doneToday);
+    subtitleEl.textContent = streakSubtitleText(streak, doneToday, remaining);
   }
 }
 
-function streakSubtitleText(streak, doneToday) {
-  if (streak === 0) return "Take a quiz today to start one!";
+function streakSubtitleText(streak, doneToday, remaining = 1) {
+  if (streak === 0 && !doneToday) return "Take a quiz today to start one!";
   if (doneToday) return "Today's done — see you tomorrow ✅";
-  return "Do a quiz today to keep it alive";
+  return `${remaining} more quiz${remaining === 1 ? "" : "zes"} today to keep it alive`;
 }
 
 /**

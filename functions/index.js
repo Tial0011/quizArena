@@ -367,89 +367,103 @@ async function cleanupInvalidTokens(tokens, response, targetUserId) {
 /* =========================================================
    STREAK REMINDERS — scheduled, twice a day
 
-   Targets students whose streak is genuinely AT RISK: they had an
-   attempt yesterday (Africa/Lagos calendar day — same day boundary
-   the client uses in attemptsService.js/getStreakInfo, not a
-   rolling 24-hour window) but haven't attempted anything YET today.
-   Someone who already did today's quiz is excluded (nothing to
-   remind them of); someone whose streak already broke days ago is
-   also excluded (reminding them their streak is "at risk" would be
-   wrong — it's already gone, that's a different kind of message).
+   Reminds students whose streak is genuinely AT RISK: their streak
+   is alive (they met the goal yesterday) and they have NOT yet met
+   today's quiz goal.
 
-   Two separate schedules, each running once daily at a different
-   Africa/Lagos time, with a different tone — an early nudge and a
-   later, more urgent one — deliberately NOT the same message twice,
-   since a duplicate feels like spam rather than a genuine reminder.
+   Before, this looked for "any attempt yesterday but none today", so
+   it knew nothing about the daily target and could not tell a
+   student who had finished their quizzes from one who hadn't.
+   Now it reads the same `streak` object the app writes on the user
+   doc (see js/student/attemptsService.js), so:
+     - a student who has met today's goal is NEVER reminded, and
+     - a student who is part-way (1 of 3 done) is told how many
+       quizzes are still left.
 
-   NOTE: scheduled functions require the Firebase project to be on
-   the Blaze (pay-as-you-go) plan — Cloud Scheduler isn't available
-   on the free Spark plan. See the deploy notes shared alongside
-   this change.
+   Day boundaries are Africa/Lagos calendar days, same as the client.
+
+   NOTE: scheduled functions need the Firebase project on the Blaze
+   (pay-as-you-go) plan.
 ========================================================= */
 
-async function findStreakAtRiskUserIds() {
-  const { todayStart, yesterdayStart } = lagosDayBoundaries();
+/* Keep in step with dailyQuizTarget() in js/student/attemptsService.js */
+function dailyQuizTarget(streakDay) {
+  if (streakDay >= 15) return 5;
+  if (streakDay >= 10) return 4;
+  if (streakDay >= 5) return 3;
+  if (streakDay >= 2) return 2;
+  return 1;
+}
 
-  const [yesterdaySnap, todaySnap] = await Promise.all([
-    db
-      .collection("attempts")
-      .where("completedAt", ">=", yesterdayStart)
-      .where("completedAt", "<", todayStart)
-      .get(),
-    db.collection("attempts").where("completedAt", ">=", todayStart).get(),
-  ]);
+/** "YYYY-MM-DD" for a given moment in Africa/Lagos (UTC+1, no DST). */
+function lagosDayKey(date = new Date()) {
+  return new Date(date.getTime() + 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
-  const activeYesterday = new Set();
-  yesterdaySnap.forEach((d) => activeYesterday.add(d.data().userId));
-
-  const activeToday = new Set();
-  todaySnap.forEach((d) => activeToday.add(d.data().userId));
-
-  return [...activeYesterday].filter((uid) => !activeToday.has(uid));
+function shiftDayKey(key, deltaDays) {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + deltaDays)).toISOString().slice(0, 10);
 }
 
 /**
- * Africa/Lagos is UTC+1 year-round (no daylight saving), so this is
- * a fixed offset rather than needing a full timezone library —
- * still computed explicitly (not "new Date() - 24h") so it lines up
- * with actual Lagos calendar-day boundaries, the same principle as
- * toDayKey() in attemptsService.js on the client.
+ * Students who still owe quizzes today. Returns
+ * [{ uid, streak, remaining }].
  */
-function lagosDayBoundaries() {
-  const LAGOS_OFFSET_MS = 60 * 60 * 1000;
-  const nowLagos = new Date(Date.now() + LAGOS_OFFSET_MS);
-  const todayStartLagos = Date.UTC(
-    nowLagos.getUTCFullYear(),
-    nowLagos.getUTCMonth(),
-    nowLagos.getUTCDate(),
-  );
-  const todayStart = new Date(todayStartLagos - LAGOS_OFFSET_MS);
-  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
-  return { todayStart, yesterdayStart };
+async function findStreakAtRisk() {
+  const today = lagosDayKey();
+  const yesterday = shiftDayKey(today, -1);
+
+  // Alive = last goal met yesterday. Anyone who met it TODAY has
+  // lastQualifiedDay === today, so they are not returned here.
+  const snap = await db
+    .collection("users")
+    .where("streak.lastQualifiedDay", "==", yesterday)
+    .get();
+
+  const atRisk = [];
+  snap.forEach((docSnap) => {
+    const s = docSnap.data().streak || {};
+    const streak = s.count || 0;
+    if (streak < 1) return;
+
+    const target = dailyQuizTarget(streak + 1);
+    const doneSoFar = s.progressDay === today ? s.progressCount || 0 : 0;
+    const remaining = target - doneSoFar;
+
+    if (remaining > 0) atRisk.push({ uid: docSnap.id, streak, remaining });
+  });
+  return atRisk;
 }
 
-async function notifyStreakAtRisk(message) {
-  const userIds = await findStreakAtRiskUserIds();
-  if (userIds.length === 0) return;
+function plural(n) {
+  return `${n} quiz${n === 1 ? "" : "zes"}`;
+}
 
-  const batch = db.batch();
-  userIds.forEach((uid) => {
-    const ref = db.collection("notifications").doc();
-    batch.set(ref, {
-      message,
-      createdBy: "System",
-      targetUserId: uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+async function notifyStreakAtRisk(buildMessage) {
+  const students = await findStreakAtRisk();
+  if (students.length === 0) return;
+
+  // Firestore batches are capped at 500 writes.
+  for (let i = 0; i < students.length; i += 450) {
+    const batch = db.batch();
+    students.slice(i, i + 450).forEach((st) => {
+      batch.set(db.collection("notifications").doc(), {
+        message: buildMessage(st),
+        createdBy: "System",
+        targetUserId: st.uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     });
-  });
-  await batch.commit();
+    await batch.commit();
+  }
 }
 
 exports.streakReminderAfternoon = onSchedule(
   { schedule: "0 14 * * *", timeZone: "Africa/Lagos" },
   async () => {
     await notifyStreakAtRisk(
-      "🔥 Don't lose your streak — take a quick quiz today!",
+      ({ streak, remaining }) =>
+        `🔥 Keep your ${streak}-day streak — finish ${plural(remaining)} today!`,
     );
   },
 );
@@ -458,7 +472,8 @@ exports.streakReminderEvening = onSchedule(
   { schedule: "0 20 * * *", timeZone: "Africa/Lagos" },
   async () => {
     await notifyStreakAtRisk(
-      "⏰ Last call! Your streak resets at midnight — squeeze in one more quiz.",
+      ({ streak, remaining }) =>
+        `⏰ Last call! ${plural(remaining)} to go before midnight or your ${streak}-day streak resets.`,
     );
   },
 );

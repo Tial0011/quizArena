@@ -75,17 +75,23 @@ function headline(streak) {
   return `${streak} day streak!`;
 }
 
-function subline(streak) {
-  if (streak <= 1) return "Come back tomorrow to keep the fire going.";
-  if (streak % 30 === 0) return "Incredible consistency. Keep it burning.";
-  if (streak % 7 === 0) return "Seven days stronger. Don't stop now.";
-  return "You practised again today. Keep it going!";
+function subline(streak, nextTarget) {
+  const tomorrow = nextTarget
+    ? ` Tomorrow: ${nextTarget} quiz${nextTarget === 1 ? "" : "zes"}.`
+    : "";
+  if (streak <= 1) return `Come back tomorrow to keep the fire going.${tomorrow}`;
+  if (streak % 30 === 0) return `Incredible consistency. Keep it burning.${tomorrow}`;
+  if (streak % 7 === 0) return `Seven days stronger. Don't stop now.${tomorrow}`;
+  return `You hit today's goal. Keep it going!${tomorrow}`;
 }
 
-function streakStatusText(streak, doneToday) {
+function streakStatusText(streak, doneToday, info = {}) {
+  const { remaining = 1, nextTarget = 1 } = info;
+  const q = (n) => `${n} quiz${n === 1 ? "" : "zes"}`;
   if (streak === 0) return "Take a quiz today to light your first flame.";
-  if (doneToday) return "Today is done. Come back tomorrow to keep it going.";
-  return "Take a quiz today to keep your streak alive.";
+  if (doneToday)
+    return `Today is done. Tomorrow you need ${q(nextTarget)} to keep it going.`;
+  return `Finish ${q(remaining)} today to keep your streak alive.`;
 }
 
 /* ---------------------------------------------------------
@@ -133,7 +139,10 @@ function mount(el) {
 /* ---------------------------------------------------------
    Full-screen celebration
 --------------------------------------------------------- */
-export function showStreakCelebration(streak, { delay = 700 } = {}) {
+export function showStreakCelebration(
+  streak,
+  { delay = 700, nextTarget = null } = {},
+) {
   if (!streak || streak < 1) return;
 
   setTimeout(() => {
@@ -165,7 +174,7 @@ export function showStreakCelebration(streak, { delay = 700 } = {}) {
 
         <div class="sc-count" id="scCount" aria-hidden="true">${Math.max(0, streak - 1)}</div>
         <h2 class="sc-title">${headline(streak)}</h2>
-        <p class="sc-sub">${subline(streak)}</p>
+        <p class="sc-sub">${subline(streak, nextTarget)}</p>
 
         ${weekMarkup(streak, true, true)}
 
@@ -202,7 +211,8 @@ export function showStreakCelebration(streak, { delay = 700 } = {}) {
 /* ---------------------------------------------------------
    Top-bar sheet
 --------------------------------------------------------- */
-export function showStreakSheet({ streak = 0, doneToday = false } = {}) {
+export function showStreakSheet(info = {}) {
+  const { streak = 0, doneToday = false } = info;
   const state = streak === 0 ? "none" : doneToday ? "done" : "risk";
 
   const el = document.createElement("div");
@@ -216,7 +226,7 @@ export function showStreakSheet({ streak = 0, doneToday = false } = {}) {
       <div class="sk-flame">${flameSvg(84)}</div>
       <div class="sk-num">${streak}</div>
       <div class="sk-label">day streak</div>
-      <p class="sk-status">${streakStatusText(streak, doneToday)}</p>
+      <p class="sk-status">${streakStatusText(streak, doneToday, info)}</p>
       ${weekMarkup(streak, doneToday, false)}
     </div>
   `;
