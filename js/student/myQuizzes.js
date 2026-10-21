@@ -1,8 +1,15 @@
 import { db } from "../firebase/config.js";
 
 import {
+  collection,
   doc,
   getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  startAfter,
+  where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { startPurchasedQuiz } from "./purchasedQuiz.js";
@@ -13,9 +20,14 @@ let purchasedQuizzes = [];
 let currentUserData = null;
 let selectedSemester = "All";
 let selectedSubject = "All";
+const PURCHASE_PAGE_SIZE = 12;
+let purchaseCursor = null;
+let hasMorePurchases = false;
+let loadingPurchasePage = false;
 
 export async function renderMyQuizzes(userData = {}) {
   currentUserData = userData;
+  purchasedQuizzes = [];
   history.pushState(
     {
       page: "myQuizzes",
@@ -46,7 +58,7 @@ export async function renderMyQuizzes(userData = {}) {
             type="text"
             id="myQuizSearch"
             class="my-quizzes-search"
-            placeholder="Search by title, subject or week..."
+            placeholder="Search loaded quizzes..."
           />
 
           <div id="myQuizSemesterFilter" class="my-quizzes-semester-filter"></div>
@@ -57,6 +69,7 @@ export async function renderMyQuizzes(userData = {}) {
 
       <div id="myQuizSummary" class="my-quizzes-summary"></div>
       <div id="myQuizList"></div>
+      <div id="myQuizPagination"></div>
     </div>
   `;
   const container = document.getElementById("myQuizList");
@@ -73,7 +86,27 @@ export async function renderMyQuizzes(userData = {}) {
     { subtitle: "This usually takes just a moment" },
   );
 
-  const purchases = userData?.purchasedQuizzes || [];
+  purchaseCursor = null;
+  hasMorePurchases = false;
+  loadingPurchasePage = false;
+  let purchaseSnap;
+  try {
+    purchaseSnap = await getDocs(query(
+      collection(db, "purchases"),
+      where("userId", "==", userData.id),
+      where("status", "==", "paid"),
+      orderBy("purchasedAt", "desc"),
+      limit(PURCHASE_PAGE_SIZE),
+    ));
+  } catch (error) {
+    console.error("Could not load purchased quizzes:", error);
+    stopLoading();
+    container.innerHTML = `<div class="empty-state"><h3>Could not load quizzes</h3><p>Please try again later.</p></div>`;
+    return;
+  }
+  const purchases = purchaseSnap.docs;
+  purchaseCursor = purchases.at(-1) || null;
+  hasMorePurchases = purchases.length === PURCHASE_PAGE_SIZE;
 
   if (purchases.length === 0) {
     stopLoading(); // remove overlay
@@ -91,11 +124,8 @@ export async function renderMyQuizzes(userData = {}) {
     return;
   }
   const quizzes = await Promise.all(
-    purchases.map(async (purchaseId) => {
+    purchases.map(async (purchaseDoc) => {
       try {
-        const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
-        if (!purchaseDoc.exists()) return null;
-
         const purchase = purchaseDoc.data();
 
         const quizDoc = await getDoc(doc(db, "quizzes", purchase.quizId));
@@ -139,7 +169,58 @@ export async function renderMyQuizzes(userData = {}) {
   renderSubjectFilter();
   renderQuizSummary();
   renderQuizList();
+  renderPurchasePagination();
   attachSearchListener();
+}
+
+function renderPurchasePagination() {
+  const container = document.getElementById("myQuizPagination");
+  if (!container) return;
+  container.innerHTML = hasMorePurchases
+    ? `<button type="button" id="loadMoreMyQuizzes" class="btn-secondary" ${loadingPurchasePage ? "disabled" : ""}>${loadingPurchasePage ? "Loading…" : "Load more quizzes"}</button>`
+    : "";
+
+  document.getElementById("loadMoreMyQuizzes")?.addEventListener("click", async () => {
+    if (loadingPurchasePage) return;
+    loadingPurchasePage = true;
+    renderPurchasePagination();
+    try {
+      const constraints = [
+        where("userId", "==", currentUserData.id),
+        where("status", "==", "paid"),
+        orderBy("purchasedAt", "desc"),
+        limit(PURCHASE_PAGE_SIZE),
+      ];
+      if (purchaseCursor) constraints.splice(3, 0, startAfter(purchaseCursor));
+      const purchaseSnap = await getDocs(query(collection(db, "purchases"), ...constraints));
+      if (!document.getElementById("myQuizList")) return;
+      if (!purchaseSnap.empty) purchaseCursor = purchaseSnap.docs.at(-1);
+      hasMorePurchases = purchaseSnap.size === PURCHASE_PAGE_SIZE;
+      const nextQuizzes = await Promise.all(purchaseSnap.docs.map(async (purchaseDoc) => {
+        const quizId = purchaseDoc.data().quizId;
+        if (!quizId) return null;
+        const quizDoc = await getDoc(doc(db, "quizzes", quizId));
+        if (!quizDoc.exists()) return null;
+        const quiz = quizDoc.data();
+        return {
+          id: quizId,
+          title: quiz.title || "Quiz",
+          subjectName: quiz.subjectName || "Other",
+          week: quiz.week ?? 0,
+          semester: quiz.semester ?? 2,
+        };
+      }));
+      purchasedQuizzes.push(...nextQuizzes.filter(Boolean));
+      renderSemesterFilter();
+      renderSubjectFilter();
+      const term = document.getElementById("myQuizSearch")?.value.trim().toLowerCase() || "";
+      renderQuizList(term);
+      renderQuizSummary(term);
+    } finally {
+      loadingPurchasePage = false;
+      renderPurchasePagination();
+    }
+  });
 }
 
 /* =========================================================

@@ -16,6 +16,8 @@ import {
   orderBy,
   limit,
   getCountFromServer,
+  getAggregateFromServer,
+  sum,
   Timestamp,
   doc,
   updateDoc,
@@ -114,6 +116,10 @@ export function renderAdminDashboard() {
       </nav>
 
       <main id="adminContent"></main>
+      <div id="adminLoadingOverlay" class="admin-loading-overlay" role="status" aria-live="polite" aria-hidden="true">
+        <span class="admin-loading-spinner" aria-hidden="true"></span>
+        <span>Loading admin dashboard…</span>
+      </div>
 
     </div>
   `;
@@ -153,6 +159,8 @@ function setupTabs() {
 }
 
 async function renderTabContent() {
+  setAdminLoading(true);
+  try {
   const content = document.getElementById("adminContent");
 
   clearInterval(userStatsTimer);
@@ -204,7 +212,23 @@ async function renderTabContent() {
               <div class="overview-icon">💰</div>
               <div class="overview-info">
                 <h3 id="revenueTotal">--</h3>
-                <p>Total Revenue</p>
+                <p>Verified Revenue</p>
+              </div>
+            </div>
+
+            <div class="overview-card load-in">
+              <div class="overview-icon">₦</div>
+              <div class="overview-info">
+                <h3 id="weeklyRevenue">--</h3>
+                <p>This Week</p>
+              </div>
+            </div>
+
+            <div class="overview-card load-in">
+              <div class="overview-icon">▦</div>
+              <div class="overview-info">
+                <h3 id="monthlyRevenue">--</h3>
+                <p>This Month</p>
               </div>
             </div>
 
@@ -307,6 +331,7 @@ async function renderTabContent() {
 
       await Promise.all([
         loadDashboardStats(),
+        loadRevenueStats(),
         loadReferralSourceStats(),
         loadRecentActivity(),
         loadUserActivityStats(),
@@ -315,25 +340,35 @@ async function renderTabContent() {
       break;
 
     case "subjects":
-      renderSubjects(content);
+      await renderSubjects(content);
       break;
 
     case "quizzes":
-      renderQuizzes(content);
+      await renderQuizzes(content);
       break;
 
     case "questions":
-      renderQuestions(content);
+      await renderQuestions(content);
       break;
 
     case "notifications":
-      renderNotifications(content);
+      await renderNotifications(content);
       break;
 
     case "weeklyPrizes":
       await renderWeeklyPrizes(content);
       break;
   }
+  } finally {
+    setAdminLoading(false);
+  }
+}
+
+function setAdminLoading(isLoading) {
+  const overlay = document.getElementById("adminLoadingOverlay");
+  if (!overlay) return;
+  overlay.classList.toggle("is-visible", isLoading);
+  overlay.setAttribute("aria-hidden", String(!isLoading));
 }
 
 async function renderWeeklyPrizes(content) {
@@ -409,19 +444,12 @@ async function loadReferralSourceStats() {
 }
 
 async function loadDashboardStats() {
-  const subjectSnap = await getDocs(collection(db, "subjects"));
-
-  const quizSnap = await getDocs(collection(db, "quizzes"));
-
-  const questionSnap = await getDocs(collection(db, "questions"));
-
-  const studentCountSnap = await getCountFromServer(
-    query(collection(db, "users"), where("role", "==", "student")),
-  );
-
-  const purchaseSnap = await getDocs(
-    query(collection(db, "purchases"), where("status", "==", "paid")),
-  );
+  const [subjectCountSnap, quizSnap, questionCountSnap, studentCountSnap] = await Promise.all([
+    getCountFromServer(collection(db, "subjects")),
+    getDocs(collection(db, "quizzes")),
+    getCountFromServer(collection(db, "questions")),
+    getCountFromServer(query(collection(db, "users"), where("role", "==", "student"))),
+  ]);
 
   // If the admin switched to a different tab while these reads were
   // in flight, #adminContent no longer contains the dashboard markup
@@ -430,45 +458,72 @@ async function loadDashboardStats() {
   // don't exist anymore.
   if (activeTab !== "dashboard") return;
 
-  setStatText("subjectCount", subjectSnap.size);
+  setStatText("subjectCount", subjectCountSnap.data().count);
   setStatText("quizCount", quizSnap.size);
-  setStatText("questionCount", questionSnap.size);
+  setStatText("questionCount", questionCountSnap.data().count);
   setStatText("studentCount", studentCountSnap.data().count);
 
-  // Purchases don't store the price paid, so revenue/top-quiz are
-  // computed by joining each paid purchase back to its quiz's
-  // *current* price/title. If a quiz's price changes after a sale,
-  // past revenue reflects the new price, not what was actually paid —
-  // fine for a rough "how are we doing" number, but call this out if
-  // it ever needs to be exact (would mean storing amount on the
-  // purchase doc at write time instead).
+  // Revenue totals come from verified Flutterwave transactions in
+  // loadRevenueStats. Count purchases per quiz with aggregation queries so
+  // the admin dashboard doesn't download every purchase document.
   const quizById = {};
   quizSnap.forEach((docSnap) => {
     quizById[docSnap.id] = docSnap.data();
   });
-
-  let totalRevenue = 0;
-  const salesByQuizId = {};
-
-  purchaseSnap.forEach((docSnap) => {
-    const { quizId } = docSnap.data();
-    const quiz = quizById[quizId];
-
-    totalRevenue += quiz?.price ?? 0;
-    salesByQuizId[quizId] = (salesByQuizId[quizId] ?? 0) + 1;
-  });
-
-  setStatText("revenueTotal", `₦${totalRevenue.toLocaleString()}`);
-
-  const topEntry = Object.entries(salesByQuizId).sort(
-    ([, a], [, b]) => b - a,
-  )[0];
+  const sales = await Promise.all(quizSnap.docs.map(async (quizDoc) => {
+    const countSnap = await getCountFromServer(query(
+      collection(db, "purchases"),
+      where("status", "==", "paid"),
+      where("quizId", "==", quizDoc.id),
+    ));
+    return [quizDoc.id, countSnap.data().count];
+  }));
+  const topEntry = sales.sort((a, b) => b[1] - a[1])[0];
 
   const topQuizEl = document.getElementById("topQuizName");
   if (topQuizEl) {
-    topQuizEl.textContent = topEntry
+    topQuizEl.textContent = topEntry && topEntry[1] > 0
       ? (quizById[topEntry[0]]?.title ?? "Unknown quiz")
       : "No sales yet";
+  }
+}
+
+async function loadRevenueStats() {
+  const hourMs = 60 * 60 * 1000;
+  const lagosNow = new Date(Date.now() + hourMs);
+  const localMidnight = Date.UTC(
+    lagosNow.getUTCFullYear(),
+    lagosNow.getUTCMonth(),
+    lagosNow.getUTCDate(),
+  );
+  const daysSinceMonday = (new Date(localMidnight).getUTCDay() + 6) % 7;
+  const weekStart = new Date(localMidnight - daysSinceMonday * 24 * hourMs - hourMs);
+  const monthStart = new Date(Date.UTC(lagosNow.getUTCFullYear(), lagosNow.getUTCMonth(), 1) - hourMs);
+  const now = Timestamp.fromDate(new Date());
+  const transactions = collection(db, "flutterwaveTransactions");
+  const sumAmount = (start) => getAggregateFromServer(
+    query(
+      transactions,
+      where("processedAt", ">=", Timestamp.fromDate(start)),
+      where("processedAt", "<=", now),
+    ),
+    { total: sum("amount") },
+  );
+
+  try {
+    const [allTime, weekly, monthly] = await Promise.all([
+      getAggregateFromServer(transactions, { total: sum("amount") }),
+      sumAmount(weekStart),
+      sumAmount(monthStart),
+    ]);
+    if (activeTab !== "dashboard") return;
+    const formatNaira = (value) => `₦${Number(value || 0).toLocaleString()}`;
+    setStatText("revenueTotal", formatNaira(allTime.data().total));
+    setStatText("weeklyRevenue", formatNaira(weekly.data().total));
+    setStatText("monthlyRevenue", formatNaira(monthly.data().total));
+  } catch (error) {
+    console.error("Failed to load verified revenue totals:", error);
+    ["revenueTotal", "weeklyRevenue", "monthlyRevenue"].forEach((id) => setStatText(id, "!"));
   }
 }
 

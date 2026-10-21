@@ -75,6 +75,8 @@ export async function sendNotification({
   createdBy = "Admin",
   targetUserId = BROADCAST_TARGET,
   skipPush = false,
+  actionType = null,
+  quizId = null,
 }) {
   const trimmed = (message || "").trim();
 
@@ -88,6 +90,8 @@ export async function sendNotification({
       createdBy,
       targetUserId,
       createdAt: serverTimestamp(),
+      ...(actionType ? { actionType } : {}),
+      ...(quizId ? { quizId } : {}),
       // In-app (bell) entry only. The Cloud Function that sends phone
       // pushes ignores docs with this flag.
       ...(skipPush ? { skipPush: true } : {}),
@@ -357,13 +361,13 @@ export function sendNewQuizNotification(quizTitle) {
  * never see other people's welcome messages.
  */
 export function sendWelcomeNotification(userId, name) {
-  const greeting = name
-    ? `Welcome to Quiz Arena, ${name}! 🎉`
-    : "Welcome to Quiz Arena! 🎉";
+  const greeting = name ? `Welcome to Quiz Arena, ${name}!` : "Welcome to Quiz Arena!";
 
   return sendNotification({
-    message: `${greeting} Head to the Marketplace to grab your first quiz.`,
+    message: `${greeting} Your free Physics quiz is ready. It’s a quick first step—open Quiz Arena and tap “Start free quiz” in your notifications or “Try your free Physics quiz” on your dashboard. No purchase needed.`,
     createdBy: "System",
     targetUserId: userId,
+    actionType: "startWelcomeQuiz",
+    quizId: "fMszqKjA0M1cYvz9samb",
   });
 }

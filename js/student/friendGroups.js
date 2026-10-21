@@ -13,7 +13,7 @@ import {
 } from "./friendGroupService.js";
 
 let currentUserData = {};
-let challengeRankedCache = []; // full ranked list from this week's Global Challenge, used to tag each group member's challenge rank
+let challengeRankedCache = []; // requested group members and their exact Global Challenge ranks
 
 export async function renderFriendGroups(userData = {}) {
   history.pushState(
@@ -120,28 +120,35 @@ async function renderFriendGroupsPage(userData) {
     .getElementById("joinGroupBtn")
     .addEventListener("click", handleJoinGroup);
 
-  // Fetched once per page load and reused both for its own section
-  // and to tag each group member's challenge rank inside their
-  // group's internal leaderboard.
-  await loadChallengeLeaderboard();
-  await loadMyGroups();
+  // Load groups first so only top 15 and group member profiles are fetched
+  // for the Global Challenge display.
+  const groups = await loadMyGroups();
+  await loadChallengeLeaderboard(groups);
+  groups.forEach((group) => loadGroupDetails(group));
 }
 
 /**
  * Loads the Global Challenge (this week, any quiz, group-gated).
  * Populates the merged leader/your-rank banner and the top-list.
  */
-async function loadChallengeLeaderboard() {
-  const { top, all, weekLabel } = await getGlobalChallengeLeaderboard(10);
+async function loadChallengeLeaderboard(groups = []) {
+  const rankUserIds = new Set([currentUserData.id]);
+  groups.forEach((group) =>
+    (group.memberIds || []).forEach((uid) => rankUserIds.add(uid)),
+  );
+  const { top, rankedMembers, weekLabel } = await getGlobalChallengeLeaderboard(
+    15,
+    [...rankUserIds],
+  );
 
-  challengeRankedCache = all;
+  challengeRankedCache = rankedMembers;
 
-  const myEntry = all.find((member) => member.uid === currentUserData.id);
-  const myRank = findGlobalRank(all, currentUserData.id);
+  const myEntry = rankedMembers.find((member) => member.uid === currentUserData.id);
+  const myRank = findGlobalRank(rankedMembers, currentUserData.id);
 
   const subtitle = document.getElementById("challengeSubtitle");
   if (subtitle) {
-    subtitle.textContent = `Top three qualify for prizes · resets every Monday. This week: ${weekLabel}.`;
+    subtitle.textContent = `Showing top 15 · group member ranks appear in each group · top three win prizes · resets Monday. This week: ${weekLabel}.`;
   }
 
   renderChallengeBanner(top[0] || null, myEntry, myRank);
@@ -306,7 +313,7 @@ async function loadMyGroups() {
   // Guard against the student having navigated away while this
   // was loading — same class of bug fixed elsewhere in this app.
   const container = document.getElementById("myGroupsList");
-  if (!container) return;
+  if (!container) return groups;
 
   // Each student can own only one group, so once they've created one
   // the "Create a Group" form has nothing left to do — remove it and
@@ -324,7 +331,7 @@ async function loadMyGroups() {
         You're not in any groups yet. Create one or join a friend's group above.
       </div>
     `;
-    return;
+    return groups;
   }
 
   container.innerHTML = groups
@@ -333,8 +340,7 @@ async function loadMyGroups() {
 
   attachShareButtons(groups);
 
-  // Load each group's requests (if owner) + leaderboard.
-  groups.forEach((group) => loadGroupDetails(group));
+  return groups;
 }
 
 function renderGroupCardSkeleton(group) {
@@ -521,10 +527,8 @@ function renderLeaderboard(members) {
       ${members
         .map((member, index) => {
           const isMe = member.uid === currentUserData.id;
-          const challengeRank = findGlobalRank(
-            challengeRankedCache,
-            member.uid,
-          );
+          const challengeRank = findGlobalRank(challengeRankedCache, member.uid);
+          const challengeRankLabel = challengeRank ? `Challenge #${challengeRank}` : "Not ranked";
 
           return `
             <div class="leaderboard-row
@@ -535,7 +539,7 @@ function renderLeaderboard(members) {
               <span class="leaderboard-rank">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
                 ${member.name}${isMe ? " (You)" : ""}
-                ${challengeRank ? `<span class="challenge-rank-badge">Challenge #${challengeRank}</span>` : ""}
+                <span class="challenge-rank-badge">${challengeRankLabel}</span>
               </span>
               <span class="leaderboard-score">
                 ${member.attemptCount > 0 ? `${member.averagePercentage}%` : "No attempts yet"}

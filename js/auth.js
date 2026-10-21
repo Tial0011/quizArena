@@ -48,6 +48,8 @@ export async function registerUser(name, email, password, referralSource) {
       email,
       role: "student",
       referralSource,
+      welcomeQuizEligible: true,
+      welcomeQuizCompleted: false,
       purchasedQuizzes: [],
       createdAt: serverTimestamp(),
     });
@@ -105,6 +107,8 @@ export async function loginUser(email, password) {
         email: user.email,
         role: "student",
         purchasedQuizzes: [],
+        welcomeQuizEligible: true,
+        welcomeQuizCompleted: false,
         createdAt: serverTimestamp(),
       });
 
@@ -184,6 +188,8 @@ export async function completeGoogleSignup(user, referralSource) {
       email: user.email,
       role: "student",
       referralSource,
+      welcomeQuizEligible: true,
+      welcomeQuizCompleted: false,
       purchasedQuizzes: [],
       createdAt: serverTimestamp(),
     });

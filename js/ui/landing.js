@@ -9,6 +9,7 @@ import {
   resetPassword,
 } from "../auth.js";
 import { renderAdminDashboard } from "../admin/dashboard.js";
+import { startPurchasedQuiz } from "../student/purchasedQuiz.js";
 import {
   prefersReducedMotion,
   initScrollReveal,
@@ -494,15 +495,24 @@ async function routeAfterAuth(user) {
   // unclicked, so this is the first place the gate needs to show —
   // js/main.js repeats the same check on later page loads/reloads.
   if (!user.emailVerified) {
-    renderVerificationGate(user, async () => {
-      const userData = await getUserData(user.uid);
-      renderStudentDashboard(userData);
-    });
+    renderVerificationGate(user, () => routeStudentDashboard(user));
     return;
   }
 
+  await routeStudentDashboard(user);
+}
+
+async function routeStudentDashboard(user) {
   const userData = await getUserData(user.uid);
   renderStudentDashboard(userData);
+
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("welcomeQuiz") !== "1") return;
+  url.searchParams.delete("welcomeQuiz");
+  history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  if (userData?.welcomeQuizEligible && !userData.welcomeQuizCompleted) {
+    startPurchasedQuiz(userData, "fMszqKjA0M1cYvz9samb", "Free Physics Welcome Quiz");
+  }
 }
 
 /* =========================================================

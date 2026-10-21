@@ -387,6 +387,14 @@
   border-radius: 18px;
 }
 
+.sd .sd-welcome-quiz-cta {
+  background: var(--sd-teal-dark);
+}
+
+.sd .sd-welcome-quiz-cta .sd-cta-arrow {
+  background: var(--sd-teal-deep);
+}
+
 .sd-cta-text {
   display: flex;
   flex-direction: column;
@@ -802,6 +810,20 @@
 .notif-time {
   font-size: 11px;
   color: var(--color-text-faint);
+}
+
+.notif-action-btn {
+  min-height: 38px;
+  margin: 4px 0 8px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .notif-empty {

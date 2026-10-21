@@ -25,6 +25,46 @@
   font-feature-settings: "tnum" 1; /* tabular figures for stat numbers */
 }
 
+.admin-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  color: var(--color-text-strong);
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.16s ease, visibility 0.16s ease;
+}
+
+.admin-loading-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.admin-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-border-tint);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: admin-spinner-turn 0.75s linear infinite;
+}
+
+@keyframes admin-spinner-turn {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-loading-overlay { transition: none; }
+  .admin-loading-spinner { animation-duration: 1.8s; }
+}
+
 /* =========================
    HERO / HEADER
 ========================= */

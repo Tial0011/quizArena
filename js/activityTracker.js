@@ -24,10 +24,11 @@ import {
 const ADMIN_EMAIL = "admin@test.com";
 
 // Admin "Online now" counts anyone whose heartbeat is newer than
-// ONLINE_WINDOW_MS (see js/admin/dashboard.js). Keep the window a bit
-// more than 2x the heartbeat so one missed beat doesn't flip a user offline.
-export const HEARTBEAT_MS = 2 * 60 * 1000;
-export const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+// ONLINE_WINDOW_MS (see js/admin/dashboard.js). A 10-minute heartbeat
+// cuts presence writes by 80% versus the former 2-minute interval while
+// the 25-minute window tolerates missed beats and browser timer throttling.
+export const HEARTBEAT_MS = 10 * 60 * 1000;
+export const ONLINE_WINDOW_MS = 25 * 60 * 1000;
 
 let heartbeatTimer = null;
 

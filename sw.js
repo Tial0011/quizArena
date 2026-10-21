@@ -32,7 +32,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "eb2b28f52f";
+const PRECACHE_VERSION = "69e1128cf3";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",
@@ -43,6 +43,7 @@ const PRECACHE_URLS = [
   "/css/auth.css",
   "/css/base.css",
   "/css/installNudge.css",
+  "/css/landing.css",
   "/css/pwa.css",
   "/css/responsive.css",
   "/css/student/dashboard.css",
@@ -100,6 +101,7 @@ const PRECACHE_URLS = [
   "/js/student/purchasedQuiz.js",
   "/js/student/questionNavigator.js",
   "/js/student/quiz.js",
+  "/js/student/quizKeys.js",
   "/js/student/quizUi.js",
   "/js/student/reviewAnswers.js",
   "/js/student/scrollEffects.js",
@@ -153,13 +155,14 @@ try {
   const messaging = firebase.messaging();
 
   messaging.onBackgroundMessage((payload) => {
-    const { title, body } = payload.data || {};
+    const { title, body, actionType } = payload.data || {};
     // Return the promise: the browser keeps the worker alive only
     // while it is pending (see the note in the old messaging SW).
     return self.registration.showNotification(title || "Quiz Arena", {
       body: body || "",
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
+      data: { actionType: actionType || "" },
     });
   });
 } catch (err) {
@@ -167,15 +170,21 @@ try {
 }
 
 self.addEventListener("notificationclick", (event) => {
+  const actionType = event.notification.data?.actionType;
+  const destination = actionType === "startWelcomeQuiz"
+    ? "/?welcomeQuiz=1"
+    : "/";
   event.notification.close();
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((windowClients) => {
         for (const client of windowClients) {
-          if ("focus" in client) return client.focus();
+          if ("focus" in client) {
+            return client.navigate(destination).then((navigatedClient) => navigatedClient.focus());
+          }
         }
-        if (clients.openWindow) return clients.openWindow("/");
+        if (clients.openWindow) return clients.openWindow(destination);
       }),
   );
 });

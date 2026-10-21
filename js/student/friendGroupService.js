@@ -266,7 +266,8 @@ export async function rejectJoinRequest(requestId) {
  */
 export function findGlobalRank(allRanked, userId) {
   const index = allRanked.findIndex((entry) => entry.uid === userId);
-  return index === -1 ? null : index + 1;
+  if (index === -1) return null;
+  return allRanked[index].rank || index + 1;
 }
 
 /* =========================================================
@@ -321,6 +322,36 @@ function getWeekBounds(date = new Date()) {
   };
 }
 
+// Firestore and scheduled jobs use Africa/Lagos week boundaries, regardless
+// of the student's device timezone.
+function getLagosWeekBounds(date = new Date()) {
+  const lagosDate = new Date(date.getTime() + 60 * 60 * 1000);
+  const midnightUtc = Date.UTC(
+    lagosDate.getUTCFullYear(),
+    lagosDate.getUTCMonth(),
+    lagosDate.getUTCDate(),
+  );
+  const day = new Date(midnightUtc).getUTCDay();
+  const mondayUtc = midnightUtc - (day === 0 ? 6 : day - 1) * 86400000;
+  const weekStart = new Date(mondayUtc - 60 * 60 * 1000);
+  const weekEnd = new Date(mondayUtc + 7 * 86400000 - 60 * 60 * 1000 - 1);
+  const firstJan = Date.UTC(new Date(mondayUtc).getUTCFullYear(), 0, 1);
+  const weekNumber = Math.ceil(
+    ((mondayUtc - firstJan) / 86400000 + new Date(firstJan).getUTCDay() + 1) / 7,
+  );
+  const fmt = (dt) => dt.toLocaleDateString("en-GB", {
+    timeZone: "Africa/Lagos",
+    day: "numeric",
+    month: "short",
+  });
+  return {
+    weekStart,
+    weekEnd,
+    weekKey: `${new Date(mondayUtc).getUTCFullYear()}-W${String(weekNumber).padStart(2, "0")}`,
+    weekLabel: `${fmt(weekStart)} – ${fmt(weekEnd)}`,
+  };
+}
+
 /**
  * The Global Challenge leaderboard for the current week. Returns
  * { top, all, weekKey, weekLabel } — `top` for display, `all` so
@@ -331,33 +362,73 @@ function getWeekBounds(date = new Date()) {
  * combined with it), so it does NOT need a Firestore composite
  * index — simpler than the old subject-scoped version.
  */
-export async function getGlobalChallengeLeaderboard(limitCount = 20) {
-  const { weekStart, weekEnd, weekKey, weekLabel } = getWeekBounds();
+export async function getGlobalChallengeLeaderboard(limitCount = 15, rankUserIds = []) {
+  const { weekStart, weekEnd, weekKey, weekLabel } = getLagosWeekBounds();
+  const projection = await getDoc(doc(db, "weeklyChallengeProjection", weekKey));
+  const useProjection = projection.exists() && projection.data().ready === true;
   const [attemptsSnap, groupsSnap] = await Promise.all([
-    getDocs(query(collection(db, "attempts"), where("completedAt", ">=", Timestamp.fromDate(weekStart)), where("completedAt", "<=", Timestamp.fromDate(weekEnd)))),
+    useProjection
+      ? Promise.resolve(null)
+      : getDocs(query(
+          collection(db, "attempts"),
+          where("completedAt", ">=", Timestamp.fromDate(weekStart)),
+          where("completedAt", "<=", Timestamp.fromDate(weekEnd)),
+        )),
     getDocs(collection(db, "friendGroups")),
   ]);
 
-  const welcomeQuizId = "fMszqKjA0M1cYvz9samb";
-  const stats = new Map();
-  const orderedAttempts = attemptsSnap.docs
-    .map((attemptDoc) => ({ data: attemptDoc.data(), id: attemptDoc.id }))
-    .sort((a, b) => (a.data.completedAt?.toMillis?.() || 0) - (b.data.completedAt?.toMillis?.() || 0));
-  orderedAttempts.forEach(({ data }) => {
-    const entry = stats.get(data.userId) || { quizCounts: new Map(), purchasedCount: 0, engagement: 0, score: 0 };
-    const percentage = data.percentage || 0;
-    if (data.quizId === welcomeQuizId) {
-      entry.score += (percentage / 10) * 0.1;
-    } else if (data.mode === "purchased" && data.quizId) {
-      const prior = entry.quizCounts.get(data.quizId) || 0;
-      const multiplier = prior === 0 ? 1 : prior <= 2 ? 0.25 : 0;
-      entry.quizCounts.set(data.quizId, prior + 1);
-      entry.purchasedCount++;
-      entry.engagement++;
-      entry.score += (percentage / 10) * multiplier;
+  let scoreSnapshots = [];
+  if (useProjection) {
+    const eligibleIds = new Set();
+    groupsSnap.forEach((groupDoc) => {
+      const group = groupDoc.data();
+      if ((group.memberIds || []).length >= MIN_GROUP_SIZE_FOR_ELIGIBILITY) {
+        (group.memberIds || []).forEach((uid) => eligibleIds.add(uid));
+      }
+    });
+    const scoreIds = [...eligibleIds].map((uid) => `${weekKey}_${uid}`);
+    const scoreQueries = [];
+    for (let offset = 0; offset < scoreIds.length; offset += 30) {
+      scoreQueries.push(getDocs(query(
+        collection(db, "weeklyChallengeScores"),
+        where(documentId(), "in", scoreIds.slice(offset, offset + 30)),
+      )));
     }
-    stats.set(data.userId, entry);
-  });
+    scoreSnapshots = await Promise.all(scoreQueries);
+  }
+
+  const stats = new Map();
+  if (useProjection) {
+    scoreSnapshots.forEach((snapshot) => snapshot.forEach((scoreDoc) => {
+      const scoreData = scoreDoc.data();
+      stats.set(scoreData.userId, {
+        quizCounts: new Map(Object.entries(scoreData.quizCounts || {})),
+        purchasedCount: scoreData.purchasedCount || 0,
+        engagement: scoreData.engagement || 0,
+        score: scoreData.scoreBase || 0,
+      });
+    }));
+  } else {
+    const welcomeQuizId = "fMszqKjA0M1cYvz9samb";
+    const orderedAttempts = attemptsSnap.docs
+      .map((attemptDoc) => ({ data: attemptDoc.data(), id: attemptDoc.id }))
+      .sort((a, b) => (a.data.completedAt?.toMillis?.() || 0) - (b.data.completedAt?.toMillis?.() || 0) || a.id.localeCompare(b.id));
+    orderedAttempts.forEach(({ data }) => {
+      const entry = stats.get(data.userId) || { quizCounts: new Map(), purchasedCount: 0, engagement: 0, score: 0 };
+      const percentage = data.percentage || 0;
+      if (data.quizId === welcomeQuizId) {
+        entry.score += (percentage / 10) * 0.1;
+      } else if (data.mode === "purchased" && data.quizId) {
+        const prior = entry.quizCounts.get(data.quizId) || 0;
+        const multiplier = prior === 0 ? 1 : prior <= 2 ? 0.25 : 0;
+        entry.quizCounts.set(data.quizId, prior + 1);
+        entry.purchasedCount++;
+        entry.engagement++;
+        entry.score += (percentage / 10) * multiplier;
+      }
+      stats.set(data.userId, entry);
+    });
+  }
 
   const qualifyingGroups = groupsSnap.docs
     .map((groupDoc) => ({ id: groupDoc.id, ...groupDoc.data() }))
@@ -383,18 +454,9 @@ export async function getGlobalChallengeLeaderboard(limitCount = 20) {
     scored.push({ uid, attemptCount: entry.purchasedCount, varietyCount, engagement: entry.engagement, score });
   });
 
-  const userBatches = [];
-  for (let offset = 0; offset < scored.length; offset += 30) {
-    const ids = scored.slice(offset, offset + 30).map((entry) => entry.uid);
-    userBatches.push(getDocs(query(collection(db, "users"), where(documentId(), "in", ids))));
-  }
-  const userSnapshots = await Promise.all(userBatches);
-  const namesByUid = new Map();
-  userSnapshots.forEach((snapshot) => snapshot.forEach((userDoc) => namesByUid.set(userDoc.id, userDoc.data().name || "Student")));
-  const ranked = scored.map((entry, index) => {
-    const name = namesByUid.get(entry.uid) || "Student";
+  const ranked = scored.map((entry) => {
     const score = Math.round(entry.score * 100) / 100;
-    return { uid: entry.uid, name, attemptCount: entry.attemptCount, varietyCount: entry.varietyCount, engagement: entry.engagement, score, averagePercentage: score };
+    return { ...entry, score, averagePercentage: score };
   });
   ranked.sort((a, b) => b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
 
@@ -402,13 +464,38 @@ export async function getGlobalChallengeLeaderboard(limitCount = 20) {
   for (const weeksAgo of [1, 2]) {
     const priorWeek = new Date(weekStart);
     priorWeek.setDate(priorWeek.getDate() - weeksAgo * 7);
-    const priorKey = getWeekBounds(priorWeek).weekKey;
+    const priorKey = getLagosWeekBounds(priorWeek).weekKey;
     const winnerDoc = await getDoc(doc(db, "weeklyWinners", priorKey));
     if (winnerDoc.exists() && winnerDoc.data().firstPlaceUid) recentWinnerIds.add(winnerDoc.data().firstPlaceUid);
   }
   ranked.sort((a, b) => Number(recentWinnerIds.has(a.uid)) - Number(recentWinnerIds.has(b.uid)) || b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
 
-  return { top: ranked.slice(0, limitCount), all: ranked, weekKey, weekLabel };
+  const requestedIds = new Set(rankUserIds);
+  const topEntries = ranked.slice(0, limitCount).map((entry, index) => ({ ...entry, rank: index + 1 }));
+  const requestedEntries = ranked
+    .map((entry, index) => ({ ...entry, rank: index + 1 }))
+    .filter((entry) => requestedIds.has(entry.uid));
+  const profileIds = [...new Set([
+    ...topEntries.map((entry) => entry.uid),
+    ...requestedEntries.map((entry) => entry.uid),
+  ])];
+  const userBatches = [];
+  for (let offset = 0; offset < profileIds.length; offset += 30) {
+    const ids = profileIds.slice(offset, offset + 30);
+    userBatches.push(getDocs(query(collection(db, "users"), where(documentId(), "in", ids))));
+  }
+  const namesByUid = new Map();
+  (await Promise.all(userBatches)).forEach((snapshot) =>
+    snapshot.forEach((userDoc) => namesByUid.set(userDoc.id, userDoc.data().name || "Student")),
+  );
+  const addName = (entry) => ({ ...entry, name: namesByUid.get(entry.uid) || "Student" });
+
+  return {
+    top: topEntries.map(addName),
+    rankedMembers: requestedEntries.map(addName),
+    weekKey,
+    weekLabel,
+  };
 }
 /**
  * Builds the internal leaderboard for a single group: each

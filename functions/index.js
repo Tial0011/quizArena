@@ -7,6 +7,160 @@ const fetch = require("node-fetch");
 admin.initializeApp();
 const db = admin.firestore();
 
+const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
+
+function lagosWeekBounds(date) {
+  const lagosDate = new Date(date.getTime() + 60 * 60 * 1000);
+  const lagosDay = Date.UTC(
+    lagosDate.getUTCFullYear(),
+    lagosDate.getUTCMonth(),
+    lagosDate.getUTCDate(),
+  );
+  const day = new Date(lagosDay).getUTCDay();
+  const mondayUtc = lagosDay - (day === 0 ? 6 : day - 1) * 86400000;
+  const weekStart = new Date(mondayUtc - 60 * 60 * 1000);
+  const weekEnd = new Date(mondayUtc + 7 * 86400000 - 60 * 60 * 1000 - 1);
+  const firstJan = Date.UTC(new Date(mondayUtc).getUTCFullYear(), 0, 1);
+  const weekNumber = Math.ceil(
+    ((mondayUtc - firstJan) / 86400000 + new Date(firstJan).getUTCDay() + 1) / 7,
+  );
+  const weekKey = `${new Date(mondayUtc).getUTCFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
+  return { weekStart, weekEnd, weekKey };
+}
+
+function summarizeWeeklyAttempts(userId, weekKey, attemptDocs) {
+  const quizCounts = {};
+  let scoreBase = 0;
+  let purchasedCount = 0;
+  let engagement = 0;
+  const ordered = [...attemptDocs].sort((a, b) => {
+    const timeDiff = (a.data().completedAt?.toMillis() || 0) - (b.data().completedAt?.toMillis() || 0);
+    return timeDiff || a.id.localeCompare(b.id);
+  });
+
+  ordered.forEach((attemptDoc) => {
+    const data = attemptDoc.data();
+    const percentage = Number(data.percentage) || 0;
+    if (data.quizId === WELCOME_QUIZ_ID) {
+      scoreBase += percentage / 100;
+    } else if (data.mode === "purchased" && data.quizId) {
+      const prior = quizCounts[data.quizId] || 0;
+      scoreBase += (percentage / 10) * (prior === 0 ? 1 : prior <= 2 ? 0.25 : 0);
+      quizCounts[data.quizId] = prior + 1;
+      purchasedCount += 1;
+      engagement += 1;
+    }
+  });
+
+  const latest = ordered[ordered.length - 1];
+  return {
+    userId,
+    weekKey,
+    scoreBase,
+    purchasedCount,
+    quizCounts,
+    varietyCount: Object.keys(quizCounts).length,
+    engagement,
+    sourceAttemptCount: attemptDocs.length,
+    lastAttemptAt: latest?.data().completedAt || null,
+    lastAttemptId: latest?.id || "",
+  };
+}
+
+async function writeWeeklyChallengeScore(summary) {
+  const scoreRef = db.collection("weeklyChallengeScores").doc(`${summary.weekKey}_${summary.userId}`);
+  await db.runTransaction(async (transaction) => {
+    const existing = await transaction.get(scoreRef);
+    const current = existing.exists ? existing.data() : null;
+    if (current && current.sourceAttemptCount > summary.sourceAttemptCount) return;
+    if (
+      current &&
+      current.sourceAttemptCount === summary.sourceAttemptCount &&
+      current.scoreBase === summary.scoreBase &&
+      current.purchasedCount === summary.purchasedCount &&
+      current.varietyCount === summary.varietyCount &&
+      current.engagement === summary.engagement &&
+      JSON.stringify(current.quizCounts || {}) === JSON.stringify(summary.quizCounts)
+    ) return;
+
+    transaction.set(scoreRef, {
+      ...summary,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+}
+
+async function getWeeklyScoringAttempts(userId, weekStart, weekEnd) {
+  const queries = [
+    db.collection("attempts").where("mode", "==", "purchased"),
+    db.collection("attempts").where("quizId", "==", WELCOME_QUIZ_ID),
+  ].map((baseQuery) => {
+    let scopedQuery = baseQuery;
+    if (userId) scopedQuery = scopedQuery.where("userId", "==", userId);
+    return scopedQuery
+      .where("completedAt", ">=", admin.firestore.Timestamp.fromDate(weekStart))
+      .where("completedAt", "<=", admin.firestore.Timestamp.fromDate(weekEnd))
+      .get();
+  });
+  const snapshots = await Promise.all(queries);
+  const uniqueAttempts = new Map();
+  snapshots.forEach((snapshot) => snapshot.docs.forEach((attemptDoc) => {
+    uniqueAttempts.set(attemptDoc.id, attemptDoc);
+  }));
+  return [...uniqueAttempts.values()];
+}
+
+async function recomputeWeeklyChallengeScore(userId, weekStart, weekEnd, weekKey) {
+  const attemptDocs = await getWeeklyScoringAttempts(userId, weekStart, weekEnd);
+  if (attemptDocs.length === 0) return;
+  const summary = summarizeWeeklyAttempts(userId, weekKey, attemptDocs);
+  if (summary.purchasedCount > 0) await writeWeeklyChallengeScore(summary);
+}
+
+exports.updateWeeklyChallengeScore = onDocumentCreated("attempts/{attemptId}", async (event) => {
+  const data = event.data?.data();
+  if (!data?.userId || !data.completedAt) return;
+  if (data.quizId !== WELCOME_QUIZ_ID && !(data.mode === "purchased" && data.quizId)) return;
+
+  const { weekStart, weekEnd, weekKey } = lagosWeekBounds(data.completedAt.toDate());
+  await recomputeWeeklyChallengeScore(data.userId, weekStart, weekEnd, weekKey);
+});
+
+// A daily rebuild backfills attempts made before the score projection was
+// deployed and repairs missed event deliveries. Student pages keep using the
+// legacy query until this marker confirms the week's snapshot is ready.
+exports.backfillCurrentWeeklyChallengeScores = onSchedule(
+  { schedule: "25 0 * * *", timeZone: "Africa/Lagos" },
+  async () => {
+    const { weekStart, weekEnd, weekKey } = lagosWeekBounds(new Date());
+    const attemptDocs = await getWeeklyScoringAttempts(null, weekStart, weekEnd);
+    const attemptsByUser = new Map();
+    attemptDocs.forEach((attemptDoc) => {
+      const userId = attemptDoc.data().userId;
+      if (!userId) return;
+      const userAttempts = attemptsByUser.get(userId) || [];
+      userAttempts.push(attemptDoc);
+      attemptsByUser.set(userId, userAttempts);
+    });
+
+    const users = [...attemptsByUser];
+    for (let offset = 0; offset < users.length; offset += 25) {
+      await Promise.all(users.slice(offset, offset + 25).map(([userId, userAttempts]) =>
+        {
+          const summary = summarizeWeeklyAttempts(userId, weekKey, userAttempts);
+          return summary.purchasedCount > 0 ? writeWeeklyChallengeScore(summary) : null;
+        },
+      ));
+    }
+
+    await db.collection("weeklyChallengeProjection").doc(weekKey).set({
+      ready: true,
+      attemptCount: attemptDocs.length,
+      computedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  },
+);
+
 /* Keep in step with js/student/packRank.js */
 const RANKS = [
   { at: 1, title: "Quiz Arena Rookie", emoji: "🌱" },
@@ -216,6 +370,21 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
   };
 });
 
+// The Physics welcome quiz is intentionally free and isn't represented by
+// a purchase document. Serve only this fixed quiz to signed-in users so its
+// launch doesn't depend on the paid-quiz Firestore read rules.
+exports.getWelcomeQuizQuestions = functions.https.onCall(async (_data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Sign in to start the welcome quiz.");
+  }
+  const snapshot = await db.collection("questions")
+    .where("quizId", "==", "fMszqKjA0M1cYvz9samb")
+    .get();
+  return {
+    questions: snapshot.docs.map((questionDoc) => ({ id: questionDoc.id, ...questionDoc.data() })),
+  };
+});
+
 /* =========================================================
    NOTIFICATIONS — push dispatch
 
@@ -247,7 +416,9 @@ exports.sendNotificationPush = onDocumentCreated(
     if (data.skipPush) return;
 
     const { targetUserId } = data;
-    const message = data.pushMessage || data.message;
+    const message = data.pushMessage || (data.actionType === "startWelcomeQuiz"
+      ? "Your free Physics quiz is ready. Tap to start now—no purchase needed."
+      : data.message);
 
     const tokens = await collectTokens(targetUserId);
     if (tokens.length === 0) return;
@@ -264,6 +435,7 @@ exports.sendNotificationPush = onDocumentCreated(
       data: {
         title: "Quiz Arena",
         body: message,
+        actionType: data.actionType || "",
       },
       // Data-only messages default to normal priority, which Android's
       // Doze/App Standby is free to defer until a maintenance window --

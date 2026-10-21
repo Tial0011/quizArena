@@ -6,6 +6,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/f
 import { renderLanding } from "./ui/landing.js";
 import { getUserData } from "./auth.js";
 import { renderStudentDashboard } from "./student/dashboard.js";
+import { startPurchasedQuiz } from "./student/purchasedQuiz.js";
 import { renderAdminDashboard } from "./admin/dashboard.js";
 import { initInstallNudge } from "./student/installNudge.js";
 import { renderVerificationGate } from "./emailVerificationGate.js";
@@ -37,6 +38,14 @@ function hideBootLoader() {
 async function renderStudent(user) {
   const userData = await getUserData(user.uid);
   renderStudentDashboard(userData);
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("welcomeQuiz") === "1") {
+    url.searchParams.delete("welcomeQuiz");
+    history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    if (userData?.welcomeQuizEligible && !userData.welcomeQuizCompleted) {
+      startPurchasedQuiz(userData, "fMszqKjA0M1cYvz9samb", "Free Physics Welcome Quiz");
+    }
+  }
 }
 
 function renderLoadError(user) {

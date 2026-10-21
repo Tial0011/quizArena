@@ -5,6 +5,7 @@ import { getRank } from "./packRank.js";
 import { renderPracticeArena } from "./practice.js";
 import { renderMarketplace } from "./marketplace.js";
 import { renderMyQuizzes } from "./myQuizzes.js";
+import { startPurchasedQuiz } from "./purchasedQuiz.js";
 import { renderFriendGroups } from "./friendGroups.js";
 import { getRecentAttempts, getStreakInfo } from "./attemptsService.js";
 import {
@@ -38,6 +39,7 @@ const app = document.getElementById("app");
 
 const DEFAULT_HERO_MESSAGE =
   "Master one quiz today and keep your streak alive.";
+const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
 
 // How many notifications the bell panel shows at once. The live
 // listener (see startNotificationsListener) fetches a larger batch
@@ -133,6 +135,10 @@ function greetingForNow() {
   return "Good evening";
 }
 
+function shouldShowWelcomeQuiz(userData) {
+  return userData.welcomeQuizEligible === true && userData.welcomeQuizCompleted !== true;
+}
+
 export function renderStudentDashboard(userData = {}) {
   const purchasedCount = userData.purchasedQuizzes?.length || 0;
   const firstName = (userData.name || "").trim().split(/\s+/)[0];
@@ -200,6 +206,15 @@ export function renderStudentDashboard(userData = {}) {
             </div>
           </div>
         </header>
+
+        ${shouldShowWelcomeQuiz(userData) ? `
+        <button type="button" class="sd-cta sd-welcome-quiz-cta load-in" data-start-welcome-quiz>
+          <span class="sd-cta-text">
+            <span class="sd-cta-title">Try your free Physics quiz</span>
+            <span class="sd-cta-sub">A quick first win. No purchase needed.</span>
+          </span>
+          <span class="sd-cta-arrow">${icon("arrow", 22)}</span>
+        </button>` : ""}
 
         <section class="sd-panel sd-stats load-in" aria-label="Your progress">
 
@@ -507,6 +522,7 @@ function renderNotifications(userData, notifications) {
   if (listEl) {
     listEl.innerHTML = renderNotificationsMarkup(notifications);
     wireNotifDeleteButtons(userData, listEl);
+    wireNotificationActions(userData, listEl);
   }
 
   if (badge) {
@@ -532,6 +548,7 @@ function renderNotificationsMarkup(notifications) {
         <div class="notif-item">
           <div class="notif-item-main">
             <p class="notif-message">${escapeHtml(n.message)}</p>
+            ${n.actionType === "startWelcomeQuiz" ? `<button type="button" class="notif-action-btn" data-notif-action="welcome-quiz">Start free quiz</button>` : ""}
             <span class="notif-time">${formatNotificationTime(n.createdAt)}</span>
           </div>
           <button
@@ -552,6 +569,15 @@ function wireNotifDeleteButtons(userData, listEl) {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       handleDismiss(userData, btn.dataset.id);
+    });
+  });
+}
+
+function wireNotificationActions(userData, listEl) {
+  listEl.querySelectorAll('[data-notif-action="welcome-quiz"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("notifPanel").hidden = true;
+      openWelcomeQuiz(userData);
     });
   });
 }
@@ -591,6 +617,10 @@ function setupDashboardEvents(userData) {
     el.addEventListener("click", () => routes[el.dataset.go]?.());
   });
 
+  document.querySelectorAll("[data-start-welcome-quiz]").forEach((button) => {
+    button.addEventListener("click", () => openWelcomeQuiz(userData));
+  });
+
   document.querySelectorAll("[data-logout]").forEach((el) => {
     el.addEventListener("click", async () => {
       if (!confirm("Are you sure you want to logout?")) return;
@@ -599,6 +629,14 @@ function setupDashboardEvents(userData) {
   });
 
   setupNotifBell(userData);
+}
+
+function openWelcomeQuiz(userData) {
+  if (userData.welcomeQuizCompleted) {
+    showToast("You’ve completed your free Physics welcome quiz.");
+    return;
+  }
+  startPurchasedQuiz(userData, WELCOME_QUIZ_ID, "Free Physics Welcome Quiz");
 }
 
 /* =========================================================

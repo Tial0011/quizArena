@@ -34,6 +34,9 @@ let lastTier = -1;
 let selectedSubject = "All";
 let selectedLevel = "100";
 let selectedSemester = "1";
+const CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
+let activeQuizCatalogCache = null;
+let activeQuizCatalogRequest = null;
 
 /* =========================================================
    PUBLIC ENTRY POINT
@@ -134,24 +137,46 @@ async function loadMarketplaceData() {
 }
 
 async function loadActiveQuizzes() {
+  const now = Date.now();
+  if (activeQuizCatalogCache && now - activeQuizCatalogCache.savedAt < CATALOG_CACHE_TTL_MS) {
+    return activeQuizCatalogCache.quizzes;
+  }
+  if (activeQuizCatalogRequest) return activeQuizCatalogRequest;
+
   const q = query(collection(db, "quizzes"), where("active", "==", true));
-  const snapshot = await getDocs(q);
+  activeQuizCatalogRequest = (async () => {
+    try {
+      const snapshot = await getDocs(q);
+      const quizzes = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
 
-  const quizzes = [];
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
+        // Backward compatibility: quizzes created before level/semester
+        // existed default to 100 Level, Semester 2.
+        quizzes.push({
+          id: docSnap.id,
+          ...data,
+          level: data.level ?? 100,
+          semester: data.semester ?? 2,
+        });
+      });
 
-    // Backward compatibility: quizzes created before level/semester
-    // existed default to 100 Level, Semester 2.
-    quizzes.push({
-      id: docSnap.id,
-      ...data,
-      level: data.level ?? 100,
-      semester: data.semester ?? 2,
-    });
-  });
+      activeQuizCatalogCache = { quizzes, savedAt: Date.now() };
+      return quizzes;
+    } finally {
+      activeQuizCatalogRequest = null;
+    }
+  })();
 
-  return quizzes;
+  try {
+    return await activeQuizCatalogRequest;
+  } catch (error) {
+    // If the catalog was loaded earlier in this app session, keep the
+    // marketplace usable during a transient network failure. Purchase
+    // eligibility is still checked against fresh server data at checkout.
+    if (activeQuizCatalogCache) return activeQuizCatalogCache.quizzes;
+    throw error;
+  }
 }
 
 /* =========================================================

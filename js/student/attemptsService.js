@@ -96,6 +96,12 @@ export async function recordQuizAttempt({
       completedAt: serverTimestamp(),
     });
 
+    if (quizId === "fMszqKjA0M1cYvz9samb") {
+      updateDoc(doc(db, "users", userId), { welcomeQuizCompleted: true }).catch((error) =>
+        console.error("Could not save welcome quiz completion:", error),
+      );
+    }
+
     const progress = info.todayCount + 1;
 
     // Today's goal was already met earlier: just keep the tally.

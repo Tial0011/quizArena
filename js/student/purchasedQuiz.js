@@ -1,5 +1,5 @@
 import { pickRandomQuestions } from "../utils/random.js";
-import { db } from "../firebase/config.js";
+import { app, db } from "../firebase/config.js";
 
 import {
   collection,
@@ -7,6 +7,7 @@ import {
   query,
   where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
 import {
@@ -37,6 +38,11 @@ import { showLoadingOverlay } from "./loadingOverlay.js";
 ========================================================= */
 const CBT_QUESTION_LIMIT = 25;
 const CBT_TIME_LIMIT_SECONDS = 10 * 60; // fixed 10-minute timer
+const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
+const getWelcomeQuizQuestions = httpsCallable(
+  getFunctions(app),
+  "getWelcomeQuizQuestions",
+);
 
 let questions = [];
 let answers = [];
@@ -50,6 +56,11 @@ let currentQuizId = null;
 let currentUserData = null;
 
 export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
+  if (quizId === WELCOME_QUIZ_ID && userData?.welcomeQuizCompleted) {
+    renderStudentDashboard(userData);
+    showToast("You’ve completed your free Physics welcome quiz.");
+    return;
+  }
   currentUserId = userData?.id || null;
   currentQuizId = quizId;
   currentUserData = userData;
@@ -75,18 +86,27 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
     { subtitle: "This usually takes just a moment" },
   );
 
-  const q = query(collection(db, "questions"), where("quizId", "==", quizId));
-
-  const snapshot = await getDocs(q);
-
   const allQuestions = [];
-
-  snapshot.forEach((docSnap) => {
-    allQuestions.push({
-      id: docSnap.id,
-      ...docSnap.data(),
-    });
-  });
+  try {
+    if (quizId === WELCOME_QUIZ_ID) {
+      const result = await getWelcomeQuizQuestions();
+      allQuestions.push(...(result.data.questions || []));
+    } else {
+      const q = query(collection(db, "questions"), where("quizId", "==", quizId));
+      const snapshot = await getDocs(q);
+      snapshot.forEach((docSnap) => {
+        allQuestions.push({ id: docSnap.id, ...docSnap.data() });
+      });
+    }
+  } catch (error) {
+    console.error("Failed to load quiz questions:", error);
+    stopLoading();
+    alert(quizId === WELCOME_QUIZ_ID
+      ? "Your free Physics quiz couldn't load right now. Please try again."
+      : "The quiz couldn't load right now. Please try again.");
+    renderStudentDashboard(userData);
+    return;
+  }
 
   if (!allQuestions.length) {
     stopLoading();
@@ -111,7 +131,8 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
 
   timeRemaining = CBT_TIME_LIMIT_SECONDS;
   registerBackHandler(() => {
-    renderMyQuizzes(userData);
+    if (currentQuizId === WELCOME_QUIZ_ID) renderStudentDashboard(userData);
+    else renderMyQuizzes(userData);
   });
 
   setQuizKeys({
@@ -392,6 +413,9 @@ function finishQuiz(quizTitle) {
   });
 
   const percentage = Math.round((score / questions.length) * 100);
+  if (currentQuizId === WELCOME_QUIZ_ID) {
+    currentUserData.welcomeQuizCompleted = true;
+  }
 
   // Fire-and-forget: analytics should never delay or block the
   // student from seeing their result. recordQuizAttempt() already
