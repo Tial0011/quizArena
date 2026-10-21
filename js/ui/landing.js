@@ -5,6 +5,7 @@ import {
   registerUser,
   getUserData,
   signInWithGoogle,
+  completeGoogleSignup,
   resetPassword,
 } from "../auth.js";
 import { renderAdminDashboard } from "../admin/dashboard.js";
@@ -24,6 +25,7 @@ import { renderVerificationGate } from "../emailVerificationGate.js";
 const app = document.getElementById("app");
 
 let mode = "login";
+let pendingGoogleUser = null;
 
 // The "beforeinstallprompt"/"appinstalled" listeners themselves now
 // live in js/installPrompt.js (a single shared module, imported
@@ -240,9 +242,10 @@ function loginMarkup() {
 
 function registerMarkup() {
   return `
-    <h2>Create Account</h2>
-    <p class="auth-subtitle">Set up your details to get started</p>
+    <h2>${pendingGoogleUser ? "Finish creating your account" : "Create Account"}</h2>
+    <p class="auth-subtitle">${pendingGoogleUser ? "Tell us how you found Quiz Arena." : "Set up your details to get started"}</p>
 
+    ${pendingGoogleUser ? "" : `
     <div class="form-group">
       <label for="name">User Name</label>
       <div class="input-with-icon">
@@ -277,20 +280,32 @@ function registerMarkup() {
         >
       </div>
     </div>
+    `}
 
-    ${googleButtonMarkup()}
+    <div class="form-group">
+      <label for="referralSource">How did you find us?</label>
+      <select id="referralSource" required>
+        <option value="">Choose a source</option>
+        <option value="linkedin">LinkedIn</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="tiktok">TikTok</option>
+        <option value="google">Google</option>
+      </select>
+    </div>
+
+    ${pendingGoogleUser ? "" : googleButtonMarkup()}
 
     <button id="submitBtn" class="submit-btn">
-      Register
+      ${pendingGoogleUser ? "Continue" : "Register"}
     </button>
 
-    <p class="switch">
+    ${pendingGoogleUser ? "" : `<p class="switch">
       Already have an account?
 
       <span id="switchMode">
         Login
       </span>
-    </p>
+    </p>`}
   `;
 }
 
@@ -316,25 +331,41 @@ async function submitForm() {
 
   submitBtn.disabled = true;
   submitBtn.textContent = "Loading...";
-  const email = document.getElementById("email").value;
-
-  const password = document.getElementById("password").value;
-
   let result;
 
   if (mode === "register") {
-    const name = document.getElementById("name").value;
+    const referralSource = document.getElementById("referralSource").value;
 
-    result = await registerUser(name, email, password);
+    if (!referralSource) {
+      alert("Choose how you found Quiz Arena.");
+      submitBtn.disabled = false;
+      submitBtn.textContent = pendingGoogleUser ? "Continue" : "Register";
+      return;
+    }
+
+    if (pendingGoogleUser) {
+      result = await completeGoogleSignup(pendingGoogleUser, referralSource);
+      if (result.success) pendingGoogleUser = null;
+    } else {
+      result = await registerUser(
+        document.getElementById("name").value,
+        document.getElementById("email").value,
+        document.getElementById("password").value,
+        referralSource,
+      );
+    }
   } else {
-    result = await loginUser(email, password);
+    result = await loginUser(
+      document.getElementById("email").value,
+      document.getElementById("password").value,
+    );
   }
 
   if (!result.success) {
     alert(result.message);
     submitBtn.disabled = false;
 
-    submitBtn.textContent = mode === "login" ? "Sign In" : "Register";
+    submitBtn.textContent = pendingGoogleUser ? "Continue" : mode === "login" ? "Sign In" : "Register";
     return;
   }
 
@@ -363,6 +394,14 @@ async function handleGoogleSignIn() {
   // can't race) and show three moving dots in place of the label.
   const submitBtn = document.getElementById("submitBtn");
   const submitWasDisabled = submitBtn?.disabled;
+  const referralSource = mode === "register"
+    ? document.getElementById("referralSource")?.value
+    : null;
+  if (mode === "register" && !referralSource) {
+    alert("Choose how you found Quiz Arena before continuing with Google.");
+    document.getElementById("referralSource")?.focus();
+    return;
+  }
 
   btn.disabled = true;
   btn.classList.add("is-loading");
@@ -383,10 +422,17 @@ async function handleGoogleSignIn() {
 
   let result;
   try {
-    result = await signInWithGoogle();
+    result = await signInWithGoogle(referralSource);
   } catch (error) {
     console.error(error);
     result = { success: false, message: "Google sign-in failed. Please try again." };
+  }
+
+  if (result.needsReferralSource) {
+    pendingGoogleUser = result.user;
+    mode = "register";
+    renderLanding();
+    return;
   }
 
   if (!result.success) {

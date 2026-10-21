@@ -11,6 +11,7 @@ import {
   arrayUnion,
   serverTimestamp,
   Timestamp,
+  documentId,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 /* =========================================================
@@ -282,13 +283,6 @@ export function findGlobalRank(allRanked, userId) {
      never the main driver.
 ========================================================= */
 
-const CHALLENGE_SCORE_WEIGHT = 0.65; // your own average score this week
-const CHALLENGE_VOLUME_WEIGHT = 0.2; // your attempt volume this week
-const CHALLENGE_GROUP_WEIGHT = 0.15; // your best qualifying group's weekly average — "small" nudge
-// Attempts needed to earn full volume credit. Doing more than this
-// doesn't add extra credit — it just caps the reward for spamming
-// attempts instead of actually improving your score.
-const CHALLENGE_TARGET_ATTEMPTS = 10;
 
 /**
  * Returns the Monday 00:00:00.000 → Sunday 23:59:59.999 bounds for
@@ -339,142 +333,83 @@ function getWeekBounds(date = new Date()) {
  */
 export async function getGlobalChallengeLeaderboard(limitCount = 20) {
   const { weekStart, weekEnd, weekKey, weekLabel } = getWeekBounds();
-
   const [attemptsSnap, groupsSnap] = await Promise.all([
-    getDocs(
-      query(
-        collection(db, "attempts"),
-        where("completedAt", ">=", Timestamp.fromDate(weekStart)),
-        where("completedAt", "<=", Timestamp.fromDate(weekEnd)),
-      ),
-    ),
+    getDocs(query(collection(db, "attempts"), where("completedAt", ">=", Timestamp.fromDate(weekStart)), where("completedAt", "<=", Timestamp.fromDate(weekEnd)))),
     getDocs(collection(db, "friendGroups")),
   ]);
 
-  // Every attempt this week, any subject, aggregated per user.
-  // `quizKeys` tracks the distinct quizzes/subjects attempted (a
-  // purchased quiz by its quizId, a practice run by its subject)
-  // so "variety" -- doing different quizzes, not just repeating
-  // one -- can be surfaced, per the note in the doc comment above.
-  const individualStats = new Map();
-  attemptsSnap.forEach((docSnap) => {
-    const data = docSnap.data();
-    const entry = individualStats.get(data.userId) || {
-      totalPercentage: 0,
-      count: 0,
-      quizKeys: new Set(),
-    };
-    entry.totalPercentage += data.percentage || 0;
-    entry.count++;
-    entry.quizKeys.add(
-      data.mode === "purchased"
-        ? `q:${data.quizId}`
-        : `s:${data.subjectName || "practice"}`,
-    );
-    individualStats.set(data.userId, entry);
+  const welcomeQuizId = "fMszqKjA0M1cYvz9samb";
+  const stats = new Map();
+  const orderedAttempts = attemptsSnap.docs
+    .map((attemptDoc) => ({ data: attemptDoc.data(), id: attemptDoc.id }))
+    .sort((a, b) => (a.data.completedAt?.toMillis?.() || 0) - (b.data.completedAt?.toMillis?.() || 0));
+  orderedAttempts.forEach(({ data }) => {
+    const entry = stats.get(data.userId) || { quizCounts: new Map(), purchasedCount: 0, engagement: 0, score: 0 };
+    const percentage = data.percentage || 0;
+    if (data.quizId === welcomeQuizId) {
+      entry.score += (percentage / 10) * 0.1;
+    } else if (data.mode === "purchased" && data.quizId) {
+      const prior = entry.quizCounts.get(data.quizId) || 0;
+      const multiplier = prior === 0 ? 1 : prior <= 2 ? 0.25 : 0;
+      entry.quizCounts.set(data.quizId, prior + 1);
+      entry.purchasedCount++;
+      entry.engagement++;
+      entry.score += (percentage / 10) * multiplier;
+    }
+    stats.set(data.userId, entry);
   });
-
-  function getIndividualAverage(userId) {
-    const entry = individualStats.get(userId);
-    return entry ? entry.totalPercentage / entry.count : null;
-  }
 
   const qualifyingGroups = groupsSnap.docs
-    .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
-    .filter(
-      (group) =>
-        (group.memberIds || []).length >= MIN_GROUP_SIZE_FOR_ELIGIBILITY,
-    );
-
-  // Each qualifying group's weekly average, computed once, reused
-  // for every member's blend below.
-  const groupsWithAverages = qualifyingGroups.map((group) => {
-    const memberAverages = group.memberIds
-      .map((uid) => getIndividualAverage(uid))
-      .filter((avg) => avg !== null);
-
-    const groupAverage =
-      memberAverages.length > 0
-        ? memberAverages.reduce((sum, avg) => sum + avg, 0) /
-          memberAverages.length
-        : null;
-
-    return { memberIds: group.memberIds, groupAverage };
+    .map((groupDoc) => ({ id: groupDoc.id, ...groupDoc.data() }))
+    .filter((group) => (group.memberIds || []).length >= MIN_GROUP_SIZE_FOR_ELIGIBILITY);
+  const eligibleIds = new Set(qualifyingGroups.flatMap((group) => group.memberIds || []));
+  const groupmatesByUid = new Map();
+  qualifyingGroups.forEach((group) => {
+    const activeMembers = (group.memberIds || []).filter((uid) => (stats.get(uid)?.purchasedCount || 0) > 0);
+    activeMembers.forEach((uid) => {
+      const groupmates = groupmatesByUid.get(uid) || new Set();
+      activeMembers.forEach((memberId) => memberId !== uid && groupmates.add(memberId));
+      groupmatesByUid.set(uid, groupmates);
+    });
   });
-
-  const eligibleUserIds = new Set();
-  groupsWithAverages.forEach((group) => {
-    group.memberIds.forEach((uid) => eligibleUserIds.add(uid));
-  });
-
   const scored = [];
 
-  eligibleUserIds.forEach((userId) => {
-    const individualAvg = getIndividualAverage(userId);
-    if (individualAvg === null) return; // no attempts this week
-
-    const entry = individualStats.get(userId);
-
-    const volumeCredit =
-      Math.min(entry.count / CHALLENGE_TARGET_ATTEMPTS, 1) * 100;
-
-    // Best qualifying group's average this week — 0 if none of the
-    // user's qualifying groups have any attempts yet, so it just
-    // doesn't add anything rather than penalizing them.
-    let bestGroupAverage = 0;
-    groupsWithAverages.forEach((group) => {
-      if (!group.memberIds.includes(userId)) return;
-      if (group.groupAverage === null) return;
-      if (group.groupAverage > bestGroupAverage) {
-        bestGroupAverage = group.groupAverage;
-      }
-    });
-
-    const weeklyScore =
-      individualAvg * CHALLENGE_SCORE_WEIGHT +
-      volumeCredit * CHALLENGE_VOLUME_WEIGHT +
-      bestGroupAverage * CHALLENGE_GROUP_WEIGHT;
-
-    scored.push({
-      uid: userId,
-      attemptCount: entry.count,
-      varietyCount: entry.quizKeys.size,
-      individualAverage: Math.round(individualAvg),
-      weeklyScore,
-    });
+  eligibleIds.forEach((uid) => {
+    const entry = stats.get(uid);
+    if (!entry || entry.purchasedCount === 0) return;
+    const varietyCount = entry.quizCounts.size;
+    const groupmates = groupmatesByUid.get(uid) || new Set();
+    const score = entry.score + Math.min(varietyCount, 8) * 3 + Math.min(groupmates.size, 4) * 5;
+    scored.push({ uid, attemptCount: entry.purchasedCount, varietyCount, engagement: entry.engagement, score });
   });
 
-  const userDocs = await Promise.allSettled(
-    scored.map((s) => getDoc(doc(db, "users", s.uid))),
-  );
-
-  const ranked = scored.map((s, index) => {
-    const userResult = userDocs[index];
-    const name =
-      userResult.status === "fulfilled" && userResult.value.exists()
-        ? userResult.value.data().name || "Student"
-        : "Student";
-
-    return {
-      uid: s.uid,
-      name,
-      attemptCount: s.attemptCount,
-      varietyCount: s.varietyCount,
-      individualAverage: s.individualAverage,
-      averagePercentage: Math.round(s.weeklyScore), // ranking/display number
-    };
+  const userBatches = [];
+  for (let offset = 0; offset < scored.length; offset += 30) {
+    const ids = scored.slice(offset, offset + 30).map((entry) => entry.uid);
+    userBatches.push(getDocs(query(collection(db, "users"), where(documentId(), "in", ids))));
+  }
+  const userSnapshots = await Promise.all(userBatches);
+  const namesByUid = new Map();
+  userSnapshots.forEach((snapshot) => snapshot.forEach((userDoc) => namesByUid.set(userDoc.id, userDoc.data().name || "Student")));
+  const ranked = scored.map((entry, index) => {
+    const name = namesByUid.get(entry.uid) || "Student";
+    const score = Math.round(entry.score * 100) / 100;
+    return { uid: entry.uid, name, attemptCount: entry.attemptCount, varietyCount: entry.varietyCount, engagement: entry.engagement, score, averagePercentage: score };
   });
+  ranked.sort((a, b) => b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
 
-  ranked.sort((a, b) => b.averagePercentage - a.averagePercentage);
+  const recentWinnerIds = new Set();
+  for (const weeksAgo of [1, 2]) {
+    const priorWeek = new Date(weekStart);
+    priorWeek.setDate(priorWeek.getDate() - weeksAgo * 7);
+    const priorKey = getWeekBounds(priorWeek).weekKey;
+    const winnerDoc = await getDoc(doc(db, "weeklyWinners", priorKey));
+    if (winnerDoc.exists() && winnerDoc.data().firstPlaceUid) recentWinnerIds.add(winnerDoc.data().firstPlaceUid);
+  }
+  ranked.sort((a, b) => Number(recentWinnerIds.has(a.uid)) - Number(recentWinnerIds.has(b.uid)) || b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
 
-  return {
-    top: ranked.slice(0, limitCount),
-    all: ranked,
-    weekKey,
-    weekLabel,
-  };
+  return { top: ranked.slice(0, limitCount), all: ranked, weekKey, weekLabel };
 }
-
 /**
  * Builds the internal leaderboard for a single group: each
  * member's average percentage across ALL their quiz attempts

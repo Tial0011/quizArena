@@ -25,9 +25,14 @@ const googleProvider = new GoogleAuthProvider();
 // =========================
 // REGISTER
 // =========================
-export async function registerUser(name, email, password) {
+const REFERRAL_SOURCES = new Set(["linkedin", "whatsapp", "tiktok", "google"]);
+
+export async function registerUser(name, email, password, referralSource) {
   if (!name || !email || !password) {
     return { success: false, message: "All fields are required" };
+  }
+  if (!REFERRAL_SOURCES.has(referralSource)) {
+    return { success: false, message: "Choose how you found Quiz Arena." };
   }
 
   try {
@@ -42,6 +47,7 @@ export async function registerUser(name, email, password) {
       name,
       email,
       role: "student",
+      referralSource,
       purchasedQuizzes: [],
       createdAt: serverTimestamp(),
     });
@@ -122,7 +128,7 @@ export async function loginUser(email, password) {
 // creates the Firestore user doc on first sign-in, same as
 // loginUser() does for email/password.
 // =========================
-export async function signInWithGoogle() {
+export async function signInWithGoogle(referralSource = null) {
   try {
     const credential = await signInWithPopup(auth, googleProvider);
     const user = credential.user;
@@ -133,15 +139,8 @@ export async function signInWithGoogle() {
     let role = "student";
 
     if (!snap.exists()) {
-      await setDoc(userRef, {
-        name: user.displayName || "",
-        email: user.email,
-        role: "student",
-        purchasedQuizzes: [],
-        createdAt: serverTimestamp(),
-      });
-
-      sendWelcomeNotification(user.uid, user.displayName);
+      if (!referralSource) return { success: false, needsReferralSource: true, user };
+      return completeGoogleSignup(user, referralSource);
     } else {
       role = snap.data().role || "student";
     }
@@ -166,6 +165,33 @@ export async function signInWithGoogle() {
       };
     }
 
+    return { success: false, message: error.message };
+  }
+}
+
+export async function completeGoogleSignup(user, referralSource) {
+  if (!user || !REFERRAL_SOURCES.has(referralSource)) {
+    return { success: false, message: "Choose how you found Quiz Arena." };
+  }
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const existing = await getDoc(userRef);
+    if (existing.exists()) {
+      return { success: true, user, role: existing.data().role || "student" };
+    }
+    await setDoc(userRef, {
+      name: user.displayName || "",
+      email: user.email,
+      role: "student",
+      referralSource,
+      purchasedQuizzes: [],
+      createdAt: serverTimestamp(),
+    });
+    sendWelcomeNotification(user.uid, user.displayName);
+    recordLogin(user);
+    return { success: true, user, role: "student" };
+  } catch (error) {
+    console.error(error);
     return { success: false, message: error.message };
   }
 }

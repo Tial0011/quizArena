@@ -477,3 +477,97 @@ exports.streakReminderEvening = onSchedule(
     );
   },
 );
+
+// Save the completed weekly prize table just after Monday starts in Lagos.
+// This immutable snapshot powers payout tracking, admin history, and the
+// two-week first-place cooldown on the live leaderboard.
+exports.recordWeeklyChallengeWinners = onSchedule(
+  { schedule: "5 0 * * 1", timeZone: "Africa/Lagos" },
+  async () => {
+    const nowLagos = new Date(Date.now() + 60 * 60 * 1000);
+    const monday = new Date(Date.UTC(nowLagos.getUTCFullYear(), nowLagos.getUTCMonth(), nowLagos.getUTCDate()));
+    monday.setUTCDate(monday.getUTCDate() - 7);
+    const weekStart = new Date(monday.getTime() - 60 * 60 * 1000);
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+    const keyDate = new Date(monday);
+    const dayOfYear = Math.floor((keyDate - new Date(Date.UTC(keyDate.getUTCFullYear(), 0, 1))) / 86400000);
+    const weekNumber = Math.ceil((dayOfYear + new Date(Date.UTC(keyDate.getUTCFullYear(), 0, 1)).getUTCDay() + 1) / 7);
+    const weekKey = `${keyDate.getUTCFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
+
+    const [attemptsSnap, groupsSnap] = await Promise.all([
+      db.collection("attempts").where("completedAt", ">=", admin.firestore.Timestamp.fromDate(weekStart)).where("completedAt", "<=", admin.firestore.Timestamp.fromDate(weekEnd)).get(),
+      db.collection("friendGroups").get(),
+    ]);
+    const stats = new Map();
+    attemptsSnap.docs
+      .sort((a, b) => (a.data().completedAt?.toMillis() || 0) - (b.data().completedAt?.toMillis() || 0))
+      .forEach((attemptDoc) => {
+        const data = attemptDoc.data();
+        const entry = stats.get(data.userId) || { quizzes: new Map(), purchased: 0, engagement: 0, score: 0 };
+        const percentage = data.percentage || 0;
+        if (data.quizId === "fMszqKjA0M1cYvz9samb") {
+          entry.score += percentage / 100;
+        } else if (data.mode === "purchased" && data.quizId) {
+          const count = entry.quizzes.get(data.quizId) || 0;
+          entry.score += (percentage / 10) * (count === 0 ? 1 : count <= 2 ? 0.25 : 0);
+          entry.quizzes.set(data.quizId, count + 1);
+          entry.purchased++;
+          entry.engagement++;
+        }
+        stats.set(data.userId, entry);
+      });
+
+    const groups = groupsSnap.docs.map((d) => d.data()).filter((g) => (g.memberIds || []).length >= 3);
+    const eligible = new Set(groups.flatMap((g) => g.memberIds || []));
+    const results = [];
+    eligible.forEach((uid) => {
+      const entry = stats.get(uid);
+      if (!entry || !entry.purchased) return;
+      const groupmates = new Set();
+      groups.forEach((group) => {
+        if ((group.memberIds || []).includes(uid)) group.memberIds.forEach((id) => id !== uid && stats.get(id)?.purchased && groupmates.add(id));
+      });
+      results.push({ uid, score: entry.score + Math.min(entry.quizzes.size, 8) * 3 + Math.min(groupmates.size, 4) * 5, varietyCount: entry.quizzes.size, engagement: entry.engagement, attemptCount: entry.purchased });
+    });
+    results.sort((a, b) => b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
+    const priorWinnerKeys = [];
+    for (const weeksAgo of [1, 2]) {
+      const priorMonday = new Date(monday);
+      priorMonday.setUTCDate(priorMonday.getUTCDate() - weeksAgo * 7);
+      const jan1 = new Date(Date.UTC(priorMonday.getUTCFullYear(), 0, 1));
+      const priorWeekNumber = Math.ceil(((priorMonday - jan1) / 86400000 + jan1.getUTCDay() + 1) / 7);
+      priorWinnerKeys.push(`${priorMonday.getUTCFullYear()}-W${String(priorWeekNumber).padStart(2, "0")}`);
+    }
+    const priorWinnerDocs = await Promise.all(priorWinnerKeys.map((key) => db.collection("weeklyWinners").doc(key).get()));
+    const cooldownIds = new Set(priorWinnerDocs.filter((snap) => snap.exists).map((snap) => snap.data().firstPlaceUid).filter(Boolean));
+    results.sort((a, b) => Number(cooldownIds.has(a.uid)) - Number(cooldownIds.has(b.uid)) || b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
+    const top = results.slice(0, 3);
+    const userRefs = top.map((entry) => db.collection("users").doc(entry.uid));
+    const userDocs = userRefs.length ? await db.getAll(...userRefs) : [];
+    const names = new Map(userDocs.map((userDoc) => [userDoc.id, userDoc.exists ? userDoc.data().name || "Student" : "Student"]));
+    const payouts = [1500, 1000, 500];
+    const winners = top.map((entry, index) => ({ ...entry, score: Math.round(entry.score * 100) / 100, name: names.get(entry.uid), place: index + 1, prizeNaira: payouts[index], payoutStatus: "pending" }));
+    const weeklyWinnerRef = db.collection("weeklyWinners").doc(weekKey);
+    const previousRecord = await weeklyWinnerRef.get();
+    if (previousRecord.exists) {
+      const payoutByUid = new Map((previousRecord.data().winners || []).map((winner) => [winner.uid, winner]));
+      winners.forEach((winner) => {
+        const previous = payoutByUid.get(winner.uid);
+        if (previous?.payoutStatus === "paid") {
+          winner.payoutStatus = "paid";
+          winner.paidAt = previous.paidAt;
+          winner.payoutMethod = previous.payoutMethod || null;
+        }
+      });
+    }
+    await weeklyWinnerRef.set({
+      weekKey,
+      weekStart: admin.firestore.Timestamp.fromDate(weekStart),
+      weekEnd: admin.firestore.Timestamp.fromDate(weekEnd),
+      firstPlaceUid: winners[0]?.uid || null,
+      winners,
+      totalPrizeNaira: winners.reduce((sum, winner) => sum + winner.prizeNaira, 0),
+      recordedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  },
+);

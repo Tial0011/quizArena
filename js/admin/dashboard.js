@@ -9,6 +9,7 @@ import { initParallax, initScrollReveal } from "../student/scrollEffects.js";
 
 import {
   collection,
+  getDoc,
   getDocs,
   query,
   where,
@@ -16,6 +17,8 @@ import {
   limit,
   getCountFromServer,
   Timestamp,
+  doc,
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { ONLINE_WINDOW_MS } from "../activityTracker.js";
 
@@ -99,6 +102,13 @@ export function renderAdminDashboard() {
           data-tab="notifications"
         >
           Notifications
+        </button>
+
+        <button
+          class="tab-btn ${activeTab === "weeklyPrizes" ? "active" : ""}"
+          data-tab="weeklyPrizes"
+        >
+          Weekly Prizes
         </button>
 
       </nav>
@@ -211,6 +221,17 @@ async function renderTabContent() {
         </div>
 
         <div class="admin-card load-in">
+          <h2>How students found us</h2>
+          <p>Referral answers from new email and Google sign-ups.</p>
+          <div class="overview-grid" id="referralSourceStats">
+            <div class="overview-card"><div class="overview-info"><h3>--</h3><p>LinkedIn</p></div></div>
+            <div class="overview-card"><div class="overview-info"><h3>--</h3><p>WhatsApp</p></div></div>
+            <div class="overview-card"><div class="overview-info"><h3>--</h3><p>TikTok</p></div></div>
+            <div class="overview-card"><div class="overview-info"><h3>--</h3><p>Google</p></div></div>
+          </div>
+        </div>
+
+        <div class="admin-card load-in">
 
           <div class="admin-card-head">
             <h2>User Activity</h2>
@@ -286,6 +307,7 @@ async function renderTabContent() {
 
       await Promise.all([
         loadDashboardStats(),
+        loadReferralSourceStats(),
         loadRecentActivity(),
         loadUserActivityStats(),
       ]);
@@ -307,7 +329,83 @@ async function renderTabContent() {
     case "notifications":
       renderNotifications(content);
       break;
+
+    case "weeklyPrizes":
+      await renderWeeklyPrizes(content);
+      break;
   }
+}
+
+async function renderWeeklyPrizes(content) {
+  content.innerHTML = `
+    <div class="admin-card">
+      <h2>Weekly Challenge Prizes</h2>
+      <p>Winners are recorded automatically every Monday. Pay prizes manually by airtime, transfer, or data, then mark each payout here.</p>
+      <div id="weeklyPrizeHistory">Loading weekly winners…</div>
+    </div>`;
+
+  try {
+    const winnersSnap = await getDocs(query(collection(db, "weeklyWinners"), orderBy("weekStart", "desc"), limit(26)));
+    if (activeTab !== "weeklyPrizes") return;
+    const history = document.getElementById("weeklyPrizeHistory");
+    if (!history) return;
+    if (winnersSnap.empty) {
+      history.innerHTML = `<p>No weekly winner records yet. The first record is created on Monday after a completed challenge week.</p>`;
+      return;
+    }
+    history.innerHTML = winnersSnap.docs.map((weekDoc) => {
+      const week = weekDoc.data();
+      const dateRange = week.weekStart?.toDate && week.weekEnd?.toDate
+        ? `${week.weekStart.toDate().toLocaleDateString()} – ${week.weekEnd.toDate().toLocaleDateString()}`
+        : week.weekKey;
+      const rows = (week.winners || []).map((winner) => `
+        <tr>
+          <td>${winner.place}</td><td>${escapeHtml(winner.name || "Student")}</td>
+          <td>₦${(winner.prizeNaira || 0).toLocaleString()}</td>
+          <td>${escapeHtml(winner.payoutStatus || "pending")}</td>
+          <td>${winner.payoutStatus === "paid" ? escapeHtml(winner.payoutMethod || "") : `<select aria-label="Payout method" data-payout-method><option value="airtime">Airtime</option><option value="transfer">Transfer</option><option value="data">Data</option></select> <button type="button" class="admin-refresh-btn" data-paid-week="${escapeHtml(weekDoc.id)}" data-paid-uid="${escapeHtml(winner.uid)}">Mark paid</button>`}</td>
+        </tr>`).join("");
+      return `<section class="admin-card"><h3>${escapeHtml(week.weekKey)} <small>${dateRange}</small></h3>
+        <div class="table-wrap"><table><thead><tr><th>Place</th><th>Student</th><th>Prize</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows || `<tr><td colspan="5">No qualifying winners</td></tr>`}</tbody></table></div></section>`;
+    }).join("");
+    history.querySelectorAll("[data-paid-week]").forEach((button) => button.addEventListener("click", async () => {
+      button.disabled = true;
+      const weekRef = doc(db, "weeklyWinners", button.dataset.paidWeek);
+      const currentSnap = await getDoc(weekRef);
+      if (!currentSnap.exists()) return;
+      const winners = currentSnap.data().winners || [];
+      const target = winners.find((winner) => winner.uid === button.dataset.paidUid);
+      if (!target) return;
+      target.payoutStatus = "paid";
+      target.paidAt = new Date();
+      target.payoutMethod = button.parentElement.querySelector("[data-payout-method]")?.value || "airtime";
+      await updateDoc(weekRef, { winners });
+      await renderWeeklyPrizes(content);
+    }));
+  } catch (error) {
+    console.error("Failed to load weekly prize history:", error);
+    const history = document.getElementById("weeklyPrizeHistory");
+    if (history) history.textContent = "Could not load weekly winner records.";
+  }
+}
+
+async function loadReferralSourceStats() {
+  const sources = ["linkedin", "whatsapp", "tiktok", "google"];
+  const target = document.getElementById("referralSourceStats");
+  if (!target) return;
+  const counts = await Promise.all(sources.map(async (source) => {
+    try {
+      const snap = await getCountFromServer(query(collection(db, "users"), where("referralSource", "==", source)));
+      return snap.data().count;
+    } catch (error) {
+      console.error(`Referral source count failed for ${source}:`, error);
+      return "!";
+    }
+  }));
+  if (activeTab !== "dashboard") return;
+  target.querySelectorAll(".overview-card h3").forEach((item, index) => {
+    item.textContent = counts[index].toLocaleString?.() || counts[index];
+  });
 }
 
 async function loadDashboardStats() {
@@ -317,7 +415,7 @@ async function loadDashboardStats() {
 
   const questionSnap = await getDocs(collection(db, "questions"));
 
-  const studentSnap = await getDocs(
+  const studentCountSnap = await getCountFromServer(
     query(collection(db, "users"), where("role", "==", "student")),
   );
 
@@ -335,7 +433,7 @@ async function loadDashboardStats() {
   setStatText("subjectCount", subjectSnap.size);
   setStatText("quizCount", quizSnap.size);
   setStatText("questionCount", questionSnap.size);
-  setStatText("studentCount", studentSnap.size);
+  setStatText("studentCount", studentCountSnap.data().count);
 
   // Purchases don't store the price paid, so revenue/top-quiz are
   // computed by joining each paid purchase back to its quiz's

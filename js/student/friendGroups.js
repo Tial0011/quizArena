@@ -46,11 +46,10 @@ async function renderFriendGroupsPage(userData) {
       <div class="friend-group-info-card">
         <div class="info-title">💡 How it works</div>
         <p>
-          A group of <strong>3+ members</strong> unlocks the
-          <strong>Global Challenge</strong> — a ₦1000 prize that resets every
-          week, across any quiz. Your own score drives it most; doing
-          <strong>different quizzes</strong> (not just repeating one) earns
-          you more credit, and your squad's average gives you a small nudge.
+          Join a group with <strong>3+ members</strong>, then attempt at least
+          one purchased quiz during the week to qualify. Earn points for quiz
+          scores, trying different purchased quizzes, and groupmates who do
+          the same. The free Physics welcome quiz does not qualify you.
         </p>
       </div>
 
@@ -60,7 +59,7 @@ async function renderFriendGroupsPage(userData) {
 
         <h3>
           🌍 Global Challenge
-          <span class="challenge-badge">₦1000 This Week</span>
+          <span class="challenge-badge">₦1,500 · ₦1,000 · ₦500 weekly</span>
         </h3>
 
         <p class="challenge-subtitle" id="challengeSubtitle">
@@ -142,7 +141,7 @@ async function loadChallengeLeaderboard() {
 
   const subtitle = document.getElementById("challengeSubtitle");
   if (subtitle) {
-    subtitle.textContent = `Groups of 3+ only — resets every Monday. This week: ${weekLabel}.`;
+    subtitle.textContent = `Top three qualify for prizes · resets every Monday. This week: ${weekLabel}.`;
   }
 
   renderChallengeBanner(top[0] || null, myEntry, myRank);
@@ -167,7 +166,7 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
       <div class="challenge-banner-half">
         <span class="challenge-banner-label">🥇 Leading</span>
         <strong>${topEntry.name}</strong>
-        <span class="challenge-banner-meta">${topEntry.individualAverage}% avg · ${topEntry.attemptCount} attempt${topEntry.attemptCount === 1 ? "" : "s"} · ${topEntry.varietyCount} quiz${topEntry.varietyCount === 1 ? "" : "zes"}</span>
+        <span class="challenge-banner-meta">${topEntry.score} points · ${topEntry.attemptCount} purchased attempt${topEntry.attemptCount === 1 ? "" : "s"} · ${topEntry.varietyCount} quiz${topEntry.varietyCount === 1 ? "" : "zes"}</span>
       </div>
     `
     : `
@@ -182,8 +181,8 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
     ? `
       <div class="challenge-banner-half">
         <span class="challenge-banner-label">📍 You</span>
-        <strong>#${myRank} · ${myEntry.individualAverage}%</strong>
-        <span class="challenge-banner-meta">${myEntry.attemptCount} attempt${myEntry.attemptCount === 1 ? "" : "s"} · ${myEntry.varietyCount} quiz${myEntry.varietyCount === 1 ? "" : "zes"}</span>
+        <strong>#${myRank} · ${myEntry.score} points</strong>
+        <span class="challenge-banner-meta">${myEntry.attemptCount} purchased attempt${myEntry.attemptCount === 1 ? "" : "s"} · ${myEntry.varietyCount} quiz${myEntry.varietyCount === 1 ? "" : "zes"}</span>
       </div>
     `
     : `
@@ -199,7 +198,7 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
       ${leaderHtml}
       <div class="challenge-banner-divider"></div>
       ${meHtml}
-      <span class="challenge-banner-prize">₦1000</span>
+        <span class="challenge-banner-prize">₦1,500<br>₦1,000<br>₦500</span>
     </div>
   `;
 }
@@ -209,7 +208,7 @@ function renderLeaderboardList(topMembers) {
     return `<div class="empty-state">No qualifying attempts yet this week — be the first!</div>`;
   }
 
-  const medals = ["🥇", "🥈", "🥉"];
+  const medals = ["🥇 ₦1,500", "🥈 ₦1,000", "🥉 ₦500"];
 
   return `
     <div class="leaderboard-list">
@@ -228,7 +227,7 @@ function renderLeaderboardList(topMembers) {
                 ${member.name}${isMe ? " (You)" : ""}
                 ${member.varietyCount > 1 ? `<span class="challenge-rank-badge">${member.varietyCount} quizzes</span>` : ""}
               </span>
-              <span class="leaderboard-score">${member.averagePercentage}%</span>
+              <span class="leaderboard-score">${member.score} pts</span>
             </div>
           `;
         })
