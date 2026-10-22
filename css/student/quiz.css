@@ -19,7 +19,7 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
-  max-width: 1240px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 16px 14px 48px;
   box-sizing: border-box;
@@ -250,6 +250,7 @@
 .quiz-actions {
   display: flex;
   gap: 12px;
+  min-width: 0;
 }
 
 .quiz-actions button {
@@ -320,7 +321,7 @@
 
 .navigator-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 16px;
 }
@@ -330,6 +331,8 @@
   aspect-ratio: 1 / 1;
   border: 1px solid var(--q-rule);
   border-radius: 10px;
+  background: var(--color-surface-2);
+  color: var(--color-text-strong);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -344,21 +347,22 @@
 }
 
 .nav-question-btn.nav-current {
-  background: var(--color-surface);
-  border: 2px solid var(--q-teal);
-  color: var(--q-teal-dark);
+  background: var(--color-tint);
+  border: 2px solid var(--color-primary);
+  color: var(--color-text-strong);
   box-shadow: none;
 }
 
 .nav-question-btn.nav-answered {
-  background: var(--q-teal);
-  border-color: var(--q-teal);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: #fff;
 }
 
 .nav-question-btn.nav-unanswered {
   background: var(--color-surface);
-  color: var(--q-muted);
+  color: var(--color-text-strong);
+  border-color: var(--color-border-tint);
 }
 
 .navigator-legend {
@@ -394,7 +398,8 @@
 }
 
 .legend-dot.nav-unanswered {
-  background: var(--color-surface);
+  background: var(--color-surface-2);
+  border-color: var(--color-border-tint);
 }
 
 .rail-summary {
@@ -406,7 +411,7 @@
 .rail-summary p {
   margin: 0 0 12px;
   font-size: 13px;
-  color: var(--q-muted);
+  color: var(--color-text-muted);
 }
 
 .rail-summary strong {
@@ -419,8 +424,8 @@
   padding: 13px;
   border: 1.5px solid var(--q-teal);
   border-radius: 12px;
-  background: var(--color-surface);
-  color: var(--q-teal-dark);
+  background: var(--color-primary);
+  color: #fff;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -432,8 +437,16 @@
 }
 
 .rail-finish:hover {
-  background: var(--q-teal);
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
   color: #fff;
+}
+
+.rail-finish:focus-visible,
+.nav-question-btn:focus-visible,
+.navigator-close-btn:focus-visible {
+  outline: 3px solid var(--color-primary-light);
+  outline-offset: 2px;
 }
 
 /* Mobile "Questions" toggle — was a plain gray-outlined button
@@ -621,14 +634,14 @@
 }
 
 /* =========================================================
-   DESKTOP (1024px+): exam workspace
+   WIDE DESKTOP (1440px+): exam workspace
    Sticky exam bar spans the full width. Below it, the question
    sits on the left and a sticky rail (question grid, progress,
    submit) on the right — everything visible without scrolling
    for typical questions.
 ========================================================= */
 
-@media (min-width: 1024px) {
+@media (min-width: 1440px) {
   .quiz-layout {
     grid-template-columns: minmax(0, 1fr) 320px;
     gap: 24px;
@@ -704,6 +717,10 @@
     display: block;
   }
 
+  .navigator-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
   .quiz-actions button {
     padding: 17px;
     font-size: 14px;
@@ -716,15 +733,82 @@
   }
 }
 
-@media (min-width: 1024px) and (hover: none) {
+@media (min-width: 1440px) and (hover: none) {
   .quiz-hint {
     display: none; /* touch laptops / tablets: no keyboard hint */
   }
 }
 
-@media (min-width: 1440px) {
+@media (max-width: 640px) {
   .quiz-layout {
-    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 12px;
+    padding: 12px 12px calc(92px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .quiz-topbar {
+    padding: 12px 14px 14px;
+    border-radius: 14px;
+  }
+
+  .quiz-header {
+    gap: 8px;
+  }
+
+  .quiz-title {
+    font-size: 0.98rem;
+  }
+
+  .quiz-card {
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+
+  .quiz-question {
+    font-size: clamp(1.05rem, 5vw, 1.3rem);
+    line-height: 1.45;
+  }
+
+  .option-btn {
+    gap: 10px;
+    padding: 13px 12px;
+    font-size: 14px;
+  }
+
+  .quiz-actions {
+    gap: 8px;
+  }
+
+  .quiz-actions button {
+    min-width: 0;
+    padding: 13px 8px;
+    font-size: 12px;
+  }
+
+  .navigator-drawer {
+    width: min(92%, 380px);
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .navigator-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .navigator-drawer .nav-question-btn {
+    aspect-ratio: 1 / 1;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .navigator-legend {
+    gap: 8px 12px;
+  }
+
+  .nav-toggle-btn {
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    min-height: 48px;
   }
 }
 
