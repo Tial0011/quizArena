@@ -73,6 +73,10 @@ async function renderFriendGroupsPage(userData) {
         <p class="challenge-subtitle" id="challengeSubtitle">
           Groups of 3+ only.
         </p>
+        <p class="challenge-refresh-note">
+          <span aria-hidden="true">↻</span>
+          Rankings refresh every 6 hours, so recent quiz activity may take a little while to appear.
+        </p>
 
         <div id="challengeBanner"></div>
 
