@@ -5,9 +5,6 @@ import {
   addDoc,
   getDocs,
   getDoc,
-  getAggregateFromServer,
-  count,
-  average,
   updateDoc,
   doc,
   query,
@@ -15,8 +12,6 @@ import {
   arrayUnion,
   serverTimestamp,
   runTransaction,
-  Timestamp,
-  documentId,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 /* =========================================================
@@ -44,15 +39,20 @@ import {
    subject), and your qualifying group gives you a small nudge.
 ========================================================= */
 
-const MIN_GROUP_SIZE_FOR_ELIGIBILITY = 3;
 const MAX_GROUPS_OWNED = 1;
 const MAX_GROUPS_JOINED = 3;
 const MAX_GROUP_MEMBERS = 5;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 (avoid ambiguity)
-const getWeeklyFirstPlaceCooldowns = httpsCallable(
+const getGlobalChallengeLeaderboardCallable = httpsCallable(
   getFunctions(app),
-  "getWeeklyFirstPlaceCooldowns",
+  "getGlobalChallengeLeaderboard",
 );
+const LEADERBOARD_CACHE_TTL_MS = 60 * 1000;
+const GROUP_DETAIL_CACHE_TTL_MS = 60 * 1000;
+const MY_GROUPS_CACHE_TTL_MS = 60 * 1000;
+const leaderboardCache = new Map();
+const groupDetailsCache = new Map();
+const myGroupsCache = new Map();
 
 function generateCode(length = 6) {
   let code = "";
@@ -110,6 +110,7 @@ export async function createFriendGroup(ownerId, ownerName, groupName) {
       memberIds: [ownerId],
       createdAt: serverTimestamp(),
     });
+    myGroupsCache.delete(ownerId);
 
     return { success: true, groupId: groupRef.id, code };
   }
@@ -199,6 +200,8 @@ export async function requestToJoinGroup(
  */
 export async function getMyGroups(userId) {
   if (!userId) return [];
+  const cached = myGroupsCache.get(userId);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
 
   const snapshot = await getDocs(
     query(
@@ -207,10 +210,12 @@ export async function getMyGroups(userId) {
     ),
   );
 
-  return snapshot.docs.map((docSnap) => ({
+  const groups = snapshot.docs.map((docSnap) => ({
     id: docSnap.id,
     ...docSnap.data(),
   }));
+  myGroupsCache.set(userId, { value: groups, expiresAt: Date.now() + MY_GROUPS_CACHE_TTL_MS });
+  return groups;
 }
 
 /**
@@ -302,6 +307,8 @@ export async function acceptJoinRequest(requestId, groupId, requesterId) {
   });
 
   if (!outcome.success) return outcome;
+
+  myGroupsCache.delete(requesterId);
 
   return { success: true };
 }
@@ -416,133 +423,19 @@ function getLagosWeekBounds(date = new Date()) {
  * index — simpler than the old subject-scoped version.
  */
 export async function getGlobalChallengeLeaderboard(limitCount = 15, rankUserIds = []) {
-  const { weekStart, weekEnd, weekKey, weekLabel } = getLagosWeekBounds();
-  const projection = await getDoc(doc(db, "weeklyChallengeProjection", weekKey));
-  const useProjection = projection.exists() && projection.data().ready === true;
-  const [attemptsSnap, groupsSnap] = await Promise.all([
-    useProjection
-      ? Promise.resolve(null)
-      : getDocs(query(
-          collection(db, "attempts"),
-          where("completedAt", ">=", Timestamp.fromDate(weekStart)),
-          where("completedAt", "<=", Timestamp.fromDate(weekEnd)),
-        )),
-    getDocs(collection(db, "friendGroups")),
-  ]);
+  const { weekKey, weekLabel } = getLagosWeekBounds();
+  const memberKey = [...new Set(rankUserIds)].sort().join(",");
+  const cacheKey = `${weekKey}:${memberKey}:${Math.min(15, limitCount)}`;
+  const cached = leaderboardCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
 
-  let scoreSnapshots = [];
-  if (useProjection) {
-    const eligibleIds = new Set();
-    groupsSnap.forEach((groupDoc) => {
-      const group = groupDoc.data();
-      if ((group.memberIds || []).length >= MIN_GROUP_SIZE_FOR_ELIGIBILITY) {
-        (group.memberIds || []).forEach((uid) => eligibleIds.add(uid));
-      }
-    });
-    const scoreIds = [...eligibleIds].map((uid) => `${weekKey}_${uid}`);
-    const scoreQueries = [];
-    for (let offset = 0; offset < scoreIds.length; offset += 30) {
-      scoreQueries.push(getDocs(query(
-        collection(db, "weeklyChallengeScores"),
-        where(documentId(), "in", scoreIds.slice(offset, offset + 30)),
-      )));
-    }
-    scoreSnapshots = await Promise.all(scoreQueries);
+  const response = await getGlobalChallengeLeaderboardCallable({ limitCount: Math.min(15, limitCount) });
+  const value = { ...response.data, weekLabel };
+  leaderboardCache.set(cacheKey, { value, expiresAt: Date.now() + LEADERBOARD_CACHE_TTL_MS });
+  for (const [key, entry] of leaderboardCache) {
+    if (entry.expiresAt <= Date.now()) leaderboardCache.delete(key);
   }
-
-  const stats = new Map();
-  if (useProjection) {
-    scoreSnapshots.forEach((snapshot) => snapshot.forEach((scoreDoc) => {
-      const scoreData = scoreDoc.data();
-      stats.set(scoreData.userId, {
-        quizCounts: new Map(Object.entries(scoreData.quizCounts || {})),
-        purchasedCount: scoreData.purchasedCount || 0,
-        engagement: scoreData.engagement || 0,
-        score: scoreData.scoreBase || 0,
-      });
-    }));
-  } else {
-    const welcomeQuizId = "fMszqKjA0M1cYvz9samb";
-    const orderedAttempts = attemptsSnap.docs
-      .map((attemptDoc) => ({ data: attemptDoc.data(), id: attemptDoc.id }))
-      .sort((a, b) => (a.data.completedAt?.toMillis?.() || 0) - (b.data.completedAt?.toMillis?.() || 0) || a.id.localeCompare(b.id));
-    orderedAttempts.forEach(({ data }) => {
-      const entry = stats.get(data.userId) || { quizCounts: new Map(), purchasedCount: 0, engagement: 0, score: 0 };
-      const percentage = data.percentage || 0;
-      if (data.quizId === welcomeQuizId) {
-        entry.score += (percentage / 10) * 0.1;
-      } else if (data.mode === "purchased" && data.quizId) {
-        const prior = entry.quizCounts.get(data.quizId) || 0;
-        const multiplier = prior === 0 ? 1 : prior <= 2 ? 0.25 : 0;
-        entry.quizCounts.set(data.quizId, prior + 1);
-        entry.purchasedCount++;
-        entry.engagement++;
-        entry.score += (percentage / 10) * multiplier;
-      }
-      stats.set(data.userId, entry);
-    });
-  }
-
-  const qualifyingGroups = groupsSnap.docs
-    .map((groupDoc) => ({ id: groupDoc.id, ...groupDoc.data() }))
-    .filter((group) => (group.memberIds || []).length >= MIN_GROUP_SIZE_FOR_ELIGIBILITY);
-  const eligibleIds = new Set(qualifyingGroups.flatMap((group) => group.memberIds || []));
-  const groupmatesByUid = new Map();
-  qualifyingGroups.forEach((group) => {
-    const activeMembers = (group.memberIds || []).filter((uid) => (stats.get(uid)?.purchasedCount || 0) > 0);
-    activeMembers.forEach((uid) => {
-      const groupmates = groupmatesByUid.get(uid) || new Set();
-      activeMembers.forEach((memberId) => memberId !== uid && groupmates.add(memberId));
-      groupmatesByUid.set(uid, groupmates);
-    });
-  });
-  const scored = [];
-
-  eligibleIds.forEach((uid) => {
-    const entry = stats.get(uid);
-    if (!entry || entry.purchasedCount === 0) return;
-    const varietyCount = entry.quizCounts.size;
-    const groupmates = groupmatesByUid.get(uid) || new Set();
-    const score = entry.score + Math.min(varietyCount, 8) * 3 + Math.min(groupmates.size, 4) * 5;
-    scored.push({ uid, attemptCount: entry.purchasedCount, varietyCount, engagement: entry.engagement, score });
-  });
-
-  const ranked = scored.map((entry) => {
-    const score = Math.round(entry.score * 100) / 100;
-    return { ...entry, score, averagePercentage: score };
-  });
-  ranked.sort((a, b) => b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
-
-  const cooldownResult = await getWeeklyFirstPlaceCooldowns({});
-  const recentWinnerIds = new Set(cooldownResult.data.userIds || []);
-  ranked.sort((a, b) => Number(recentWinnerIds.has(a.uid)) - Number(recentWinnerIds.has(b.uid)) || b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
-
-  const requestedIds = new Set(rankUserIds);
-  const topEntries = ranked.slice(0, limitCount).map((entry, index) => ({ ...entry, rank: index + 1 }));
-  const requestedEntries = ranked
-    .map((entry, index) => ({ ...entry, rank: index + 1 }))
-    .filter((entry) => requestedIds.has(entry.uid));
-  const profileIds = [...new Set([
-    ...topEntries.map((entry) => entry.uid),
-    ...requestedEntries.map((entry) => entry.uid),
-  ])];
-  const userBatches = [];
-  for (let offset = 0; offset < profileIds.length; offset += 30) {
-    const ids = profileIds.slice(offset, offset + 30);
-    userBatches.push(getDocs(query(collection(db, "users"), where(documentId(), "in", ids))));
-  }
-  const namesByUid = new Map();
-  (await Promise.all(userBatches)).forEach((snapshot) =>
-    snapshot.forEach((userDoc) => namesByUid.set(userDoc.id, userDoc.data().name || "Student")),
-  );
-  const addName = (entry) => ({ ...entry, name: namesByUid.get(entry.uid) || "Student" });
-
-  return {
-    top: topEntries.map(addName),
-    rankedMembers: requestedEntries.map(addName),
-    weekKey,
-    weekLabel,
-  };
+  return value;
 }
 /**
  * Builds the internal leaderboard for a single group: each
@@ -551,28 +444,23 @@ export async function getGlobalChallengeLeaderboard(limitCount = 15, rankUserIds
  * this is just "how is my squad doing", separate from the
  * time-boxed Global Challenge above).
  */
-export async function getGroupLeaderboard(group) {
+export async function getGroupLeaderboard(group, rankedMembers = []) {
   const memberIds = group.memberIds || [];
+  const cacheKey = `${group.id}:${[...memberIds].sort().join(",")}`;
+  const cached = groupDetailsCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
 
+  const ranksByUid = new Map(rankedMembers.map((member) => [member.uid, member]));
   const memberResults = await Promise.allSettled(
     memberIds.map(async (uid) => {
-      const [userSnap, attemptsAggregate] = await Promise.all([
-        getDoc(doc(db, "users", uid)),
-        getAggregateFromServer(
-          query(collection(db, "attempts"), where("userId", "==", uid)),
-          { attemptCount: count(), averagePercentage: average("percentage") },
-        ),
-      ]);
+      const userSnap = await getDoc(doc(db, "users", uid));
 
       const name = userSnap.exists()
         ? userSnap.data().name || "Student"
         : "Student";
 
-      const aggregateData = attemptsAggregate.data();
-      const attemptCount = aggregateData.attemptCount || 0;
-      const averagePercentage = Math.round(aggregateData.averagePercentage || 0);
-
-      return { uid, name, attemptCount, averagePercentage };
+      const rank = ranksByUid.get(uid);
+      return { uid, name, rank: rank?.rank || null, attemptCount: rank?.attemptCount || 0, score: rank?.score || 0 };
     }),
   );
 
@@ -580,15 +468,16 @@ export async function getGroupLeaderboard(group) {
     .filter((r) => r.status === "fulfilled")
     .map((r) => r.value);
 
-  // Members with zero attempts sort to the bottom, not the top —
-  // an average of 0 shouldn't outrank someone who's actually
-  // attempted and scored low.
   members.sort((a, b) => {
-    if (a.attemptCount === 0 && b.attemptCount === 0) return 0;
-    if (a.attemptCount === 0) return 1;
-    if (b.attemptCount === 0) return -1;
-    return b.averagePercentage - a.averagePercentage;
+    if (a.rank == null && b.rank == null) return 0;
+    if (a.rank == null) return 1;
+    if (b.rank == null) return -1;
+    return a.rank - b.rank;
   });
 
+  groupDetailsCache.set(cacheKey, { value: members, expiresAt: Date.now() + GROUP_DETAIL_CACHE_TTL_MS });
+  for (const [key, entry] of groupDetailsCache) {
+    if (entry.expiresAt <= Date.now()) groupDetailsCache.delete(key);
+  }
   return members;
 }

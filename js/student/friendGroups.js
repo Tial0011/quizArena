@@ -172,7 +172,7 @@ async function loadChallengeLeaderboard(groups = []) {
   groups.forEach((group) =>
     (group.memberIds || []).forEach((uid) => rankUserIds.add(uid)),
   );
-  const { top, rankedMembers, weekLabel } = await getGlobalChallengeLeaderboard(
+  const { top, rankedMembers, weekLabel, updatedAt } = await getGlobalChallengeLeaderboard(
     15,
     [...rankUserIds],
   );
@@ -185,6 +185,13 @@ async function loadChallengeLeaderboard(groups = []) {
   const subtitle = document.getElementById("challengeSubtitle");
   if (subtitle) {
     subtitle.textContent = `Showing top 15 · group member ranks appear in each group · top three win prizes · resets Monday. This week: ${weekLabel}.`;
+  }
+
+  if (subtitle) {
+    const refreshed = updatedAt
+      ? new Date(updatedAt).toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" })
+      : null;
+    subtitle.textContent = `Top 15 · weekly prizes for the top three · resets Monday · ${weekLabel}${refreshed ? ` · updated ${refreshed}` : " · refreshes every 6 hours"}`;
   }
 
   renderChallengeBanner(top[0] || null, myEntry, myRank);
@@ -497,7 +504,7 @@ async function loadGroupDetails(group) {
       }
     }
 
-    const leaderboard = await getGroupLeaderboard(group);
+    const leaderboard = await getGroupLeaderboard(group, challengeRankedCache);
     const leaderboardContainer = document.getElementById(
       `leaderboard-${group.id}`,
     );
@@ -605,7 +612,7 @@ function renderLeaderboard(members) {
                 <span class="challenge-rank-badge">${challengeRankLabel}</span>
               </span>
               <span class="leaderboard-score">
-                ${member.attemptCount > 0 ? `${member.averagePercentage}%` : "No attempts yet"}
+                ${member.attemptCount > 0 ? `${Number(member.score).toFixed(1)} pts` : "Not ranked"}
               </span>
             </div>
           `;

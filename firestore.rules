@@ -66,26 +66,27 @@ service cloud.firestore {
     }
 
     // ---------- attempts ----------
-    // Readable by signed-in users because group leaderboards read members' attempts.
     match /attempts/{id} {
-      allow read: if signedIn();
+      // Attempt histories are private. Group leaderboards use compact summaries.
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
       allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
-    // ---------- weekly leaderboard projections ----------
-    // Clients can read scores to build the weekly leaderboard. Cloud Functions
-    // use the Admin SDK and bypass rules; clients cannot forge or alter scores.
+    // Weekly scores and leaderboard snapshots are backend-only. The callable
+    // returns only the top 15 and the signed-in user's group ranks.
     match /weeklyChallengeScores/{scoreId} {
-      allow read: if signedIn();
+      allow read: if false;
       allow write: if false;
     }
 
-    // Readiness marker controls whether clients use projections or the legacy
-    // attempts-based fallback. It contains no user data and is function-managed.
     match /weeklyChallengeProjection/{weekKey} {
-      allow read: if signedIn();
+      allow read: if false;
       allow write: if false;
+    }
+
+    match /weeklyChallengeLeaderboardSnapshots/{weekKey} {
+      allow read, write: if false;
     }
 
     // Admin reviews weekly winners and records manual payout completion.

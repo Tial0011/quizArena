@@ -118,6 +118,178 @@ async function recomputeWeeklyChallengeScore(userId, weekStart, weekEnd, weekKey
   if (summary.purchasedCount > 0) await writeWeeklyChallengeScore(summary);
 }
 
+async function rebuildWeeklyChallengeLeaderboardSnapshot() {
+  const { weekStart, weekEnd, weekKey } = lagosWeekBounds(new Date());
+  const [projectionSnap, groupsSnap] = await Promise.all([
+    db.collection("weeklyChallengeProjection").doc(weekKey).get(),
+    db.collection("friendGroups").get(),
+  ]);
+  const groups = groupsSnap.docs
+    .map((doc) => doc.data())
+    .filter((group) => (group.memberIds || []).length >= 3);
+  const eligibleIds = new Set(groups.flatMap((group) => group.memberIds || []));
+  const stats = new Map();
+
+  if (projectionSnap.exists && projectionSnap.data().ready === true) {
+    const scoreIds = [...eligibleIds].map((uid) => `${weekKey}_${uid}`);
+    for (let offset = 0; offset < scoreIds.length; offset += 30) {
+      const ids = scoreIds.slice(offset, offset + 30);
+      const scoreSnap = await db.collection("weeklyChallengeScores")
+        .where(admin.firestore.FieldPath.documentId(), "in", ids)
+        .get();
+      scoreSnap.docs.forEach((scoreDoc) => {
+        const score = scoreDoc.data();
+        stats.set(score.userId, {
+          score: Number(score.scoreBase) || 0,
+          purchasedCount: Number(score.purchasedCount) || 0,
+          varietyCount: Number(score.varietyCount) || Object.keys(score.quizCounts || {}).length,
+          engagement: Number(score.engagement) || 0,
+        });
+      });
+    }
+  } else {
+    const attempts = await getWeeklyScoringAttempts(null, weekStart, weekEnd);
+    const byUser = new Map();
+    attempts.forEach((attempt) => {
+      const userId = attempt.data().userId;
+      if (!userId) return;
+      const userAttempts = byUser.get(userId) || [];
+      userAttempts.push(attempt);
+      byUser.set(userId, userAttempts);
+    });
+    byUser.forEach((userAttempts, userId) => {
+      const summary = summarizeWeeklyAttempts(userId, weekKey, userAttempts);
+      if (summary.purchasedCount > 0) stats.set(userId, {
+        score: summary.scoreBase,
+        purchasedCount: summary.purchasedCount,
+        varietyCount: summary.varietyCount,
+        engagement: summary.engagement,
+      });
+    });
+  }
+
+  const groupmatesByUid = new Map();
+  groups.forEach((group) => {
+    const activeMembers = (group.memberIds || []).filter((uid) => (stats.get(uid)?.purchasedCount || 0) > 0);
+    activeMembers.forEach((uid) => {
+      const groupmates = groupmatesByUid.get(uid) || new Set();
+      activeMembers.forEach((otherUid) => { if (otherUid !== uid) groupmates.add(otherUid); });
+      groupmatesByUid.set(uid, groupmates);
+    });
+  });
+
+  const priorWeekKeys = [1, 2].map((weeksAgo) => {
+    const priorDate = new Date(weekStart);
+    priorDate.setUTCDate(priorDate.getUTCDate() - weeksAgo * 7);
+    return lagosWeekBounds(priorDate).weekKey;
+  });
+  const priorWinnerDocs = await Promise.all(priorWeekKeys.map((key) => db.collection("weeklyWinners").doc(key).get()));
+  const cooldownIds = new Set(priorWinnerDocs
+    .filter((winner) => winner.exists)
+    .map((winner) => winner.data().firstPlaceUid)
+    .filter(Boolean));
+
+  const ranked = [];
+  eligibleIds.forEach((uid) => {
+    const entry = stats.get(uid);
+    if (!entry || !entry.purchasedCount) return;
+    const score = entry.score
+      + Math.min(entry.varietyCount, 8) * 3
+      + Math.min((groupmatesByUid.get(uid) || new Set()).size, 4) * 5;
+    ranked.push({
+      uid,
+      score: Math.round(score * 100) / 100,
+      attemptCount: entry.purchasedCount,
+      varietyCount: entry.varietyCount,
+      engagement: entry.engagement,
+    });
+  });
+  ranked.sort((a, b) => b.score - a.score
+    || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
+  // Cooldown winners may place 2nd/3rd, but never 1st, even if nearly
+  // everyone else is cooling down too.
+  if (ranked.length > 1 && cooldownIds.has(ranked[0].uid)) {
+    const firstPlaceEligibleIndex = ranked.findIndex((entry) => !cooldownIds.has(entry.uid));
+    if (firstPlaceEligibleIndex > 0) {
+      [ranked[0], ranked[firstPlaceEligibleIndex]] = [ranked[firstPlaceEligibleIndex], ranked[0]];
+    }
+  }
+
+  const usersById = new Map();
+  for (let offset = 0; offset < ranked.length; offset += 100) {
+    const chunk = ranked.slice(offset, offset + 100);
+    const userDocs = await db.getAll(...chunk.map((entry) => db.collection("users").doc(entry.uid)));
+    userDocs.forEach((userDoc) => usersById.set(userDoc.id, userDoc.exists ? userDoc.data().name || "Student" : "Student"));
+  }
+
+  const ranksByUid = {};
+  ranked.forEach((entry, index) => {
+    const visibleEntry = {
+      ...entry,
+      rank: index + 1,
+      averagePercentage: entry.score,
+      name: usersById.get(entry.uid) || "Student",
+    };
+    ranksByUid[entry.uid] = visibleEntry;
+  });
+  await db.collection("weeklyChallengeLeaderboardSnapshots").doc(weekKey).set({
+    weekKey,
+    top: ranked.slice(0, 15).map((entry, index) => ranksByUid[entry.uid] && ({ ...ranksByUid[entry.uid], rank: index + 1 })),
+    ranksByUid,
+    computedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+const leaderboardSnapshotRefreshes = new Map();
+async function ensureWeeklyLeaderboardSnapshot() {
+  const { weekKey } = lagosWeekBounds(new Date());
+  if (!leaderboardSnapshotRefreshes.has(weekKey)) {
+    const refresh = rebuildWeeklyChallengeLeaderboardSnapshot()
+      .finally(() => leaderboardSnapshotRefreshes.delete(weekKey));
+    leaderboardSnapshotRefreshes.set(weekKey, refresh);
+  }
+  await leaderboardSnapshotRefreshes.get(weekKey);
+}
+
+exports.getGlobalChallengeLeaderboard = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in to view the leaderboard.");
+  const uid = request.auth.uid;
+  const { weekKey } = lagosWeekBounds(new Date());
+  let snapshot = await db.collection("weeklyChallengeLeaderboardSnapshots").doc(weekKey).get();
+  if (!snapshot.exists) {
+    await ensureWeeklyLeaderboardSnapshot();
+    snapshot = await db.collection("weeklyChallengeLeaderboardSnapshots").doc(weekKey).get();
+  }
+  if (!snapshot.exists) throw new HttpsError("unavailable", "The weekly leaderboard is preparing. Please try again shortly.");
+
+  const groups = await db.collection("friendGroups")
+    .where("memberIds", "array-contains", uid)
+    .limit(3)
+    .get();
+  const visibleIds = new Set([uid]);
+  groups.docs.forEach((groupDoc) => {
+    const memberIds = groupDoc.data().memberIds || [];
+    if (memberIds.length >= 3) memberIds.forEach((memberId) => visibleIds.add(memberId));
+  });
+  const ranksByUid = snapshot.data().ranksByUid || {};
+  const rankedMembers = [...visibleIds]
+    .map((memberId) => ranksByUid[memberId])
+    .filter(Boolean)
+    .sort((a, b) => a.rank - b.rank);
+  const snapshotData = snapshot.data();
+  return {
+    top: snapshotData.top || [],
+    rankedMembers,
+    weekKey,
+    updatedAt: snapshotData.computedAt?.toMillis?.() || null,
+  };
+});
+
+exports.refreshWeeklyChallengeLeaderboard = onSchedule(
+  { schedule: "0 */6 * * *", timeZone: "Africa/Lagos" },
+  rebuildWeeklyChallengeLeaderboardSnapshot,
+);
+
 exports.updateWeeklyChallengeScore = onDocumentCreated("attempts/{attemptId}", async (event) => {
   const data = event.data?.data();
   if (!data?.userId || !data.completedAt) return;
@@ -159,6 +331,7 @@ exports.backfillCurrentWeeklyChallengeScores = onSchedule(
       attemptCount: attemptDocs.length,
       computedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    await rebuildWeeklyChallengeLeaderboardSnapshot();
   },
 );
 
@@ -751,7 +924,11 @@ exports.recordWeeklyChallengeWinners = onSchedule(
     }
     const priorWinnerDocs = await Promise.all(priorWinnerKeys.map((key) => db.collection("weeklyWinners").doc(key).get()));
     const cooldownIds = new Set(priorWinnerDocs.filter((snap) => snap.exists).map((snap) => snap.data().firstPlaceUid).filter(Boolean));
-    results.sort((a, b) => Number(cooldownIds.has(a.uid)) - Number(cooldownIds.has(b.uid)) || b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
+    results.sort((a, b) => b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
+    if (results.length > 1 && cooldownIds.has(results[0].uid)) {
+      const eligibleIndex = results.findIndex((entry) => !cooldownIds.has(entry.uid));
+      if (eligibleIndex > 0) [results[0], results[eligibleIndex]] = [results[eligibleIndex], results[0]];
+    }
     const top = results.slice(0, 3);
     const userRefs = top.map((entry) => db.collection("users").doc(entry.uid));
     const userDocs = userRefs.length ? await db.getAll(...userRefs) : [];
