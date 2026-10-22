@@ -242,7 +242,11 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
       ${leaderHtml}
       <div class="challenge-banner-divider"></div>
       ${meHtml}
-        <span class="challenge-banner-prize">₦1,500<br>₦1,000<br>₦500</span>
+        <div class="challenge-banner-prize" aria-label="Weekly prizes">
+          <span class="challenge-prize-row"><span aria-hidden="true">🥇</span><span class="challenge-prize-place">1st place</span><strong>₦1,500</strong></span>
+          <span class="challenge-prize-row"><span aria-hidden="true">🥈</span><span class="challenge-prize-place">2nd place</span><strong>₦1,000</strong></span>
+          <span class="challenge-prize-row"><span aria-hidden="true">🥉</span><span class="challenge-prize-place">3rd place</span><strong>₦500</strong></span>
+        </div>
     </div>
   `;
 }
