@@ -10,8 +10,9 @@ import {
   getAnalytics,
   isSupported,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-// Your config
-const firebaseConfig = {
+// Production remains the default. For staging-only verification, open the
+// app with ?firebaseEnv=staging so test traffic cannot silently hit production.
+const productionConfig = {
   apiKey: "AIzaSyBzKtJ5P_2bL0LWDOJt4KqMlA1Z8sMOSwo",
   authDomain: "quizarena-2c75e.firebaseapp.com",
   databaseURL: "https://quizarena-2c75e-default-rtdb.firebaseio.com",
@@ -21,6 +22,20 @@ const firebaseConfig = {
   appId: "1:610430960552:web:23f5ca5be24bf2e2b4139d",
   measurementId: "G-SY9QG48JJT",
 };
+
+const stagingConfig = {
+  apiKey: "AIzaSyDbSXf54cRPjZdyrdEKVmxpv7AHXY6__gY",
+  authDomain: "quiz-arena-staging.firebaseapp.com",
+  projectId: "quiz-arena-staging",
+  storageBucket: "quiz-arena-staging.firebasestorage.app",
+  messagingSenderId: "544422363679",
+  appId: "1:544422363679:web:01a25b4da75c68f7e7cb2a",
+  measurementId: "G-3M5PLDQNYT",
+};
+
+const firebaseConfig = new URLSearchParams(window.location.search).get("firebaseEnv") === "staging"
+  ? stagingConfig
+  : productionConfig;
 
 // Initialize
 export const app = initializeApp(firebaseConfig);

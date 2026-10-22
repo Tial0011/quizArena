@@ -63,8 +63,6 @@ async function renderFriendGroupsPage(userData) {
         </p>
       </div>
 
-      <div id="challengeBanner"></div>
-
       <div class="global-challenge-section">
 
         <h3>
@@ -76,8 +74,13 @@ async function renderFriendGroupsPage(userData) {
           Groups of 3+ only.
         </p>
 
-        <div id="challengeLeaderboardList">
-          <p>Loading...</p>
+        <div id="challengeBanner"></div>
+
+        <div id="challengeLeaderboardList" aria-live="polite" aria-busy="true">
+          <div class="challenge-loading" role="status">
+            <span class="challenge-spinner" aria-hidden="true"></span>
+            <span>Loading this week’s leaderboard…</span>
+          </div>
         </div>
 
       </div>
@@ -139,6 +142,11 @@ async function renderFriendGroupsPage(userData) {
     console.error("Could not load friend groups:", error);
     const container = document.getElementById("myGroupsList");
     if (container) container.innerHTML = `<div class="empty-state">Could not load your groups. Please try again.</div>`;
+    const challenge = document.getElementById("challengeLeaderboardList");
+    if (challenge) {
+      challenge.setAttribute("aria-busy", "false");
+      challenge.innerHTML = `<div class="empty-state">Could not load the leaderboard. Please try again.</div>`;
+    }
     return;
   }
 
@@ -147,7 +155,10 @@ async function renderFriendGroupsPage(userData) {
   } catch (error) {
     console.error("Could not load Global Challenge leaderboard:", error);
     const container = document.getElementById("challengeLeaderboardList");
-    if (container) container.innerHTML = `<div class="empty-state">Leaderboard unavailable right now. Please try again.</div>`;
+    if (container) {
+      container.setAttribute("aria-busy", "false");
+      container.innerHTML = `<div class="empty-state">Leaderboard unavailable right now. Please try again.</div>`;
+    }
   }
   await Promise.all(groups.map((group) => loadGroupDetails(group)));
 }
@@ -181,6 +192,7 @@ async function loadChallengeLeaderboard(groups = []) {
   const container = document.getElementById("challengeLeaderboardList");
   if (!container) return;
 
+  container.setAttribute("aria-busy", "false");
   container.innerHTML = renderLeaderboardList(top);
 }
 

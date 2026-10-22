@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "quizarena-2c75e"
+    "default": "quizarena-2c75e",
+    "staging": "quiz-arena-staging"
   }
 }

@@ -3,13 +3,13 @@
 ========================================================= */
 
 .friend-group-info-card {
-  background: linear-gradient(135deg, var(--color-surface), var(--color-surface-2));
-  border: 1px solid var(--warn-border);
-  border-left: 5px solid var(--color-primary);
-  border-radius: 18px;
-  padding: 18px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 14px;
+  padding: 16px 18px;
   margin: 18px 0 22px;
-  box-shadow: 0 8px 24px rgba(56, 150, 149, 0.08);
+  box-shadow: none;
 }
 
 .info-title {
@@ -109,6 +109,11 @@
 
 .global-challenge-section {
   margin: 20px 0 28px;
+  padding: 22px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
 }
 
 .global-challenge-section h3 {
@@ -117,23 +122,58 @@
   gap: 10px;
   flex-wrap: wrap;
   margin: 0 0 6px;
-  font-size: 1.05rem;
-  color: var(--color-text);
+  font-size: 1.15rem;
+  color: var(--color-text-strong);
 }
 
 .challenge-badge {
   background: var(--color-tint);
   color: var(--color-link);
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
+  padding: 9px 13px;
+  border: 1px solid var(--color-border-tint);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .challenge-subtitle {
-  margin: 0 0 14px;
+  margin: 5px 0 0;
   color: var(--color-text-muted);
   font-size: 13px;
+  line-height: 1.5;
+}
+
+#challengeLeaderboardList[aria-busy="true"] {
+  min-height: 150px;
+}
+
+.challenge-loading {
+  display: flex;
+  min-height: 150px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px dashed var(--color-border-tint);
+  border-radius: 14px;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.challenge-spinner {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 3px solid var(--color-border-tint);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: challenge-spin 0.8s linear infinite;
+}
+
+@keyframes challenge-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Rank badge shown next to a member's name inside a group's
@@ -457,8 +497,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
+  padding: 13px 15px;
+  border-radius: 14px;
   background: var(--color-surface-2);
   border: 1px solid var(--color-border);
 }
@@ -507,6 +547,26 @@
   font-size: 16px;
   font-weight: 800;
   color: var(--color-link);
+}
+
+.global-challenge-section .leaderboard-list {
+  gap: 9px;
+}
+
+.global-challenge-section .leaderboard-row {
+  min-height: 52px;
+}
+
+.global-challenge-section .leaderboard-row.first-place {
+  border-left: 3px solid var(--color-warning);
+}
+
+.global-challenge-section .leaderboard-row.second-place {
+  border-left: 3px solid var(--color-text-faint);
+}
+
+.global-challenge-section .leaderboard-row.third-place {
+  border-left: 3px solid var(--color-accent-deep);
 }
 
 /* Generic empty-state used by the challenge list, group
@@ -562,7 +622,22 @@
 }
 
 @media (max-width: 500px) {
+  .global-challenge-section {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .challenge-badge {
+    white-space: normal;
+  }
+
   .challenge-banner {
     flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .challenge-spinner {
+    animation: none;
   }
 }
