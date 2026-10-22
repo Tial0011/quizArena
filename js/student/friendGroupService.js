@@ -1,15 +1,20 @@
-import { db } from "../firebase/config.js";
+import { app, db } from "../firebase/config.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import {
   collection,
   addDoc,
   getDocs,
   getDoc,
+  getAggregateFromServer,
+  count,
+  average,
   updateDoc,
   doc,
   query,
   where,
   arrayUnion,
   serverTimestamp,
+  runTransaction,
   Timestamp,
   documentId,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -42,7 +47,12 @@ import {
 const MIN_GROUP_SIZE_FOR_ELIGIBILITY = 3;
 const MAX_GROUPS_OWNED = 1;
 const MAX_GROUPS_JOINED = 3;
+const MAX_GROUP_MEMBERS = 5;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 (avoid ambiguity)
+const getWeeklyFirstPlaceCooldowns = httpsCallable(
+  getFunctions(app),
+  "getWeeklyFirstPlaceCooldowns",
+);
 
 function generateCode(length = 6) {
   let code = "";
@@ -147,7 +157,11 @@ export async function requestToJoinGroup(
   const groupDoc = groupSnap.docs[0];
   const group = groupDoc.data();
 
-  if (group.memberIds.includes(requesterId)) {
+  if ((group.memberIds || []).length >= MAX_GROUP_MEMBERS) {
+    return { success: false, message: "This group is full (5 members maximum)." };
+  }
+
+  if ((group.memberIds || []).includes(requesterId)) {
     return { success: false, message: "You're already in this group." };
   }
 
@@ -229,6 +243,18 @@ export async function getPendingRequests(groupId) {
  * exceeding the limit.
  */
 export async function acceptJoinRequest(requestId, groupId, requesterId) {
+  const groupSnap = await getDoc(doc(db, "friendGroups", groupId));
+  if (!groupSnap.exists()) {
+    return { success: false, message: "This group no longer exists." };
+  }
+  const group = groupSnap.data();
+  if ((group.memberIds || []).length >= MAX_GROUP_MEMBERS) {
+    await updateDoc(doc(db, "groupJoinRequests", requestId), {
+      status: "rejected",
+    });
+    return { success: false, message: "This group is full (5 members maximum)." };
+  }
+
   const myGroups = await getMyGroups(requesterId);
 
   if (myGroups.length >= MAX_GROUPS_JOINED) {
@@ -242,13 +268,40 @@ export async function acceptJoinRequest(requestId, groupId, requesterId) {
     };
   }
 
-  await updateDoc(doc(db, "groupJoinRequests", requestId), {
-    status: "accepted",
+  const requestRef = doc(db, "groupJoinRequests", requestId);
+  const groupRef = doc(db, "friendGroups", groupId);
+  const outcome = await runTransaction(db, async (transaction) => {
+    const [requestSnap, liveGroupSnap] = await Promise.all([
+      transaction.get(requestRef),
+      transaction.get(groupRef),
+    ]);
+    if (!requestSnap.exists() || !liveGroupSnap.exists()) {
+      return { success: false, message: "The request or group no longer exists." };
+    }
+
+    const request = requestSnap.data();
+    const memberIds = liveGroupSnap.data().memberIds || [];
+    if (request.groupId !== groupId || request.requesterId !== requesterId) {
+      return { success: false, message: "This join request does not match the group." };
+    }
+    if (request.status !== "pending") {
+      return { success: false, message: "This request has already been handled." };
+    }
+    if (memberIds.includes(requesterId)) {
+      transaction.update(requestRef, { status: "accepted" });
+      return { success: true };
+    }
+    if (memberIds.length >= MAX_GROUP_MEMBERS) {
+      transaction.update(requestRef, { status: "rejected" });
+      return { success: false, message: "This group is full (5 members maximum)." };
+    }
+
+    transaction.update(requestRef, { status: "accepted" });
+    transaction.update(groupRef, { memberIds: arrayUnion(requesterId) });
+    return { success: true };
   });
 
-  await updateDoc(doc(db, "friendGroups", groupId), {
-    memberIds: arrayUnion(requesterId),
-  });
+  if (!outcome.success) return outcome;
 
   return { success: true };
 }
@@ -460,14 +513,8 @@ export async function getGlobalChallengeLeaderboard(limitCount = 15, rankUserIds
   });
   ranked.sort((a, b) => b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
 
-  const recentWinnerIds = new Set();
-  for (const weeksAgo of [1, 2]) {
-    const priorWeek = new Date(weekStart);
-    priorWeek.setDate(priorWeek.getDate() - weeksAgo * 7);
-    const priorKey = getLagosWeekBounds(priorWeek).weekKey;
-    const winnerDoc = await getDoc(doc(db, "weeklyWinners", priorKey));
-    if (winnerDoc.exists() && winnerDoc.data().firstPlaceUid) recentWinnerIds.add(winnerDoc.data().firstPlaceUid);
-  }
+  const cooldownResult = await getWeeklyFirstPlaceCooldowns({});
+  const recentWinnerIds = new Set(cooldownResult.data.userIds || []);
   ranked.sort((a, b) => Number(recentWinnerIds.has(a.uid)) - Number(recentWinnerIds.has(b.uid)) || b.score - a.score || b.varietyCount - a.varietyCount || b.engagement - a.engagement);
 
   const requestedIds = new Set(rankUserIds);
@@ -509,25 +556,21 @@ export async function getGroupLeaderboard(group) {
 
   const memberResults = await Promise.allSettled(
     memberIds.map(async (uid) => {
-      const [userSnap, attemptsSnap] = await Promise.all([
+      const [userSnap, attemptsAggregate] = await Promise.all([
         getDoc(doc(db, "users", uid)),
-        getDocs(query(collection(db, "attempts"), where("userId", "==", uid))),
+        getAggregateFromServer(
+          query(collection(db, "attempts"), where("userId", "==", uid)),
+          { attemptCount: count(), averagePercentage: average("percentage") },
+        ),
       ]);
 
       const name = userSnap.exists()
         ? userSnap.data().name || "Student"
         : "Student";
 
-      const percentages = attemptsSnap.docs.map(
-        (d) => d.data().percentage || 0,
-      );
-      const attemptCount = percentages.length;
-      const averagePercentage =
-        attemptCount > 0
-          ? Math.round(
-              percentages.reduce((sum, p) => sum + p, 0) / attemptCount,
-            )
-          : 0;
+      const aggregateData = attemptsAggregate.data();
+      const attemptCount = aggregateData.attemptCount || 0;
+      const averagePercentage = Math.round(aggregateData.averagePercentage || 0);
 
       return { uid, name, attemptCount, averagePercentage };
     }),

@@ -21,6 +21,7 @@ let currentUserData = null;
 let selectedSemester = "All";
 let selectedSubject = "All";
 const PURCHASE_PAGE_SIZE = 12;
+const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
 let purchaseCursor = null;
 let hasMorePurchases = false;
 let loadingPurchasePage = false;
@@ -127,6 +128,8 @@ export async function renderMyQuizzes(userData = {}) {
     purchases.map(async (purchaseDoc) => {
       try {
         const purchase = purchaseDoc.data();
+        // Keep the free welcome quiz separate from paid purchase history.
+        if (purchase.quizId === WELCOME_QUIZ_ID) return null;
 
         const quizDoc = await getDoc(doc(db, "quizzes", purchase.quizId));
         if (!quizDoc.exists()) return null;
@@ -198,7 +201,7 @@ function renderPurchasePagination() {
       hasMorePurchases = purchaseSnap.size === PURCHASE_PAGE_SIZE;
       const nextQuizzes = await Promise.all(purchaseSnap.docs.map(async (purchaseDoc) => {
         const quizId = purchaseDoc.data().quizId;
-        if (!quizId) return null;
+        if (!quizId || quizId === WELCOME_QUIZ_ID) return null;
         const quizDoc = await getDoc(doc(db, "quizzes", quizId));
         if (!quizDoc.exists()) return null;
         const quiz = quizDoc.data();

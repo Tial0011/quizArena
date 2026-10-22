@@ -10,6 +10,7 @@ import {
 import { startQuiz } from "./quiz.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
+import { renderMarketplace } from "./marketplace.js";
 import { showLoadingOverlay } from "./loadingOverlay.js";
 
 /* =========================================================
@@ -68,6 +69,10 @@ async function renderPracticeArenaPage(userData) {
             <select id="subjectSelect">
               <option value="">Select Subject</option>
             </select>
+            <div class="practice-no-quizzes" id="practiceNoQuizzes" hidden>
+              <p>You don’t own any quizzes yet. Purchase a quiz to unlock practice questions.</p>
+              <button type="button" class="practice-marketplace-btn" id="practiceMarketplaceBtn">Browse Marketplace</button>
+            </div>
           </div>
 
           <div class="form-group">
@@ -174,6 +179,10 @@ async function renderPracticeArenaPage(userData) {
   updatePacePreview();
   await loadPurchasedSubjects();
 
+  document.getElementById("practiceMarketplaceBtn")?.addEventListener("click", () => {
+    renderMarketplace(currentUserData);
+  });
+
   document
     .getElementById("startPracticeBtn")
     .addEventListener("click", beginPractice);
@@ -222,7 +231,9 @@ async function loadPurchasedSubjects() {
   );
 
   select.disabled = false;
-  select.innerHTML = `<option value="">Select Subject</option>`;
+  const noOwnedQuizzes = purchases.length === 0;
+  select.innerHTML = `<option value="">${noOwnedQuizzes ? "No quizzes yet — purchase one to practice" : subjects.size ? "Select Subject" : "No practice subjects available"}</option>`;
+  document.getElementById("practiceNoQuizzes").hidden = !noOwnedQuizzes;
 
   subjects.forEach((subject) => {
     select.innerHTML += `

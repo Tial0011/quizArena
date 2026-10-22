@@ -42,6 +42,7 @@ import {
 ========================================================= */
 
 const functions = getFunctions(app);
+const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
 const verifyFlutterwavePurchaseCallable = httpsCallable(
   functions,
   "verifyFlutterwavePurchase",
@@ -53,7 +54,7 @@ const verifyFlutterwavePurchaseCallable = httpsCallable(
  * purchasedQuizzes array (which stores purchase doc IDs, not quiz IDs).
  */
 export async function hasUserPurchasedQuiz(userId, quizId) {
-  if (!userId || !quizId) return false;
+  if (!userId || !quizId || quizId === WELCOME_QUIZ_ID) return false;
 
   const q = query(
     collection(db, "purchases"),
@@ -85,7 +86,9 @@ export async function getUserOwnedQuizIds(userId) {
   const quizIds = new Set();
 
   snapshot.forEach((docSnap) => {
-    quizIds.add(docSnap.data().quizId);
+    if (docSnap.data().quizId !== WELCOME_QUIZ_ID) {
+      quizIds.add(docSnap.data().quizId);
+    }
   });
 
   return quizIds;
@@ -101,6 +104,9 @@ export async function getUserOwnedQuizIds(userId) {
 export async function purchaseQuiz(userId, quizId) {
   if (!userId || !quizId) {
     return { success: false, message: "Missing user or quiz information." };
+  }
+  if (quizId === WELCOME_QUIZ_ID) {
+    return { success: false, message: "The welcome quiz is free and already available in your dashboard." };
   }
 
   try {
@@ -162,6 +168,9 @@ export async function confirmFlutterwavePurchase(
 ) {
   // Accepts one id or many: a single payment can now unlock a whole pack.
   const ids = Array.isArray(quizIds) ? quizIds : [quizIds];
+  if (ids.includes(WELCOME_QUIZ_ID)) {
+    return { success: false, message: "The welcome quiz is free and cannot be purchased." };
+  }
   try {
     const result = await verifyFlutterwavePurchaseCallable({
       userId,

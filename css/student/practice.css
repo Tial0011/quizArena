@@ -116,6 +116,37 @@
   box-shadow: 0 0 0 3px rgba(56, 150, 149, 0.22);
 }
 
+.practice-no-quizzes {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid var(--p-rule);
+  border-radius: 14px;
+  background: var(--color-surface-2);
+}
+
+.practice-no-quizzes p {
+  margin: 0 0 10px;
+  color: var(--p-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.practice-marketplace-btn {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--p-teal);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.practice-marketplace-btn:hover {
+  background: var(--p-teal-dark);
+}
+
 /* Presets */
 .practice-presets {
   display: grid;

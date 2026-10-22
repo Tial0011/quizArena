@@ -20,6 +20,7 @@ import { RANKS } from "./packRank.js";
    FLUTTERWAVE CONFIG
 ========================================================= */
 const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-b1678b9192cb9718206cded093336375-X";
+const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
 
 /* =========================================================
    MODULE STATE
@@ -149,6 +150,8 @@ async function loadActiveQuizzes() {
       const snapshot = await getDocs(q);
       const quizzes = [];
       snapshot.forEach((docSnap) => {
+        // The free welcome quiz is a permanent student entitlement, not a product.
+        if (docSnap.id === WELCOME_QUIZ_ID) return;
         const data = docSnap.data();
 
         // Backward compatibility: quizzes created before level/semester

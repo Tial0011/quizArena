@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
@@ -201,6 +202,12 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
       "Missing required fields.",
     );
   }
+  if (quizIds.includes(WELCOME_QUIZ_ID)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "The free welcome quiz cannot be purchased.",
+    );
+  }
 
   // 1. Ask Flutterwave directly: did this transaction really succeed?
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
@@ -373,17 +380,49 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
 // The Physics welcome quiz is intentionally free and isn't represented by
 // a purchase document. Serve only this fixed quiz to signed-in users so its
 // launch doesn't depend on the paid-quiz Firestore read rules.
-exports.getWelcomeQuizQuestions = functions.https.onCall(async (_data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Sign in to start the welcome quiz.");
+exports.getWelcomeQuizQuestions = onCall(
+  {
+    cors: ["https://quizarena.name.ng", "https://www.quizarena.name.ng"],
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in to start the welcome quiz.");
+    }
+    const snapshot = await db.collection("questions")
+      .where("quizId", "==", WELCOME_QUIZ_ID)
+      .get();
+    return {
+      questions: snapshot.docs.map((questionDoc) => ({ id: questionDoc.id, ...questionDoc.data() })),
+    };
   }
-  const snapshot = await db.collection("questions")
-    .where("quizId", "==", "fMszqKjA0M1cYvz9samb")
-    .get();
-  return {
-    questions: snapshot.docs.map((questionDoc) => ({ id: questionDoc.id, ...questionDoc.data() })),
-  };
-});
+);
+
+// The student leaderboard needs only the recent first-place UIDs for its
+// cooldown rule. Keep full payout records private to admins and return only
+// that minimal data from this authenticated callable.
+exports.getWeeklyFirstPlaceCooldowns = onCall(
+  { cors: true },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in to view the leaderboard.");
+    }
+    const currentWeek = lagosWeekBounds(new Date());
+    const weekKeys = [1, 2].map((weeksAgo) => {
+      const priorWeek = new Date(currentWeek.weekStart);
+      priorWeek.setDate(priorWeek.getDate() - weeksAgo * 7);
+      return lagosWeekBounds(priorWeek).weekKey;
+    });
+    const winnerDocs = await Promise.all(
+      weekKeys.map((weekKey) => db.collection("weeklyWinners").doc(weekKey).get()),
+    );
+    return {
+      userIds: winnerDocs
+        .filter((winnerDoc) => winnerDoc.exists)
+        .map((winnerDoc) => winnerDoc.data().firstPlaceUid)
+        .filter((uid) => typeof uid === "string" && uid),
+    };
+  },
+);
 
 /* =========================================================
    NOTIFICATIONS — push dispatch

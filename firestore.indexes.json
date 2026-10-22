@@ -66,6 +66,14 @@
         { "fieldPath": "quizId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "flutterwaveTransactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "processedAt", "order": "ASCENDING" },
+        { "fieldPath": "amount", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

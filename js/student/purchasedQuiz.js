@@ -56,11 +56,6 @@ let currentQuizId = null;
 let currentUserData = null;
 
 export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
-  if (quizId === WELCOME_QUIZ_ID && userData?.welcomeQuizCompleted) {
-    renderStudentDashboard(userData);
-    showToast("You’ve completed your free Physics welcome quiz.");
-    return;
-  }
   currentUserId = userData?.id || null;
   currentQuizId = quizId;
   currentUserData = userData;
@@ -413,6 +408,8 @@ function finishQuiz(quizTitle) {
   });
 
   const percentage = Math.round((score / questions.length) * 100);
+  const isFirstWelcomeCompletion = currentQuizId === WELCOME_QUIZ_ID
+    && currentUserData.welcomeQuizCompleted !== true;
   if (currentQuizId === WELCOME_QUIZ_ID) {
     currentUserData.welcomeQuizCompleted = true;
   }
@@ -428,6 +425,7 @@ function finishQuiz(quizTitle) {
     quizTitle,
     score,
     totalQuestions: questions.length,
+    sendWelcomeQuizFollowup: isFirstWelcomeCompletion,
   }).then((res) => {
     // Today's quiz goal met = streak extended -> fire celebration.
     if (res?.streakExtended) {

@@ -74,6 +74,7 @@ export async function recordQuizAttempt({
   quizTitle = null,
   score,
   totalQuestions,
+  sendWelcomeQuizFollowup = true,
 }) {
   if (!userId || !totalQuestions) return { streakExtended: false };
 
@@ -100,6 +101,14 @@ export async function recordQuizAttempt({
       updateDoc(doc(db, "users", userId), { welcomeQuizCompleted: true }).catch((error) =>
         console.error("Could not save welcome quiz completion:", error),
       );
+      if (sendWelcomeQuizFollowup) {
+        sendNotification({
+          message: "Great work finishing your free Physics quiz! Browse the Marketplace to unlock more quizzes for your courses.",
+          createdBy: "Quiz Arena",
+          targetUserId: userId,
+          actionType: "openMarketplace",
+        }).catch((error) => console.error("Could not send free quiz follow-up:", error));
+      }
     }
 
     const progress = info.todayCount + 1;

@@ -15,6 +15,16 @@ import {
 let currentUserData = {};
 let challengeRankedCache = []; // requested group members and their exact Global Challenge ranks
 
+function escapeHtml(value = "") {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[char]);
+}
+
 export async function renderFriendGroups(userData = {}) {
   history.pushState(
     {
@@ -103,7 +113,7 @@ async function renderFriendGroupsPage(userData) {
       </div>
 
       <p class="group-limits-note">
-        You can own 1 group and be part of up to 3 total.
+        You can own 1 group, be part of up to 3 total, and each group can have up to 5 members.
       </p>
 
       <div id="myGroupsList" class="my-groups-list">
@@ -122,9 +132,24 @@ async function renderFriendGroupsPage(userData) {
 
   // Load groups first so only top 15 and group member profiles are fetched
   // for the Global Challenge display.
-  const groups = await loadMyGroups();
-  await loadChallengeLeaderboard(groups);
-  groups.forEach((group) => loadGroupDetails(group));
+  let groups;
+  try {
+    groups = await loadMyGroups();
+  } catch (error) {
+    console.error("Could not load friend groups:", error);
+    const container = document.getElementById("myGroupsList");
+    if (container) container.innerHTML = `<div class="empty-state">Could not load your groups. Please try again.</div>`;
+    return;
+  }
+
+  try {
+    await loadChallengeLeaderboard(groups);
+  } catch (error) {
+    console.error("Could not load Global Challenge leaderboard:", error);
+    const container = document.getElementById("challengeLeaderboardList");
+    if (container) container.innerHTML = `<div class="empty-state">Leaderboard unavailable right now. Please try again.</div>`;
+  }
+  await Promise.all(groups.map((group) => loadGroupDetails(group)));
 }
 
 /**
@@ -172,7 +197,7 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
     ? `
       <div class="challenge-banner-half">
         <span class="challenge-banner-label">🥇 Leading</span>
-        <strong>${topEntry.name}</strong>
+        <strong>${escapeHtml(topEntry.name)}</strong>
         <span class="challenge-banner-meta">${topEntry.score} points · ${topEntry.attemptCount} purchased attempt${topEntry.attemptCount === 1 ? "" : "s"} · ${topEntry.varietyCount} quiz${topEntry.varietyCount === 1 ? "" : "zes"}</span>
       </div>
     `
@@ -231,7 +256,7 @@ function renderLeaderboardList(topMembers) {
     ${index === 2 ? "third-place" : ""}">
               <span class="leaderboard-rank">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
-                ${member.name}${isMe ? " (You)" : ""}
+                ${escapeHtml(member.name)}${isMe ? " (You)" : ""}
                 ${member.varietyCount > 1 ? `<span class="challenge-rank-badge">${member.varietyCount} quizzes</span>` : ""}
               </span>
               <span class="leaderboard-score">${member.score} pts</span>
@@ -256,14 +281,21 @@ async function handleCreateGroup() {
   btn.disabled = true;
   btn.textContent = "Creating...";
 
-  const result = await createFriendGroup(
-    currentUserData.id,
-    currentUserData.name,
-    name,
-  );
-
-  btn.disabled = false;
-  btn.textContent = "Create Group";
+  let result;
+  try {
+    result = await createFriendGroup(
+      currentUserData.id,
+      currentUserData.name,
+      name,
+    );
+  } catch (error) {
+    console.error("Could not create friend group:", error);
+    alert("Could not create the group. Please try again.");
+    return;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Create Group";
+  }
 
   if (!result.success) {
     alert(result.message);
@@ -288,15 +320,22 @@ async function handleJoinGroup() {
   btn.disabled = true;
   btn.textContent = "Joining...";
 
-  const result = await requestToJoinGroup(
-    code,
-    currentUserData.id,
-    currentUserData.email,
-    currentUserData.name,
-  );
-
-  btn.disabled = false;
-  btn.textContent = "Join Group";
+  let result;
+  try {
+    result = await requestToJoinGroup(
+      code,
+      currentUserData.id,
+      currentUserData.email,
+      currentUserData.name,
+    );
+  } catch (error) {
+    console.error("Could not request group membership:", error);
+    alert("Could not send the join request. Please try again.");
+    return;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Join Group";
+  }
 
   if (!result.success) {
     alert(result.message);
@@ -357,7 +396,7 @@ function renderGroupCardSkeleton(group) {
 
     <div class="group-title-row">
 
-      <h3>${group.name}</h3>
+      <h3>${escapeHtml(group.name)}</h3>
 
       <span class="group-status ${qualified ? "qualified" : "not-qualified"}">
 
@@ -370,7 +409,7 @@ function renderGroupCardSkeleton(group) {
     <span class="friend-group-code">
 
       Code:
-      <strong>${group.code}</strong>
+      <strong>${escapeHtml(group.code)}</strong>
 
     </span>
 
@@ -390,8 +429,8 @@ function renderGroupCardSkeleton(group) {
 
   <button
       class="btn-share-code"
-      data-code="${group.code}"
-      data-name="${group.name}"
+      data-code="${escapeHtml(group.code)}"
+      data-name="${escapeHtml(group.name)}"
   >
       Share via WhatsApp
   </button>
@@ -429,25 +468,33 @@ function attachShareButtons(groups) {
 async function loadGroupDetails(group) {
   const isOwner = group.ownerId === currentUserData.id;
 
-  if (isOwner) {
-    const requests = await getPendingRequests(group.id);
-    const requestsContainer = document.getElementById(
-      `pendingRequests-${group.id}`,
+  try {
+    if (isOwner) {
+      const requests = await getPendingRequests(group.id);
+      const requestsContainer = document.getElementById(
+        `pendingRequests-${group.id}`,
+      );
+
+      if (requestsContainer) {
+        requestsContainer.innerHTML = renderPendingRequests(group.id, requests);
+        attachRequestActionEvents(group.id);
+      }
+    }
+
+    const leaderboard = await getGroupLeaderboard(group);
+    const leaderboardContainer = document.getElementById(
+      `leaderboard-${group.id}`,
     );
 
-    if (requestsContainer) {
-      requestsContainer.innerHTML = renderPendingRequests(group.id, requests);
-      attachRequestActionEvents(group.id);
+    if (leaderboardContainer) {
+      leaderboardContainer.innerHTML = renderLeaderboard(leaderboard);
     }
-  }
-
-  const leaderboard = await getGroupLeaderboard(group);
-  const leaderboardContainer = document.getElementById(
-    `leaderboard-${group.id}`,
-  );
-
-  if (leaderboardContainer) {
-    leaderboardContainer.innerHTML = renderLeaderboard(leaderboard);
+  } catch (error) {
+    console.error(`Could not load details for group ${group.id}:`, error);
+    const leaderboardContainer = document.getElementById(`leaderboard-${group.id}`);
+    if (leaderboardContainer) {
+      leaderboardContainer.innerHTML = `<div class="empty-state">Could not load this group’s details.</div>`;
+    }
   }
 }
 
@@ -462,8 +509,8 @@ function renderPendingRequests(groupId, requests) {
           (req) => `
             <div class="pending-request-item">
               <div>
-                <strong>${req.requesterName || "Unknown"}</strong>
-                <span class="pending-request-email">${req.requesterEmail}</span>
+                <strong>${escapeHtml(req.requesterName || "Unknown")}</strong>
+                <span class="pending-request-email">${escapeHtml(req.requesterEmail || "")}</span>
               </div>
               <div class="pending-request-actions">
                 <button
@@ -538,7 +585,7 @@ function renderLeaderboard(members) {
     ${index === 2 ? "third-place" : ""}">
               <span class="leaderboard-rank">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
-                ${member.name}${isMe ? " (You)" : ""}
+                ${escapeHtml(member.name)}${isMe ? " (You)" : ""}
                 <span class="challenge-rank-badge">${challengeRankLabel}</span>
               </span>
               <span class="leaderboard-score">

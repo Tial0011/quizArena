@@ -136,7 +136,8 @@ function greetingForNow() {
 }
 
 function shouldShowWelcomeQuiz(userData) {
-  return userData.welcomeQuizEligible === true && userData.welcomeQuizCompleted !== true;
+  // The welcome quiz is a permanent free entitlement, independent of paid purchases.
+  return Boolean(userData?.id);
 }
 
 export function renderStudentDashboard(userData = {}) {
@@ -210,8 +211,8 @@ export function renderStudentDashboard(userData = {}) {
         ${shouldShowWelcomeQuiz(userData) ? `
         <button type="button" class="sd-cta sd-welcome-quiz-cta load-in" data-start-welcome-quiz>
           <span class="sd-cta-text">
-            <span class="sd-cta-title">Try your free Physics quiz</span>
-            <span class="sd-cta-sub">A quick first win. No purchase needed.</span>
+            <span class="sd-cta-title">${userData.welcomeQuizCompleted ? "Retake your free Physics quiz" : "Try your free Physics quiz"}</span>
+            <span class="sd-cta-sub">Always free and available here. No purchase needed.</span>
           </span>
           <span class="sd-cta-arrow">${icon("arrow", 22)}</span>
         </button>` : ""}
@@ -549,6 +550,7 @@ function renderNotificationsMarkup(notifications) {
           <div class="notif-item-main">
             <p class="notif-message">${escapeHtml(n.message)}</p>
             ${n.actionType === "startWelcomeQuiz" ? `<button type="button" class="notif-action-btn" data-notif-action="welcome-quiz">Start free quiz</button>` : ""}
+            ${n.actionType === "openMarketplace" ? `<button type="button" class="notif-action-btn" data-notif-action="marketplace">Browse Marketplace</button>` : ""}
             <span class="notif-time">${formatNotificationTime(n.createdAt)}</span>
           </div>
           <button
@@ -578,6 +580,12 @@ function wireNotificationActions(userData, listEl) {
     button.addEventListener("click", () => {
       document.getElementById("notifPanel").hidden = true;
       openWelcomeQuiz(userData);
+    });
+  });
+  listEl.querySelectorAll('[data-notif-action="marketplace"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("notifPanel").hidden = true;
+      renderMarketplace(userData);
     });
   });
 }
@@ -632,10 +640,6 @@ function setupDashboardEvents(userData) {
 }
 
 function openWelcomeQuiz(userData) {
-  if (userData.welcomeQuizCompleted) {
-    showToast("You’ve completed your free Physics welcome quiz.");
-    return;
-  }
   startPurchasedQuiz(userData, WELCOME_QUIZ_ID, "Free Physics Welcome Quiz");
 }
 
