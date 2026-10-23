@@ -19,7 +19,7 @@ import { RANKS } from "./packRank.js";
 /* =========================================================
    FLUTTERWAVE CONFIG
 ========================================================= */
-const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-b1678b9192cb9718206cded093336375-X";
+const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-d1a8aa1e0c3dc9129e6e05633d8307fb-X";
 const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
 
 /* =========================================================
@@ -139,7 +139,10 @@ async function loadMarketplaceData() {
 
 async function loadActiveQuizzes() {
   const now = Date.now();
-  if (activeQuizCatalogCache && now - activeQuizCatalogCache.savedAt < CATALOG_CACHE_TTL_MS) {
+  if (
+    activeQuizCatalogCache &&
+    now - activeQuizCatalogCache.savedAt < CATALOG_CACHE_TTL_MS
+  ) {
     return activeQuizCatalogCache.quizzes;
   }
   if (activeQuizCatalogRequest) return activeQuizCatalogRequest;
@@ -477,7 +480,9 @@ function renderQuizCard(quiz) {
 
   return `
     <div class="marketplace-card${isOwned ? " is-owned" : ""}" data-id="${quiz.id}" ${
-      isOwned ? "" : `data-action="toggle" role="button" tabindex="0" aria-pressed="false"`
+      isOwned
+        ? ""
+        : `data-action="toggle" role="button" tabindex="0" aria-pressed="false"`
     }>
       <div class="marketplace-card-top">
         <span class="badge badge-subject">${esc(quiz.subjectName)}</span>
@@ -530,7 +535,9 @@ function restoreCart() {
     const saved = JSON.parse(localStorage.getItem(cartKey()) || "[]");
     const live = new Map(quizzesCache.map((q) => [q.id, q]));
     // drop anything that's been bought or removed since last visit
-    saved.forEach((id) => live.has(id) && !ownedQuizIds.has(id) && cart.add(id));
+    saved.forEach(
+      (id) => live.has(id) && !ownedQuizIds.has(id) && cart.add(id),
+    );
   } catch {
     /* private mode: cart just starts empty */
   }
@@ -546,7 +553,8 @@ function persistCart() {
 }
 
 const cartQuizzes = () => quizzesCache.filter((q) => cart.has(q.id));
-const cartTotal = () => cartQuizzes().reduce((sum, q) => sum + Number(q.price || 0), 0);
+const cartTotal = () =>
+  cartQuizzes().reduce((sum, q) => sum + Number(q.price || 0), 0);
 const money = (n) => `₦${Number(n || 0).toLocaleString("en-NG")}`;
 
 function tierIndex(count) {
@@ -563,7 +571,8 @@ function buzz(pattern = 12) {
   }
 }
 
-const calm = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+const calm = () =>
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 function toggleQuiz(id) {
   if (ownedQuizIds.has(id)) return;
@@ -611,8 +620,12 @@ function renderCartBarMarkup() {
 }
 
 function attachCartBarListeners() {
-  document.getElementById("mkCartOpen").addEventListener("click", openPurchaseDialog);
-  document.getElementById("mkCartPay").addEventListener("click", openPurchaseDialog);
+  document
+    .getElementById("mkCartOpen")
+    .addEventListener("click", openPurchaseDialog);
+  document
+    .getElementById("mkCartPay")
+    .addEventListener("click", openPurchaseDialog);
 }
 
 let shownTotal = 0;
@@ -635,21 +648,26 @@ function rollNumber(el, from, to) {
 
 function syncCartUI({ silent = false } = {}) {
   // cards
-  document.querySelectorAll(".marketplace-card[data-action='toggle']").forEach((card) => {
-    const on = cart.has(card.dataset.id);
-    card.classList.toggle("is-selected", on);
-    card.setAttribute("aria-pressed", String(on));
-    const label = card.querySelector(".mk-add-label");
-    const plus = card.querySelector(".mk-add-plus");
-    if (label) label.textContent = on ? "Added" : "Add";
-    if (plus) plus.textContent = on ? "✓" : "+";
-  });
+  document
+    .querySelectorAll(".marketplace-card[data-action='toggle']")
+    .forEach((card) => {
+      const on = cart.has(card.dataset.id);
+      card.classList.toggle("is-selected", on);
+      card.setAttribute("aria-pressed", String(on));
+      const label = card.querySelector(".mk-add-label");
+      const plus = card.querySelector(".mk-add-plus");
+      if (label) label.textContent = on ? "Added" : "Add";
+      if (plus) plus.textContent = on ? "✓" : "+";
+    });
 
   // per-subject select-all buttons
   document.querySelectorAll(".mk-select-all").forEach((btn) => {
     const section = btn.closest(".marketplace-section");
-    const cards = [...section.querySelectorAll(".marketplace-card[data-action='toggle']")];
-    const allIn = cards.length > 0 && cards.every((c) => cart.has(c.dataset.id));
+    const cards = [
+      ...section.querySelectorAll(".marketplace-card[data-action='toggle']"),
+    ];
+    const allIn =
+      cards.length > 0 && cards.every((c) => cart.has(c.dataset.id));
     btn.textContent = allIn ? "Clear subject" : `Select all ${cards.length}`;
   });
 
@@ -669,16 +687,24 @@ function syncCartUI({ silent = false } = {}) {
     const tier = TIERS[tIdx];
     const next = TIERS[tIdx + 1];
     const prev = tier ? tier.at : 0;
-    const pct = next ? Math.round(((count - prev) / (next.at - prev)) * 100) : 100;
+    const pct = next
+      ? Math.round(((count - prev) / (next.at - prev)) * 100)
+      : 100;
     const subjects = new Set(cartQuizzes().map((q) => q.subjectName)).size;
 
-    document.getElementById("mkRank").textContent = `${tier.emoji} ${tier.name}`;
+    document.getElementById("mkRank").textContent =
+      `${tier.emoji} ${tier.name}`;
     document.getElementById("mkMeterFill").style.width = `${Math.max(8, pct)}%`;
     document.getElementById("mkGoal").textContent = next
       ? `Add ${next.at - count} more to reach ${next.name}`
       : `Max rank · ${subjects} subject${subjects > 1 ? "s" : ""} covered`;
-    document.getElementById("mkPayCount").textContent = `${count} quiz${count > 1 ? "zes" : ""}`;
-    rollNumber(document.getElementById("mkPayTotal"), wasHidden ? 0 : shownTotal, total);
+    document.getElementById("mkPayCount").textContent =
+      `${count} quiz${count > 1 ? "zes" : ""}`;
+    rollNumber(
+      document.getElementById("mkPayTotal"),
+      wasHidden ? 0 : shownTotal,
+      total,
+    );
 
     if (!silent && tIdx > lastTier && count > 1) {
       celebrate(bar, 18);
@@ -710,7 +736,13 @@ function celebrate(anchor, n = 28) {
 }
 
 const esc = (v) =>
-  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  String(v ?? "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
 
 /* =========================================================
    CARD ACTIONS
@@ -812,9 +844,12 @@ function attachDialogEventListeners() {
   // Clicking the dark overlay cancels, but NOT while a payment is being
   // processed: Flutterwave's own modal closing can leak a click through to
   // this overlay and hide it before verification has finished.
-  document.getElementById("purchaseDialogOverlay").addEventListener("click", (e) => {
-    if (e.target.id === "purchaseDialogOverlay" && !isPurchasing) closePurchaseDialog();
-  });
+  document
+    .getElementById("purchaseDialogOverlay")
+    .addEventListener("click", (e) => {
+      if (e.target.id === "purchaseDialogOverlay" && !isPurchasing)
+        closePurchaseDialog();
+    });
 }
 
 function openPurchaseDialog() {
@@ -826,8 +861,12 @@ function openPurchaseDialog() {
 function paintCheckout() {
   const box = document.getElementById("purchaseDialogBox");
   box.innerHTML = checkoutMarkup();
-  box.querySelector("#cancelPurchaseBtn").addEventListener("click", closePurchaseDialog);
-  box.querySelector("#confirmPurchaseBtn").addEventListener("click", handleConfirmPurchase);
+  box
+    .querySelector("#cancelPurchaseBtn")
+    .addEventListener("click", closePurchaseDialog);
+  box
+    .querySelector("#confirmPurchaseBtn")
+    .addEventListener("click", handleConfirmPurchase);
   box.querySelector("#mkSheetList").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-remove]");
     if (!btn || isPurchasing) return;
@@ -894,7 +933,9 @@ function showPurchaseSuccess(boughtQuizzes) {
     closePurchaseDialog();
     await renderMarketplacePage(currentUserData);
   };
-  document.getElementById("mkKeepBrowsing").addEventListener("click", refresh, { once: true });
+  document
+    .getElementById("mkKeepBrowsing")
+    .addEventListener("click", refresh, { once: true });
   document.getElementById("mkStartNow")?.addEventListener(
     "click",
     async () => {
@@ -935,7 +976,9 @@ async function handleConfirmPurchase() {
 
   if (typeof window.FlutterwaveCheckout !== "function") {
     resetPayButton();
-    showCheckoutError("Payment is still loading. Check your connection and try again.");
+    showCheckoutError(
+      "Payment is still loading. Check your connection and try again.",
+    );
     return;
   }
 
@@ -967,7 +1010,9 @@ async function handleConfirmPurchase() {
         return;
       }
       resetPayButton();
-      showCheckoutError("Payment was not completed. You have not been charged.");
+      showCheckoutError(
+        "Payment was not completed. You have not been charged.",
+      );
     },
     onclose: () => {
       if (paymentResultReceived) return;
@@ -978,12 +1023,17 @@ async function handleConfirmPurchase() {
 
 async function onPurchaseConfirmed(result, ids) {
   isPurchasing = false;
-  const doneIds = Array.isArray(result.purchasedIds) && result.purchasedIds.length ? result.purchasedIds : ids;
+  const doneIds =
+    Array.isArray(result.purchasedIds) && result.purchasedIds.length
+      ? result.purchasedIds
+      : ids;
 
   const fresh = await getUserData(currentUserId);
   if (fresh) currentUserData = fresh;
 
-  const bought = quizzesCache.filter((q) => doneIds.includes(q.id) || ids.includes(q.id));
+  const bought = quizzesCache.filter(
+    (q) => doneIds.includes(q.id) || ids.includes(q.id),
+  );
   bought.forEach((q) => {
     ownedQuizIds.add(q.id);
     cart.delete(q.id);
@@ -1003,7 +1053,9 @@ async function finalizePurchase(response, ids) {
   if (!result.success) {
     console.warn("[purchase] Verification failed", result.message);
     resetPayButton();
-    showCheckoutError(result.message || "Payment verification failed. Please contact support.");
+    showCheckoutError(
+      result.message || "Payment verification failed. Please contact support.",
+    );
     return;
   }
   await onPurchaseConfirmed(result, ids);
@@ -1015,13 +1067,22 @@ async function pollForConfirmation(response, ids, attempt = 1) {
 
   const stopLoading = showLoadingOverlay(
     document.getElementById("purchaseDialogBox"),
-    ["Confirming your bank transfer...", "This can take a moment...", "Almost there..."],
+    [
+      "Confirming your bank transfer...",
+      "This can take a moment...",
+      "Almost there...",
+    ],
     { subtitle: "Please don't close this window" },
   );
 
   let result;
   try {
-    result = await confirmFlutterwavePurchase(currentUserId, ids, response.tx_ref, response.transaction_id);
+    result = await confirmFlutterwavePurchase(
+      currentUserId,
+      ids,
+      response.tx_ref,
+      response.transaction_id,
+    );
   } finally {
     stopLoading();
   }
@@ -1032,7 +1093,10 @@ async function pollForConfirmation(response, ids, attempt = 1) {
   }
 
   if (attempt >= maxAttempts) {
-    console.warn("[purchase] Gave up polling after max attempts", result.message);
+    console.warn(
+      "[purchase] Gave up polling after max attempts",
+      result.message,
+    );
     resetPayButton();
     showCheckoutError(
       "We're still confirming your transfer. This can take a few minutes. Check back on the Marketplace shortly, or contact support with your reference.",
