@@ -810,6 +810,9 @@ function checkoutMarkup() {
   const net = netKobo / 100;
   const combinedFees = quote ? quote.customerTotal - net : null;
   const total = quote?.customerTotal ?? net;
+  const feeAmount = quote
+    ? quote.flutterwaveFee + quote.quizVat
+    : null;
   const loadingDots = `<span class="mk-loading-dots" role="status" aria-label="Calculating total"><i></i><i></i><i></i></span>`;
   return `
     <div class="mk-sheet-head">
@@ -838,7 +841,7 @@ function checkoutMarkup() {
       <strong>${money(net)}</strong>
     </div>
     <div class="mk-sheet-fees" aria-label="Checkout fees">
-      <span>VAT + Flutterwave fees</span><span>${quote ? money(combinedFees) : loadingDots}</span>
+      <span>Flutterwave fee + 7.5% fee VAT</span><span>${quote ? money(feeAmount) : loadingDots}</span>
     </div>
     <div class="mk-sheet-total mk-sheet-grand-total">
       <span>Total</span>

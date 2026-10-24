@@ -482,7 +482,7 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
     const expectedProductAmount = expectedNet;
     const expectedFeeKobo = Math.round(Number(tx.app_fee || 0) * 100);
     const expectedFeeVatKobo = Math.round(expectedFeeKobo * 0.075);
-    const minimumCustomerChargeKobo =
+    const expectedCustomerChargeKobo =
       expectedNetKobo + expectedFeeKobo + expectedFeeVatKobo;
     const actualCustomerChargeKobo = Math.round(
       Number(tx.charged_amount ?? tx.amount) * 100,
@@ -491,7 +491,7 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
     if (
       tx.currency !== "NGN" ||
       Math.round(Number(tx.amount) * 100) !== Math.round(expectedProductAmount * 100) ||
-      actualCustomerChargeKobo < minimumCustomerChargeKobo ||
+      actualCustomerChargeKobo !== expectedCustomerChargeKobo ||
       !Number.isFinite(amountSettled) ||
       Math.round(amountSettled * 100) !== Math.round(expectedNet * 100) ||
       actualCustomerChargeKobo < Math.round(Number(tx.amount) * 100)
@@ -625,36 +625,19 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
     throw new HttpsError("unavailable", "Checkout is temporarily unavailable.");
   }
   try {
-    const initialQuote = await quoteFlutterwaveFee(Math.ceil(net), "card");
-    const baseChargeAmount = initialQuote.chargeAmount;
-    const firstCandidate = Math.ceil(net);
-    // v3's fee endpoint accepts whole NGN amounts. Search nearby whole-naira
-    // base amounts until its customer charge rounds to the target whole naira.
-    for (let offset = 0; offset <= 10; offset++) {
-      const candidates = offset === 0
-        ? [firstCandidate]
-        : [firstCandidate - offset, firstCandidate + offset];
-      for (const candidate of candidates) {
-        if (candidate < Math.ceil(net)) continue;
-        const quote = await quoteFlutterwaveFee(candidate, "card");
-        if (quote.chargeAmount === baseChargeAmount) {
-          const feeKobo = Math.round(quote.fee * 100);
-          const feeVat = Math.round(feeKobo * 0.075) / 100;
-          const vatAndFeeTotal = quote.chargeAmount + quote.fee + feeVat;
-          const customerTotal = Math.ceil(vatAndFeeTotal);
-          return {
-            success: true,
-            net,
-            quizVat: feeVat,
-            flutterwaveFee: quote.fee,
-            total: customerTotal,
-            customerTotal,
-            productAmount: net,
-          };
-        }
-      }
-    }
-    throw new Error("Could not find a whole-naira fee quote for the payout amount.");
+    const quote = await quoteFlutterwaveFee(Math.ceil(net), "card");
+    const feeKobo = Math.round(quote.fee * 100);
+    const feeVatKobo = Math.round(feeKobo * 0.075);
+    const customerTotalKobo = netKobo + feeKobo + feeVatKobo;
+    return {
+      success: true,
+      net,
+      quizVat: feeVatKobo / 100,
+      flutterwaveFee: feeKobo / 100,
+      total: customerTotalKobo / 100,
+      customerTotal: customerTotalKobo / 100,
+      productAmount: net,
+    };
   } catch (err) {
     console.error("Flutterwave fee quote failed:", {
       message: err.message,
