@@ -645,8 +645,8 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
             net,
             quizVat,
             flutterwaveFee: quote.fee,
-            total: targetTotal,
-            customerTotal: targetTotal,
+            total: quote.chargeAmount,
+            customerTotal: quote.chargeAmount,
             productAmount: candidate,
           };
         }
