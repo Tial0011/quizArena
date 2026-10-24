@@ -808,6 +808,7 @@ function checkoutMarkup() {
   const vat = quote?.quizVat ?? Math.round(netKobo * 0.075) / 100;
   const flutterwaveFee = quote?.flutterwaveFee ?? Math.round((netKobo + Math.round(netKobo * 0.075)) * 0.02) / 100;
   const total = quote?.total ?? (netKobo + Math.round(netKobo * 0.075)) / 100;
+  const loadingDots = `<span class="mk-loading-dots" role="status" aria-label="Calculating total"><i></i><i></i><i></i></span>`;
   return `
     <div class="mk-sheet-head">
       <h3>Your study pack</h3>
@@ -836,11 +837,11 @@ function checkoutMarkup() {
     </div>
     <div class="mk-sheet-fees" aria-label="Checkout fees">
       <span>VAT (7.5%)</span><span>${money(vat)}</span>
-      <span>Flutterwave processing fee</span><span>${quote ? money(flutterwaveFee) : "Calculating…"}</span>
+      <span>Flutterwave processing fee</span><span>${quote ? money(flutterwaveFee) : loadingDots}</span>
     </div>
     <div class="mk-sheet-total mk-sheet-grand-total">
       <span>Total</span>
-      <strong id="mkSheetTotal">${quote ? money(total) : "Calculating…"}</strong>
+      <strong id="mkSheetTotal">${quote ? money(total) : loadingDots}</strong>
     </div>
 
     <p class="mk-sheet-error" id="mkCheckoutError" role="alert" hidden></p>
@@ -850,7 +851,7 @@ function checkoutMarkup() {
 
     <div class="purchase-dialog-actions">
       <button type="button" id="cancelPurchaseBtn" class="btn-secondary">Keep browsing</button>
-      <button type="button" id="confirmPurchaseBtn" class="btn-primary" ${quote ? "" : "disabled"}>${quote ? `Pay ${money(total)}` : "Calculating total…"}</button>
+      <button type="button" id="confirmPurchaseBtn" class="btn-primary" ${quote ? "" : "disabled"}>${quote ? `Pay ${money(total)}` : loadingDots}</button>
     </div>
   `;
 }

@@ -953,6 +953,30 @@
   padding-top: 10px;
 }
 
+.mk-loading-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 28px;
+  color: currentColor;
+}
+
+.mk-loading-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: mk-dot-bounce 0.7s ease-in-out infinite alternate;
+}
+
+.mk-loading-dots i:nth-child(2) { animation-delay: 0.16s; }
+.mk-loading-dots i:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes mk-dot-bounce {
+  to { transform: translateY(-4px); opacity: 0.45; }
+}
+
 .mk-sheet-error {
   margin: 0 0 12px;
   padding: 10px 12px;
@@ -1021,6 +1045,7 @@
 @media (prefers-reduced-motion: reduce) {
   .marketplace-card.is-selected,
   .mk-cartbar,
-  .purchase-success-check { animation: none; }
+  .purchase-success-check,
+  .mk-loading-dots i { animation: none; }
   .mk-meter i { transition: none; }
 }
