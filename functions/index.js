@@ -18,6 +18,28 @@ function expectedCheckoutTotal(netAmount) {
   return (netKobo + vatKobo) / 100;
 }
 
+async function quoteFlutterwaveFee(amount, paymentType) {
+  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  if (!secretKey) throw new Error("Flutterwave secret key is not configured.");
+  const response = await fetch(
+    `https://api.flutterwave.com/v3/transactions/fee?amount=${encodeURIComponent(amount)}&currency=NGN&payment_type=${encodeURIComponent(paymentType)}`,
+    { headers: { Authorization: `Bearer ${secretKey}` } },
+  );
+  const result = await response.json();
+  const chargeAmount = Number(result?.data?.charge_amount);
+  const fee = Number(result?.data?.fee);
+  if (
+    !response.ok ||
+    result?.status !== "success" ||
+    !Number.isFinite(chargeAmount) ||
+    !Number.isFinite(fee) ||
+    chargeAmount < amount
+  ) {
+    throw new Error("Flutterwave fee quote failed.");
+  }
+  return { chargeAmount, fee };
+}
+
 function lagosWeekBounds(date) {
   const lagosDate = new Date(date.getTime() + 60 * 60 * 1000);
   const lagosDay = Date.UTC(
@@ -462,11 +484,11 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
       0,
     );
     const expectedNet = expectedNetKobo / 100;
-    const expected = expectedCheckoutTotal(expectedNet);
+    const expectedProductAmount = expectedCheckoutTotal(expectedNet);
     const amountSettled = Number(tx.amount_settled);
     if (
       tx.currency !== "NGN" ||
-      Number(tx.amount) < expected ||
+      Number(tx.amount) < expectedProductAmount ||
       !Number.isFinite(amountSettled) ||
       amountSettled < expectedNet
     ) {
@@ -474,7 +496,7 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
         txAmount: tx.amount,
         amountSettled: tx.amount_settled,
         txCurrency: tx.currency,
-        expectedGross: expected,
+        expectedProductAmount,
         expectedNet,
       });
       return { mismatch: true };
@@ -601,23 +623,30 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
   if (!secretKey) {
     throw new HttpsError("unavailable", "Checkout is temporarily unavailable.");
   }
-  const response = await fetch(
-    `https://api.flutterwave.com/v3/transactions/fee?amount=${encodeURIComponent(productAmount)}&currency=NGN&payment_type=card`,
-    { headers: { Authorization: `Bearer ${secretKey}` } },
-  );
-  const result = await response.json();
-  const flutterwaveFee = Number(result?.data?.fee) / 100;
-  if (
-    !response.ok ||
-    result?.status !== "success" ||
-    !Number.isFinite(flutterwaveFee)
-  ) {
+  try {
+    const quote = await quoteFlutterwaveFee(productAmount, "card");
+    const total = Math.ceil(quote.chargeAmount);
+    const chargeAmount = total - quote.fee;
+    if (chargeAmount < productAmount) {
+      throw new Error("Quoted charge would not cover quiz and VAT.");
+    }
+    const adjustedQuote = await quoteFlutterwaveFee(chargeAmount, "card");
+    if (adjustedQuote.chargeAmount !== total) {
+      throw new Error("Flutterwave quote did not reach the requested whole-naira total.");
+    }
+    return {
+      success: true,
+      net,
+      quizVat,
+      flutterwaveFee: adjustedQuote.fee,
+      total,
+      customerTotal: adjustedQuote.chargeAmount,
+      productAmount: chargeAmount,
+    };
+  } catch (err) {
+    console.error("Flutterwave fee quote failed:", err.message);
     throw new HttpsError("unavailable", "Could not calculate the checkout total. Please try again.");
   }
-  // Pass Flutterwave the product amount; its configured customer-borne fee
-  // is applied by checkout. Add the quoted fee only to the displayed total.
-  const total = productAmount + flutterwaveFee;
-  return { success: true, net, quizVat, flutterwaveFee, total, productAmount };
 });
 
 // The Physics welcome quiz is intentionally free and isn't represented by
