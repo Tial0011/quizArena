@@ -10,6 +10,7 @@ import {
 import {
   confirmFlutterwavePurchase,
   getUserOwnedQuizIds,
+  quoteFlutterwavePurchase,
 } from "./purchaseService.js";
 import { getUserData } from "../auth.js";
 import { registerBackHandler } from "./navigation.js";
@@ -32,6 +33,7 @@ let currentUserData = null;
 let cart = new Set(); // quiz ids the student has ticked for one combined payment
 let isPurchasing = false;
 let lastTier = -1;
+let latestCheckoutQuote = null;
 let selectedSubject = "All";
 let selectedLevel = "100";
 let selectedSemester = "1";
@@ -677,7 +679,7 @@ function syncCartUI({ silent = false } = {}) {
   if (!bar) return;
 
   const count = cart.size;
-  const total = cartTotal();
+  const total = latestCheckoutQuote?.total || cartTotal();
   const wasHidden = bar.hidden;
   bar.hidden = count === 0;
   page?.classList.toggle("has-cart", count > 0);
@@ -800,7 +802,12 @@ function renderPurchaseDialogMarkup() {
 
 function checkoutMarkup() {
   const items = cartQuizzes();
-  const total = cartTotal();
+  const quote = latestCheckoutQuote?.quizIds?.join("|") === items.map((q) => q.id).join("|") ? latestCheckoutQuote : null;
+  const netKobo = Math.round(cartTotal() * 100);
+  const net = netKobo / 100;
+  const vat = quote?.quizVat ?? Math.round(netKobo * 0.075) / 100;
+  const flutterwaveFee = quote?.flutterwaveFee ?? Math.round((netKobo + Math.round(netKobo * 0.075)) * 0.02) / 100;
+  const total = quote?.total ?? (netKobo + Math.round(netKobo * 0.075)) / 100;
   return `
     <div class="mk-sheet-head">
       <h3>Your study pack</h3>
@@ -824,18 +831,27 @@ function checkoutMarkup() {
     </ul>
 
     <div class="mk-sheet-total">
+      <span>Quiz total</span>
+      <strong>${money(net)}</strong>
+    </div>
+    <div class="mk-sheet-fees" aria-label="Checkout fees">
+      <span>VAT (7.5%)</span><span>${money(vat)}</span>
+      <span>Flutterwave processing fee</span><span>${quote ? money(flutterwaveFee) : "Calculating…"}</span>
+    </div>
+    <div class="mk-sheet-total mk-sheet-grand-total">
       <span>Total</span>
-      <strong id="mkSheetTotal">${money(total)}</strong>
+      <strong id="mkSheetTotal">${quote ? money(total) : "Calculating…"}</strong>
     </div>
 
     <p class="mk-sheet-error" id="mkCheckoutError" role="alert" hidden></p>
+    <p class="mk-fee-note">A small Flutterwave processing fee is included in your total.</p>
     <p class="purchase-dialog-notice">
-      Secure payment with Flutterwave: card, bank transfer or USSD. One payment unlocks everything above.
+      Pay securely with card, bank transfer or USSD.
     </p>
 
     <div class="purchase-dialog-actions">
       <button type="button" id="cancelPurchaseBtn" class="btn-secondary">Keep browsing</button>
-      <button type="button" id="confirmPurchaseBtn" class="btn-primary">Pay ${money(total)}</button>
+      <button type="button" id="confirmPurchaseBtn" class="btn-primary" ${quote ? "" : "disabled"}>${quote ? `Pay ${money(total)}` : "Calculating total…"}</button>
     </div>
   `;
 }
@@ -854,8 +870,24 @@ function attachDialogEventListeners() {
 
 function openPurchaseDialog() {
   if (cart.size === 0) return;
-  paintCheckout();
   document.getElementById("purchaseDialogOverlay").hidden = false;
+  updateCheckoutQuote();
+}
+let quoteRequestId = 0;
+async function updateCheckoutQuote() {
+  const ids = cartQuizzes().filter((q) => !ownedQuizIds.has(q.id)).map((q) => q.id);
+  const requestId = ++quoteRequestId;
+  latestCheckoutQuote = null;
+  paintCheckout();
+  const quote = ids.length ? await quoteFlutterwavePurchase(currentUserId, ids) : null;
+  if (requestId !== quoteRequestId || document.getElementById("purchaseDialogOverlay").hidden) return;
+  if (!quote?.success) {
+    showCheckoutError(quote?.message || "Could not calculate the exact payment total. Please try again.");
+    document.getElementById("confirmPurchaseBtn").disabled = true;
+    return;
+  }
+  latestCheckoutQuote = { ...quote, quizIds: ids, validUntil: Date.now() + 120000 };
+  paintCheckout();
 }
 
 function paintCheckout() {
@@ -893,8 +925,9 @@ function resetPayButton() {
   isPurchasing = false;
   const confirmBtn = document.getElementById("confirmPurchaseBtn");
   if (confirmBtn) {
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = `Pay ${money(cartTotal())}`;
+    const quoteMatchesCart = latestCheckoutQuote?.validUntil > Date.now() && latestCheckoutQuote?.quizIds?.join("|") === cartQuizzes().filter((q) => !ownedQuizIds.has(q.id)).map((q) => q.id).join("|");
+    confirmBtn.disabled = !quoteMatchesCart;
+    confirmBtn.textContent = quoteMatchesCart ? `Pay ${money(latestCheckoutQuote.total)}` : "Recalculate total";
   }
   document.getElementById("cancelPurchaseBtn")?.removeAttribute("disabled");
 }
@@ -960,7 +993,13 @@ async function handleConfirmPurchase() {
 
   const items = cartQuizzes().filter((q) => !ownedQuizIds.has(q.id));
   const ids = items.map((q) => q.id);
-  const total = items.reduce((sum, q) => sum + Number(q.price || 0), 0);
+  const quoteMatchesCart = latestCheckoutQuote?.validUntil > Date.now() && latestCheckoutQuote?.quizIds?.join("|") === ids.join("|") && ids.every((id) => cart.has(id));
+  if (!quoteMatchesCart) {
+    isPurchasing = false;
+    updateCheckoutQuote();
+    return;
+  }
+  const total = latestCheckoutQuote.productAmount;
   if (ids.length === 0 || total <= 0) return;
 
   isPurchasing = true;

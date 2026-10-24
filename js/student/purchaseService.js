@@ -47,6 +47,20 @@ const verifyFlutterwavePurchaseCallable = httpsCallable(
   functions,
   "verifyFlutterwavePurchase",
 );
+const quoteFlutterwavePurchaseCallable = httpsCallable(
+  functions,
+  "quoteFlutterwavePurchase",
+);
+
+export async function quoteFlutterwavePurchase(userId, quizIds) {
+  try {
+    const result = await quoteFlutterwavePurchaseCallable({ userId, quizIds });
+    return result.data;
+  } catch (err) {
+    console.error("quoteFlutterwavePurchase failed:", err);
+    return { success: false, message: "Could not calculate the exact payment total. Please try again." };
+  }
+}
 
 /**
  * Checks whether a user already owns (has a paid purchase for) a quiz.

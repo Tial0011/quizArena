@@ -10,6 +10,14 @@ const db = admin.firestore();
 
 const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
 
+function expectedCheckoutTotal(netAmount) {
+  // Flutterwave v3 charges its fee separately when the merchant has enabled
+  // customer-borne fees. Here verify the amount sent by our checkout: quiz
+  // amount plus the requested QuizArena VAT, all represented in kobo.
+  const netKobo = Math.round(Number(netAmount || 0) * 100);
+  return Math.round(netKobo * 1.075) / 100;
+}
+
 function lagosWeekBounds(date) {
   const lagosDate = new Date(date.getTime() + 60 * 60 * 1000);
   const lagosDay = Date.UTC(
@@ -449,12 +457,25 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
       return { alreadyOwned: true, purchasedIds: [] };
     }
 
-    const expected = toGrant.reduce((sum, q) => sum + Number(q.price || 0), 0);
-    if (tx.currency !== "NGN" || tx.amount < expected) {
+    const expectedNetKobo = toGrant.reduce(
+      (sum, q) => sum + Math.round(Number(q.price || 0) * 100),
+      0,
+    );
+    const expectedNet = expectedNetKobo / 100;
+    const expected = expectedCheckoutTotal(expectedNet);
+    const amountSettled = Number(tx.amount_settled);
+    if (
+      tx.currency !== "NGN" ||
+      Number(tx.amount) < expected ||
+      !Number.isFinite(amountSettled) ||
+      amountSettled < expectedNet
+    ) {
       console.log("Amount/currency check failed", {
         txAmount: tx.amount,
+        amountSettled: tx.amount_settled,
         txCurrency: tx.currency,
-        expected,
+        expectedGross: expected,
+        expectedNet,
       });
       return { mismatch: true };
     }
@@ -478,6 +499,9 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
       quizIds: toGrant.map((q) => q.id),
       txRef,
       amount: tx.amount,
+      amountSettled: tx.amount_settled ?? null,
+      flutterwaveFee: tx.app_fee ?? null,
+      paymentType: tx.payment_type ?? null,
       processedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -548,6 +572,52 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
     purchasedIds: outcome.purchasedIds,
     message: "Purchase successful.",
   };
+});
+
+exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
+  const { userId } = request.data || {};
+  const quizIds = Array.isArray(request.data?.quizIds)
+    ? [...new Set(request.data.quizIds.filter((id) => typeof id === "string" && id))]
+    : [];
+  if (!request.auth || request.auth.uid !== userId) {
+    throw new HttpsError("permission-denied", "Not authorized.");
+  }
+  if (!quizIds.length || quizIds.length > 50 || quizIds.includes(WELCOME_QUIZ_ID)) {
+    throw new HttpsError("invalid-argument", "Invalid quiz selection.");
+  }
+  const snaps = await Promise.all(quizIds.map((id) => db.collection("quizzes").doc(id).get()));
+  if (snaps.some((snap) => !snap.exists)) {
+    throw new HttpsError("not-found", "A selected quiz was not found.");
+  }
+  const netKobo = snaps.reduce(
+    (sum, snap) => sum + Math.round(Number(snap.data().price || 0) * 100),
+    0,
+  );
+  const net = netKobo / 100;
+  const quizVatKobo = Math.round(netKobo * 0.075);
+  const quizVat = quizVatKobo / 100;
+  const productAmount = (netKobo + quizVatKobo) / 100;
+  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  if (!secretKey) {
+    throw new HttpsError("unavailable", "Checkout is temporarily unavailable.");
+  }
+  const response = await fetch(
+    `https://api.flutterwave.com/v3/transactions/fee?amount=${encodeURIComponent(productAmount)}&currency=NGN&payment_type=card`,
+    { headers: { Authorization: `Bearer ${secretKey}` } },
+  );
+  const result = await response.json();
+  const flutterwaveFee = Number(result?.data?.fee) / 100;
+  if (
+    !response.ok ||
+    result?.status !== "success" ||
+    !Number.isFinite(flutterwaveFee)
+  ) {
+    throw new HttpsError("unavailable", "Could not calculate the checkout total. Please try again.");
+  }
+  // Pass Flutterwave the product amount; its configured customer-borne fee
+  // is applied by checkout. Add the quoted fee only to the displayed total.
+  const total = productAmount + flutterwaveFee;
+  return { success: true, net, quizVat, flutterwaveFee, total, productAmount };
 });
 
 // The Physics welcome quiz is intentionally free and isn't represented by
