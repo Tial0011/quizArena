@@ -802,11 +802,15 @@ function renderPurchaseDialogMarkup() {
 
 function checkoutMarkup() {
   const items = cartQuizzes();
-  const quote = latestCheckoutQuote?.quizIds?.join("|") === items.map((q) => q.id).join("|") ? latestCheckoutQuote : null;
+  const quote =
+    latestCheckoutQuote?.quizIds?.join("|") === items.map((q) => q.id).join("|")
+      ? latestCheckoutQuote
+      : null;
   const netKobo = Math.round(cartTotal() * 100);
   const net = netKobo / 100;
   const combinedFees = quote ? quote.quizVat + quote.flutterwaveFee : null;
-  const unroundedTotal = quote?.total ?? (netKobo + Math.round(netKobo * 0.075)) / 100;
+  const unroundedTotal =
+    quote?.total ?? (netKobo + Math.round(netKobo * 0.075)) / 100;
   const total = Math.ceil(unroundedTotal);
   const loadingDots = `<span class="mk-loading-dots" role="status" aria-label="Calculating total"><i></i><i></i><i></i></span>`;
   return `
@@ -836,7 +840,7 @@ function checkoutMarkup() {
       <strong>${money(net)}</strong>
     </div>
     <div class="mk-sheet-fees" aria-label="Checkout fees">
-      <span>VAT + Flutterwave</span><span>${quote ? money(combinedFees) : loadingDots}</span>
+      <span>VAT + Flutterwave fees</span><span>${quote ? money(combinedFees) : loadingDots}</span>
     </div>
     <div class="mk-sheet-total mk-sheet-grand-total">
       <span>Total</span>
@@ -874,18 +878,33 @@ function openPurchaseDialog() {
 }
 let quoteRequestId = 0;
 async function updateCheckoutQuote() {
-  const ids = cartQuizzes().filter((q) => !ownedQuizIds.has(q.id)).map((q) => q.id);
+  const ids = cartQuizzes()
+    .filter((q) => !ownedQuizIds.has(q.id))
+    .map((q) => q.id);
   const requestId = ++quoteRequestId;
   latestCheckoutQuote = null;
   paintCheckout();
-  const quote = ids.length ? await quoteFlutterwavePurchase(currentUserId, ids) : null;
-  if (requestId !== quoteRequestId || document.getElementById("purchaseDialogOverlay").hidden) return;
+  const quote = ids.length
+    ? await quoteFlutterwavePurchase(currentUserId, ids)
+    : null;
+  if (
+    requestId !== quoteRequestId ||
+    document.getElementById("purchaseDialogOverlay").hidden
+  )
+    return;
   if (!quote?.success) {
-    showCheckoutError(quote?.message || "Could not calculate the exact payment total. Please try again.");
+    showCheckoutError(
+      quote?.message ||
+        "Could not calculate the exact payment total. Please try again.",
+    );
     document.getElementById("confirmPurchaseBtn").disabled = true;
     return;
   }
-  latestCheckoutQuote = { ...quote, quizIds: ids, validUntil: Date.now() + 120000 };
+  latestCheckoutQuote = {
+    ...quote,
+    quizIds: ids,
+    validUntil: Date.now() + 120000,
+  };
   paintCheckout();
 }
 
@@ -924,9 +943,17 @@ function resetPayButton() {
   isPurchasing = false;
   const confirmBtn = document.getElementById("confirmPurchaseBtn");
   if (confirmBtn) {
-    const quoteMatchesCart = latestCheckoutQuote?.validUntil > Date.now() && latestCheckoutQuote?.quizIds?.join("|") === cartQuizzes().filter((q) => !ownedQuizIds.has(q.id)).map((q) => q.id).join("|");
+    const quoteMatchesCart =
+      latestCheckoutQuote?.validUntil > Date.now() &&
+      latestCheckoutQuote?.quizIds?.join("|") ===
+        cartQuizzes()
+          .filter((q) => !ownedQuizIds.has(q.id))
+          .map((q) => q.id)
+          .join("|");
     confirmBtn.disabled = !quoteMatchesCart;
-    confirmBtn.textContent = quoteMatchesCart ? `Pay ${money(latestCheckoutQuote.total)}` : "Recalculate total";
+    confirmBtn.textContent = quoteMatchesCart
+      ? `Pay ${money(latestCheckoutQuote.total)}`
+      : "Recalculate total";
   }
   document.getElementById("cancelPurchaseBtn")?.removeAttribute("disabled");
 }
@@ -992,7 +1019,10 @@ async function handleConfirmPurchase() {
 
   const items = cartQuizzes().filter((q) => !ownedQuizIds.has(q.id));
   const ids = items.map((q) => q.id);
-  const quoteMatchesCart = latestCheckoutQuote?.validUntil > Date.now() && latestCheckoutQuote?.quizIds?.join("|") === ids.join("|") && ids.every((id) => cart.has(id));
+  const quoteMatchesCart =
+    latestCheckoutQuote?.validUntil > Date.now() &&
+    latestCheckoutQuote?.quizIds?.join("|") === ids.join("|") &&
+    ids.every((id) => cart.has(id));
   if (!quoteMatchesCart) {
     isPurchasing = false;
     updateCheckoutQuote();
