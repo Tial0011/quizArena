@@ -628,7 +628,7 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
     const quote = await quoteFlutterwaveFee(Math.ceil(net), "card");
     const feeKobo = Math.round(quote.fee * 100);
     const feeVatKobo = Math.round(feeKobo * 0.075);
-    const customerTotalKobo = netKobo + feeKobo + feeVatKobo;
+    const customerTotalKobo = Math.round(quote.chargeAmount * 100) + feeVatKobo;
     return {
       success: true,
       net,

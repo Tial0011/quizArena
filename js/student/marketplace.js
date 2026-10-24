@@ -808,7 +808,6 @@ function checkoutMarkup() {
       : null;
   const netKobo = Math.round(cartTotal() * 100);
   const net = netKobo / 100;
-  const combinedFees = quote ? quote.customerTotal - net : null;
   const total = quote?.customerTotal ?? net;
   const feeAmount = quote
     ? quote.flutterwaveFee + quote.quizVat
@@ -1029,7 +1028,7 @@ async function handleConfirmPurchase() {
     updateCheckoutQuote();
     return;
   }
-  const total = latestCheckoutQuote.productAmount;
+  const total = latestCheckoutQuote.total;
   if (ids.length === 0 || total <= 0) return;
 
   isPurchasing = true;
