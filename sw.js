@@ -14,10 +14,9 @@
                     modules the app imports from gstatic.com, so the
                     app boots with no network at all. Progress is
                     broadcast to the page (welcome screen status line).
-   2. RUNTIME    -- navigations: network first, but if the network takes
-                    more than 3.5s (bad "lie-fi" data) the cached shell
-                    is served instead. Same-origin assets: stale-while-
-                    revalidate. Firebase SDK: cache first.
+   2. RUNTIME    -- navigations and same-origin assets: network first,
+                    falling back to the current cached shell/assets if
+                    offline or the network times out. Firebase SDK: cache first.
    3. PUSH       -- FCM background notifications (moved from
                     firebase-messaging-sw.js, same behaviour).
 
@@ -32,7 +31,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "860b48bb35";
+const PRECACHE_VERSION = "13f4dfb9e6";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",
@@ -129,7 +128,6 @@ const SHELL_CACHE = `qa-shell-${PRECACHE_VERSION}`;
 const FONT_CACHE = "qa-fonts-v1";
 const CDN_CACHE = "qa-cdn-v1"; // URLs contain the SDK version, so they never go stale
 const META_KEY = "/__qa_precache_meta";
-const NAV_TIMEOUT_MS = 3500;
 const CONCURRENCY = 4;
 
 /* ---------------------------------------------------------
@@ -362,40 +360,28 @@ function offlinePage() {
 
 async function handleNavigation(event) {
   const cache = await caches.open(SHELL_CACHE);
-  const cached = await cache.match("/");
-
-  const network = fetch(event.request).then(async (res) => {
-    // Keep the cached shell fresh for next time.
-    if (res && res.ok && new URL(event.request.url).pathname === "/") {
-      await cache.put("/", await cleanResponse(res.clone()));
+  try {
+    const response = await fetch(event.request);
+    if (response?.ok && new URL(event.request.url).pathname === "/") {
+      await cache.put("/", await cleanResponse(response.clone()));
     }
-    return res;
-  });
-  // Let the cache refresh finish even when we answered from cache.
-  event.waitUntil(network.catch(() => {}));
-
-  if (!cached) return network.catch(() => offlinePage());
-
-  const timeout = new Promise((resolve) => setTimeout(() => resolve(cached), NAV_TIMEOUT_MS));
-  return Promise.race([network, timeout]).catch(() => cached);
+    return response;
+  } catch {
+    return (await cache.match("/")) || offlinePage();
+  }
 }
 
-async function staleWhileRevalidate(event) {
+async function networkFirstAsset(event) {
   const cache = await caches.open(SHELL_CACHE);
-  const cached = await cache.match(event.request);
-
-  const network = fetch(event.request)
-    .then((res) => {
-      if (res && res.ok && res.type === "basic") cache.put(event.request, res.clone());
-      return res;
-    })
-    .catch(() => null);
-
-  if (cached) {
-    event.waitUntil(network);
-    return cached;
+  try {
+    const response = await fetch(event.request);
+    if (response && response.ok && response.type === "basic") {
+      await cache.put(event.request, response.clone());
+    }
+    return response;
+  } catch {
+    return (await cache.match(event.request)) || Response.error();
   }
-  return (await network) || Response.error();
 }
 
 async function cacheFirst(request, cacheName) {
@@ -419,7 +405,7 @@ self.addEventListener("fetch", (event) => {
     if (req.mode === "navigate") {
       event.respondWith(handleNavigation(event));
     } else {
-      event.respondWith(staleWhileRevalidate(event));
+      event.respondWith(networkFirstAsset(event));
     }
     return;
   }
