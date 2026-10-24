@@ -25,6 +25,9 @@ import { markReturningUser } from "./welcomeGate.js";
 import { renderVerificationGate } from "../emailVerificationGate.js";
 const app = document.getElementById("app");
 
+const authLoadingDots = () =>
+  `<span class="btn-dots" role="status" aria-label="Loading"><span></span><span></span><span></span></span>`;
+
 let mode = "login";
 let pendingGoogleUser = null;
 
@@ -331,7 +334,7 @@ async function submitForm() {
   const submitBtn = document.getElementById("submitBtn");
 
   submitBtn.disabled = true;
-  submitBtn.textContent = "Loading...";
+  submitBtn.innerHTML = authLoadingDots();
   let result;
 
   if (mode === "register") {
@@ -340,7 +343,7 @@ async function submitForm() {
     if (!referralSource) {
       alert("Choose how you found Quiz Arena.");
       submitBtn.disabled = false;
-      submitBtn.textContent = pendingGoogleUser ? "Continue" : "Register";
+      submitBtn.innerHTML = pendingGoogleUser ? "Continue" : "Register";
       return;
     }
 
@@ -366,7 +369,7 @@ async function submitForm() {
     alert(result.message);
     submitBtn.disabled = false;
 
-    submitBtn.textContent = pendingGoogleUser ? "Continue" : mode === "login" ? "Sign In" : "Register";
+    submitBtn.innerHTML = pendingGoogleUser ? "Continue" : mode === "login" ? "Sign In" : "Register";
     return;
   }
 

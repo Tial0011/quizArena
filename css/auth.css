@@ -358,6 +358,10 @@
   cursor: not-allowed;
 }
 
+.submit-btn .btn-dots span {
+  background: currentColor;
+}
+
 .switch {
   text-align: center;
 

@@ -3,6 +3,9 @@ import { resendVerificationEmail, logoutUser } from "./auth.js";
 
 const app = document.getElementById("app");
 
+const authLoadingDots = () =>
+  `<span class="btn-dots" role="status" aria-label="Loading"><span></span><span></span><span></span></span>`;
+
 let cooldownUntil = 0;
 
 /**
@@ -66,7 +69,7 @@ export function renderVerificationGate(user, onVerified) {
 async function handleContinue(onVerified) {
   const btn = document.getElementById("verifyContinueBtn");
   btn.disabled = true;
-  btn.textContent = "Checking...";
+  btn.innerHTML = authLoadingDots();
 
   // Firebase caches emailVerified on the local user object — reload()
   // re-fetches it from the server, since that's the only way to know
@@ -95,7 +98,7 @@ async function handleResend() {
   }
 
   btn.disabled = true;
-  btn.textContent = "Sending...";
+  btn.innerHTML = authLoadingDots();
 
   const result = await resendVerificationEmail(auth.currentUser);
   alert(result.message);
