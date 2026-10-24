@@ -809,7 +809,7 @@ function checkoutMarkup() {
   const netKobo = Math.round(cartTotal() * 100);
   const net = netKobo / 100;
   const combinedFees = quote ? quote.customerTotal - net : null;
-  const total = quote?.customerTotal ?? (netKobo + Math.round(netKobo * 0.075)) / 100;
+  const total = quote?.customerTotal ?? net;
   const loadingDots = `<span class="mk-loading-dots" role="status" aria-label="Calculating total"><i></i><i></i><i></i></span>`;
   return `
     <div class="mk-sheet-head">
