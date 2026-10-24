@@ -808,7 +808,9 @@ function checkoutMarkup() {
       : null;
   const netKobo = Math.round(cartTotal() * 100);
   const net = netKobo / 100;
-  const combinedFees = quote ? quote.quizVat + quote.flutterwaveFee : null;
+  const combinedFees = quote
+    ? Math.ceil(quote.quizVat + quote.flutterwaveFee)
+    : null;
   const unroundedTotal =
     quote?.total ?? (netKobo + Math.round(netKobo * 0.075)) / 100;
   const total = Math.ceil(unroundedTotal);
