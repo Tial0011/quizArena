@@ -679,7 +679,7 @@ function syncCartUI({ silent = false } = {}) {
   if (!bar) return;
 
   const count = cart.size;
-  const total = latestCheckoutQuote?.total || cartTotal();
+  const total = cartTotal();
   const wasHidden = bar.hidden;
   bar.hidden = count === 0;
   page?.classList.toggle("has-cart", count > 0);
@@ -831,7 +831,7 @@ function checkoutMarkup() {
         .join("")}
     </ul>
 
-    <div class="mk-sheet-total">
+    <div class="mk-sheet-total mk-sheet-subtotal">
       <span>Quiz total</span>
       <strong>${money(net)}</strong>
     </div>

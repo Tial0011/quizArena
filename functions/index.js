@@ -15,7 +15,10 @@ function expectedCheckoutTotal(netAmount) {
   // customer-borne fees. Here verify the amount sent by our checkout: quiz
   // amount plus the requested QuizArena VAT, all represented in kobo.
   const netKobo = Math.round(Number(netAmount || 0) * 100);
-  return Math.round(netKobo * 1.075) / 100;
+  const vatKobo = Math.round(netKobo * 0.075);
+  const flutterwaveFeeKobo = Math.round((netKobo + vatKobo) * 0.02);
+  const unroundedTotal = (netKobo + vatKobo + flutterwaveFeeKobo) / 100;
+  return Math.ceil(unroundedTotal);
 }
 
 function lagosWeekBounds(date) {

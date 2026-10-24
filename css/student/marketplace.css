@@ -938,6 +938,16 @@
 
 .mk-sheet-total strong { font-size: 24px; font-variant-numeric: tabular-nums; }
 
+.mk-sheet-subtotal,
+.mk-sheet-grand-total {
+  font-weight: 700;
+}
+
+.mk-sheet-subtotal strong,
+.mk-sheet-grand-total strong {
+  font-weight: 800;
+}
+
 .mk-sheet-fees {
   display: grid;
   grid-template-columns: 1fr auto;
