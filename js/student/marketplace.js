@@ -805,9 +805,9 @@ function checkoutMarkup() {
   const quote = latestCheckoutQuote?.quizIds?.join("|") === items.map((q) => q.id).join("|") ? latestCheckoutQuote : null;
   const netKobo = Math.round(cartTotal() * 100);
   const net = netKobo / 100;
-  const vat = quote?.quizVat ?? Math.round(netKobo * 0.075) / 100;
-  const flutterwaveFee = quote?.flutterwaveFee ?? Math.round((netKobo + Math.round(netKobo * 0.075)) * 0.02) / 100;
-  const total = quote?.total ?? (netKobo + Math.round(netKobo * 0.075)) / 100;
+  const combinedFees = quote ? quote.quizVat + quote.flutterwaveFee : null;
+  const unroundedTotal = quote?.total ?? (netKobo + Math.round(netKobo * 0.075)) / 100;
+  const total = Math.ceil(unroundedTotal);
   const loadingDots = `<span class="mk-loading-dots" role="status" aria-label="Calculating total"><i></i><i></i><i></i></span>`;
   return `
     <div class="mk-sheet-head">
@@ -836,8 +836,7 @@ function checkoutMarkup() {
       <strong>${money(net)}</strong>
     </div>
     <div class="mk-sheet-fees" aria-label="Checkout fees">
-      <span>VAT (7.5%)</span><span>${money(vat)}</span>
-      <span>Flutterwave processing fee</span><span>${quote ? money(flutterwaveFee) : loadingDots}</span>
+      <span>VAT + Flutterwave</span><span>${quote ? money(combinedFees) : loadingDots}</span>
     </div>
     <div class="mk-sheet-total mk-sheet-grand-total">
       <span>Total</span>
@@ -999,7 +998,7 @@ async function handleConfirmPurchase() {
     updateCheckoutQuote();
     return;
   }
-  const total = latestCheckoutQuote.productAmount;
+  const total = Math.ceil(latestCheckoutQuote.total);
   if (ids.length === 0 || total <= 0) return;
 
   isPurchasing = true;
