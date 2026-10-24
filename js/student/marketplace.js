@@ -844,7 +844,6 @@ function checkoutMarkup() {
     </div>
 
     <p class="mk-sheet-error" id="mkCheckoutError" role="alert" hidden></p>
-    <p class="mk-fee-note">A small Flutterwave processing fee is included in your total.</p>
     <p class="purchase-dialog-notice">
       Pay securely with card, bank transfer or USSD.
     </p>

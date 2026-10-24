@@ -315,6 +315,7 @@
   border-radius: 0;
   padding: 0;
   margin: 0 0 14px;
+  text-align: center;
 }
 
 .purchase-dialog-actions {
@@ -945,14 +946,6 @@
   color: var(--color-text-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-}
-
-.mk-fee-note {
-  margin: 0 0 4px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  text-align: right;
-  opacity: 0.82;
 }
 
 .mk-sheet-grand-total {
