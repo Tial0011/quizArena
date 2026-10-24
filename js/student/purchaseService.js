@@ -58,7 +58,10 @@ export async function quoteFlutterwavePurchase(userId, quizIds) {
     return result.data;
   } catch (err) {
     console.error("quoteFlutterwavePurchase failed:", err);
-    return { success: false, message: "Could not calculate the exact payment total. Please try again." };
+    return {
+      success: false,
+      message: err?.message || "Could not calculate the checkout total. Please try again.",
+    };
   }
 }
 

@@ -21,6 +21,9 @@ function expectedCheckoutTotal(netAmount) {
 async function quoteFlutterwaveFee(amount, paymentType) {
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
   if (!secretKey) throw new Error("Flutterwave secret key is not configured.");
+  if (!Number.isInteger(amount)) {
+    throw new Error("Flutterwave v3 fee quotes require a whole-naira amount.");
+  }
   const response = await fetch(
     `https://api.flutterwave.com/v3/transactions/fee?amount=${encodeURIComponent(amount)}&currency=NGN&payment_type=${encodeURIComponent(paymentType)}`,
     { headers: { Authorization: `Bearer ${secretKey}` } },
@@ -624,28 +627,41 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
     throw new HttpsError("unavailable", "Checkout is temporarily unavailable.");
   }
   try {
-    const quote = await quoteFlutterwaveFee(productAmount, "card");
-    const total = Math.ceil(quote.chargeAmount);
-    const chargeAmount = total - quote.fee;
-    if (chargeAmount < productAmount) {
-      throw new Error("Quoted charge would not cover quiz and VAT.");
+    const initialQuote = await quoteFlutterwaveFee(Math.ceil(productAmount), "card");
+    const targetTotal = Math.ceil(initialQuote.chargeAmount);
+    const firstCandidate = Math.ceil(productAmount);
+    // v3's fee endpoint accepts whole NGN amounts. Search nearby whole-naira
+    // base amounts until its customer charge rounds to the target whole naira.
+    for (let offset = 0; offset <= 10; offset++) {
+      const candidates = offset === 0
+        ? [firstCandidate]
+        : [firstCandidate - offset, firstCandidate + offset];
+      for (const candidate of candidates) {
+        if (candidate < Math.ceil(productAmount)) continue;
+        const quote = await quoteFlutterwaveFee(candidate, "card");
+        if (Math.ceil(quote.chargeAmount) === targetTotal) {
+          return {
+            success: true,
+            net,
+            quizVat,
+            flutterwaveFee: quote.fee,
+            total: targetTotal,
+            customerTotal: targetTotal,
+            productAmount: candidate,
+          };
+        }
+      }
     }
-    const adjustedQuote = await quoteFlutterwaveFee(chargeAmount, "card");
-    if (adjustedQuote.chargeAmount !== total) {
-      throw new Error("Flutterwave quote did not reach the requested whole-naira total.");
-    }
-    return {
-      success: true,
-      net,
-      quizVat,
-      flutterwaveFee: adjustedQuote.fee,
-      total,
-      customerTotal: adjustedQuote.chargeAmount,
-      productAmount: chargeAmount,
-    };
+    throw new Error("Could not find a whole-naira base amount for the rounded charge.");
   } catch (err) {
-    console.error("Flutterwave fee quote failed:", err.message);
-    throw new HttpsError("unavailable", "Could not calculate the checkout total. Please try again.");
+    console.error("Flutterwave fee quote failed:", {
+      message: err.message,
+      cause: err.cause?.message,
+    });
+    throw new HttpsError(
+      "unavailable",
+      "Flutterwave could not return a valid fee quote. Please retry, or contact support if this continues.",
+    );
   }
 });
 
