@@ -11,14 +11,11 @@ const db = admin.firestore();
 const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
 
 function expectedCheckoutTotal(netAmount) {
-  // Flutterwave v3 charges its fee separately when the merchant has enabled
-  // customer-borne fees. Here verify the amount sent by our checkout: quiz
-  // amount plus the requested QuizArena VAT, all represented in kobo.
+  // The checkout sends this product amount to Flutterwave; customer-borne
+  // processor fees are applied separately by Flutterwave.
   const netKobo = Math.round(Number(netAmount || 0) * 100);
   const vatKobo = Math.round(netKobo * 0.075);
-  const flutterwaveFeeKobo = Math.round((netKobo + vatKobo) * 0.02);
-  const unroundedTotal = (netKobo + vatKobo + flutterwaveFeeKobo) / 100;
-  return Math.ceil(unroundedTotal);
+  return (netKobo + vatKobo) / 100;
 }
 
 function lagosWeekBounds(date) {
