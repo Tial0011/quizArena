@@ -1028,7 +1028,10 @@ async function handleConfirmPurchase() {
     updateCheckoutQuote();
     return;
   }
-  const total = latestCheckoutQuote.total;
+  // Flutterwave adds its configured customer-paid fee on top of the amount
+  // sent here. The backend quote includes that fee in customerTotal and adds
+  // fee VAT to widgetAmount so both sides show the same final charge.
+  const total = latestCheckoutQuote.widgetAmount;
   if (ids.length === 0 || total <= 0) return;
 
   isPurchasing = true;

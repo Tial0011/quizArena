@@ -479,28 +479,28 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
       0,
     );
     const expectedNet = expectedNetKobo / 100;
-    const expectedProductAmount = expectedNet;
     const expectedFeeKobo = Math.round(Number(tx.app_fee || 0) * 100);
     const expectedFeeVatKobo = Math.round(expectedFeeKobo * 0.075);
+    const expectedWidgetAmountKobo = expectedNetKobo + expectedFeeVatKobo;
     const expectedCustomerChargeKobo =
-      expectedNetKobo + expectedFeeKobo + expectedFeeVatKobo;
+      expectedWidgetAmountKobo + expectedFeeKobo;
     const actualCustomerChargeKobo = Math.round(
       Number(tx.charged_amount ?? tx.amount) * 100,
     );
     const amountSettled = Number(tx.amount_settled);
     if (
       tx.currency !== "NGN" ||
-      Math.round(Number(tx.amount) * 100) !== Math.round(expectedProductAmount * 100) ||
+      Math.round(Number(tx.amount) * 100) !== expectedWidgetAmountKobo ||
       actualCustomerChargeKobo !== expectedCustomerChargeKobo ||
       !Number.isFinite(amountSettled) ||
-      Math.round(amountSettled * 100) !== Math.round(expectedNet * 100) ||
+      Math.round(amountSettled * 100) !== expectedWidgetAmountKobo ||
       actualCustomerChargeKobo < Math.round(Number(tx.amount) * 100)
     ) {
       console.log("Amount/currency check failed", {
         txAmount: tx.amount,
         amountSettled: tx.amount_settled,
         txCurrency: tx.currency,
-        expectedProductAmount,
+        expectedWidgetAmount: expectedWidgetAmountKobo / 100,
         expectedNet,
       });
       return { mismatch: true };
@@ -625,10 +625,23 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
     throw new HttpsError("unavailable", "Checkout is temporarily unavailable.");
   }
   try {
-    const quote = await quoteFlutterwaveFee(Math.ceil(net), "card");
-    const feeKobo = Math.round(quote.fee * 100);
-    const feeVatKobo = Math.round(feeKobo * 0.075);
-    const customerTotalKobo = Math.round(quote.chargeAmount * 100) + feeVatKobo;
+    // The widget amount includes the VAT passed through on Flutterwave's fee.
+    // Flutterwave then adds its configured customer-paid fee. Requote against
+    // the VAT-inclusive widget amount so the displayed total matches checkout.
+    let feeKobo = 0;
+    let feeVatKobo = 0;
+    let quote;
+    for (let i = 0; i < 3; i += 1) {
+      const widgetAmountKobo = netKobo + feeVatKobo;
+      quote = await quoteFlutterwaveFee(
+        Math.ceil(widgetAmountKobo / 100),
+        "card",
+      );
+      feeKobo = Math.round(quote.fee * 100);
+      feeVatKobo = Math.round(feeKobo * 0.075);
+    }
+    const widgetAmountKobo = netKobo + feeVatKobo;
+    const customerTotalKobo = widgetAmountKobo + feeKobo;
     return {
       success: true,
       net,
@@ -637,6 +650,7 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
       total: customerTotalKobo / 100,
       customerTotal: customerTotalKobo / 100,
       productAmount: net,
+      widgetAmount: widgetAmountKobo / 100,
     };
   } catch (err) {
     console.error("Flutterwave fee quote failed:", {
