@@ -942,20 +942,23 @@ function showCheckoutError(msg) {
 function resetPayButton() {
   isPurchasing = false;
   const confirmBtn = document.getElementById("confirmPurchaseBtn");
+  const quoteMatchesCart =
+    latestCheckoutQuote?.validUntil > Date.now() &&
+    latestCheckoutQuote?.quizIds?.join("|") ===
+      cartQuizzes()
+        .filter((q) => !ownedQuizIds.has(q.id))
+        .map((q) => q.id)
+        .join("|");
   if (confirmBtn) {
-    const quoteMatchesCart =
-      latestCheckoutQuote?.validUntil > Date.now() &&
-      latestCheckoutQuote?.quizIds?.join("|") ===
-        cartQuizzes()
-          .filter((q) => !ownedQuizIds.has(q.id))
-          .map((q) => q.id)
-          .join("|");
     confirmBtn.disabled = !quoteMatchesCart;
     confirmBtn.textContent = quoteMatchesCart
       ? `Pay ${money(latestCheckoutQuote.total)}`
       : "Recalculate total";
   }
   document.getElementById("cancelPurchaseBtn")?.removeAttribute("disabled");
+  // A dismissed or failed attempt should return to a fresh, usable checkout.
+  // Requote fees because they can change while Flutterwave is open.
+  updateCheckoutQuote();
 }
 
 /**
