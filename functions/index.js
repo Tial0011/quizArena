@@ -480,7 +480,8 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
     );
     const expectedNet = expectedNetKobo / 100;
     const expectedFeeKobo = Math.round(Number(tx.app_fee || 0) * 100);
-    const expectedFeeVatKobo = Math.round(expectedFeeKobo * 0.075);
+    const expectedFeeAndVatKobo = Math.ceil(expectedFeeKobo * 1.075 / 100) * 100;
+    const expectedFeeVatKobo = expectedFeeAndVatKobo - expectedFeeKobo;
     const expectedWidgetAmountKobo = expectedNetKobo + expectedFeeVatKobo;
     const expectedCustomerChargeKobo =
       expectedWidgetAmountKobo + expectedFeeKobo;
@@ -493,7 +494,7 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
       Math.round(Number(tx.amount) * 100) !== expectedWidgetAmountKobo ||
       actualCustomerChargeKobo !== expectedCustomerChargeKobo ||
       !Number.isFinite(amountSettled) ||
-      Math.round(amountSettled * 100) !== expectedWidgetAmountKobo ||
+      Math.round(amountSettled * 100) !== expectedNetKobo ||
       actualCustomerChargeKobo < Math.round(Number(tx.amount) * 100)
     ) {
       console.log("Amount/currency check failed", {
@@ -638,8 +639,8 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
         "card",
       );
       feeKobo = Math.round(quote.fee * 100);
-      const rawVatKobo = feeKobo * 0.075;
-      feeVatKobo = Math.ceil(rawVatKobo / 50) * 50;
+      const roundedFeeAndVatKobo = Math.ceil(feeKobo * 1.075 / 100) * 100;
+      feeVatKobo = roundedFeeAndVatKobo - feeKobo;
     }
     const widgetAmountKobo = netKobo + feeVatKobo;
     const customerTotalKobo = widgetAmountKobo + feeKobo;
