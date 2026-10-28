@@ -836,9 +836,6 @@ function checkoutMarkup() {
       <span>Quiz total</span>
       <strong>${money(net)}</strong>
     </div>
-    <div class="mk-sheet-fees" aria-label="Checkout fees">
-      <span>Flutterwave fee</span><span>${quote ? money(quote.flutterwaveFee) : loadingDots}</span>
-    </div>
     <div class="mk-sheet-fees" aria-label="Flutterwave and VAT fee">
       <span>Flutterwave + VAT fee</span><span>${quote ? money(quote.flutterwaveFee + quote.quizVat) : loadingDots}</span>
     </div>
