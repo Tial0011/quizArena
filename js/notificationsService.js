@@ -368,6 +368,6 @@ export function sendWelcomeNotification(userId, name) {
     createdBy: "System",
     targetUserId: userId,
     actionType: "startWelcomeQuiz",
-    quizId: "kEvJYSuwFyY71jb5y0Yw",
+    quizId: "odlJoarhn2atl14EpZq6",
   });
 }

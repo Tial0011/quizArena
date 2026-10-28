@@ -170,6 +170,10 @@ Quiz Arena helps UNIMED students prepare for 100 Level courses with timed CBT pr
       <div class="story-cta-content reveal" data-reveal>
         <h2>Ready to start?</h2>
         <p>Create your free account and take your first quiz in minutes.</p>
+        <nav class="landing-social-links" aria-label="Quiz Arena social media">
+          <a href="https://www.linkedin.com/company/quizarena01/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href="https://vt.tiktok.com/ZSgqhoUR5/" target="_blank" rel="noopener noreferrer">TikTok</a>
+        </nav>
       </div>
     </section>
   `;
@@ -514,7 +518,7 @@ async function routeStudentDashboard(user) {
   url.searchParams.delete("welcomeQuiz");
   history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
   if (userData?.welcomeQuizEligible && !userData.welcomeQuizCompleted) {
-    startPurchasedQuiz(userData, "kEvJYSuwFyY71jb5y0Yw", "Free GES 111 Communications in English Quiz");
+    startPurchasedQuiz(userData, "odlJoarhn2atl14EpZq6", "Free GES 111 Communications in English Quiz");
   }
 }
 

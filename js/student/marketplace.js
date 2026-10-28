@@ -21,7 +21,7 @@ import { RANKS } from "./packRank.js";
    FLUTTERWAVE CONFIG
 ========================================================= */
 const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-d1a8aa1e0c3dc9129e6e05633d8307fb-X";
-const WELCOME_QUIZ_ID = "kEvJYSuwFyY71jb5y0Yw";
+const WELCOME_QUIZ_ID = "odlJoarhn2atl14EpZq6";
 
 /* =========================================================
    MODULE STATE

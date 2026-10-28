@@ -8,7 +8,7 @@ const fetch = require("node-fetch");
 admin.initializeApp();
 const db = admin.firestore();
 
-const WELCOME_QUIZ_ID = "kEvJYSuwFyY71jb5y0Yw";
+const WELCOME_QUIZ_ID = "odlJoarhn2atl14EpZq6";
 
 async function quoteFlutterwaveFee(amount, paymentType) {
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
@@ -479,29 +479,27 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
       0,
     );
     const expectedNet = expectedNetKobo / 100;
-    const expectedFeeKobo = Math.round(Number(tx.app_fee || 0) * 100);
-    const expectedFeeAndVatKobo = Math.ceil(expectedFeeKobo * 1.075 / 100) * 100;
-    const expectedFeeVatKobo = expectedFeeAndVatKobo - expectedFeeKobo;
-    const expectedWidgetAmountKobo = expectedNetKobo + expectedFeeVatKobo;
-    const expectedCustomerChargeKobo =
-      expectedWidgetAmountKobo + expectedFeeKobo;
+    const transactionAmountKobo = Math.round(Number(tx.amount) * 100);
     const actualCustomerChargeKobo = Math.round(
       Number(tx.charged_amount ?? tx.amount) * 100,
     );
     const amountSettled = Number(tx.amount_settled);
     if (
       tx.currency !== "NGN" ||
-      Math.round(Number(tx.amount) * 100) !== expectedWidgetAmountKobo ||
-      actualCustomerChargeKobo !== expectedCustomerChargeKobo ||
+      !Number.isFinite(transactionAmountKobo) ||
+      transactionAmountKobo < expectedNetKobo ||
+      !Number.isFinite(actualCustomerChargeKobo) ||
+      actualCustomerChargeKobo < transactionAmountKobo ||
       !Number.isFinite(amountSettled) ||
-      Math.round(amountSettled * 100) !== expectedNetKobo ||
-      actualCustomerChargeKobo < Math.round(Number(tx.amount) * 100)
+      Math.round(amountSettled * 100) < expectedNetKobo
     ) {
       console.log("Amount/currency check failed", {
         txAmount: tx.amount,
+        txChargedAmount: tx.charged_amount,
         amountSettled: tx.amount_settled,
         txCurrency: tx.currency,
-        expectedWidgetAmount: expectedWidgetAmountKobo / 100,
+        transactionAmount: transactionAmountKobo / 100,
+        customerCharge: actualCustomerChargeKobo / 100,
         expectedNet,
       });
       return { mismatch: true };

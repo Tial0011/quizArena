@@ -38,7 +38,7 @@ import { showLoadingOverlay } from "./loadingOverlay.js";
 ========================================================= */
 const CBT_QUESTION_LIMIT = 25;
 const CBT_TIME_LIMIT_SECONDS = 10 * 60; // fixed 10-minute timer
-const WELCOME_QUIZ_ID = "kEvJYSuwFyY71jb5y0Yw";
+const WELCOME_QUIZ_ID = "odlJoarhn2atl14EpZq6";
 const getWelcomeQuizQuestions = httpsCallable(
   getFunctions(app),
   "getWelcomeQuizQuestions",

@@ -43,7 +43,7 @@ async function renderStudent(user) {
     url.searchParams.delete("welcomeQuiz");
     history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
     if (userData?.welcomeQuizEligible && !userData.welcomeQuizCompleted) {
-      startPurchasedQuiz(userData, "kEvJYSuwFyY71jb5y0Yw", "Free GES 111 Communications in English Quiz");
+      startPurchasedQuiz(userData, "odlJoarhn2atl14EpZq6", "Free GES 111 Communications in English Quiz");
     }
   }
 }

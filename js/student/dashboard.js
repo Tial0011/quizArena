@@ -39,7 +39,7 @@ const app = document.getElementById("app");
 
 const DEFAULT_HERO_MESSAGE =
   "Master one quiz today and keep your streak alive.";
-const WELCOME_QUIZ_ID = "kEvJYSuwFyY71jb5y0Yw";
+const WELCOME_QUIZ_ID = "odlJoarhn2atl14EpZq6";
 
 // How many notifications the bell panel shows at once. The live
 // listener (see startNotificationsListener) fetches a larger batch
@@ -66,6 +66,7 @@ let outsideClickHandler = null;
 let latestStreakInfo = { streak: 0, doneToday: false };
 let notifCloseHandler = null;
 let notifResizeHandler = null;
+const firstQuizPromptedUsers = new Set();
 
 /* Line icons (24px grid, 1.75 stroke) — sharp joins to match the
    square-edged look, and they inherit colour from the parent. */
@@ -312,6 +313,7 @@ export function renderStudentDashboard(userData = {}) {
 
   startNotificationsListener(userData);
   initPushNotifications(userData.id);
+  maybeShowFirstQuizPrompt(userData);
 }
 
 /* =========================================================
@@ -641,6 +643,45 @@ function setupDashboardEvents(userData) {
 
 function openWelcomeQuiz(userData) {
   startPurchasedQuiz(userData, WELCOME_QUIZ_ID, "Free GES 111 Communications in English Quiz");
+}
+
+function maybeShowFirstQuizPrompt(userData) {
+  if (!userData?.id) return;
+  const storageKey = `quizArena:firstQuizPrompt:${userData.id}`;
+  if (firstQuizPromptedUsers.has(userData.id)) return;
+  try {
+    if (sessionStorage.getItem(storageKey)) return;
+    sessionStorage.setItem(storageKey, "shown");
+  } catch {
+    // The in-memory guard still prevents repeated prompts if storage is unavailable.
+  }
+  firstQuizPromptedUsers.add(userData.id);
+
+  document.getElementById("firstQuizPromptOverlay")?.remove();
+  const overlay = document.createElement("div");
+  overlay.id = "firstQuizPromptOverlay";
+  overlay.className = "first-quiz-prompt-overlay";
+  overlay.innerHTML = `
+    <section class="first-quiz-prompt" role="dialog" aria-modal="true" aria-labelledby="firstQuizPromptTitle">
+      <button type="button" class="first-quiz-prompt-close" aria-label="Close">&times;</button>
+      <p class="first-quiz-prompt-eyebrow">Your first quiz is free</p>
+      <h2 id="firstQuizPromptTitle">Try GES 111: Communications in English</h2>
+      <p>Start your free quiz now. No purchase needed.</p>
+      <button type="button" class="btn-primary first-quiz-prompt-start">Start quiz</button>
+    </section>
+  `;
+  document.body.appendChild(overlay);
+
+  const dismiss = () => overlay.remove();
+  overlay.querySelector(".first-quiz-prompt-close").addEventListener("click", dismiss);
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) dismiss();
+  });
+  overlay.querySelector(".first-quiz-prompt-start").addEventListener("click", () => {
+    dismiss();
+    openWelcomeQuiz(userData);
+  });
+  overlay.querySelector(".first-quiz-prompt-start").focus();
 }
 
 /* =========================================================

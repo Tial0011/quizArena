@@ -30,6 +30,69 @@
   color: var(--sd-ink);
 }
 
+.first-quiz-prompt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(12 18 26 / 58%);
+}
+
+.first-quiz-prompt {
+  position: relative;
+  width: min(100%, 440px);
+  padding: 30px 26px 26px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: center;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 24%);
+}
+
+.first-quiz-prompt-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.first-quiz-prompt-eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.first-quiz-prompt h2 {
+  margin: 0 24px 10px;
+  color: var(--color-text-strong);
+  font-size: clamp(21px, 5vw, 27px);
+  line-height: 1.2;
+}
+
+.first-quiz-prompt p:not(.first-quiz-prompt-eyebrow) {
+  margin: 0 0 22px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.first-quiz-prompt-start {
+  min-width: 170px;
+}
+
 .sd button {
   font: inherit;
   color: inherit;

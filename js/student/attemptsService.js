@@ -97,7 +97,7 @@ export async function recordQuizAttempt({
       completedAt: serverTimestamp(),
     });
 
-    if (quizId === "kEvJYSuwFyY71jb5y0Yw") {
+    if (quizId === "odlJoarhn2atl14EpZq6") {
       updateDoc(doc(db, "users", userId), { welcomeQuizCompleted: true }).catch((error) =>
         console.error("Could not save welcome quiz completion:", error),
       );
