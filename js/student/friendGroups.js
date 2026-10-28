@@ -63,12 +63,15 @@ async function renderFriendGroupsPage(userData) {
         </p>
         <p class="friend-group-quiz-prompt">
           ${hasPurchasedQuizzes
-            ? "You have quizzes ready. Take one this week to qualify and earn challenge points."
-            : "You don't own a paid quiz yet. Choose one in the Marketplace, then take it this week to qualify."}
+            ? "Invite up to 3 friends to build your group, then take one of your quizzes this week to qualify."
+            : "Start by creating your group and inviting up to 3 friends. Once your group is set, head to the Marketplace to get a quiz."}
         </p>
-        <button type="button" id="friendGroupQuizCta" class="btn-primary friend-group-quiz-cta">
-          ${hasPurchasedQuizzes ? "Go to My Quizzes" : "Browse Marketplace"}
-        </button>
+        <div class="friend-group-onboarding-actions">
+          <button type="button" id="friendGroupInviteCta" class="btn-primary friend-group-quiz-cta">
+            ${hasPurchasedQuizzes ? "Create a Group" : "Add Friends First"}
+          </button>
+          ${!hasPurchasedQuizzes ? `<button type="button" id="friendGroupQuizCta" class="btn-secondary friend-group-quiz-cta" disabled aria-disabled="true">Go to Marketplace</button>` : ""}
+        </div>
       </div>
 
       <div class="global-challenge-section">
@@ -144,7 +147,11 @@ async function renderFriendGroupsPage(userData) {
   document
     .getElementById("joinGroupBtn")
     .addEventListener("click", handleJoinGroup);
-  document.getElementById("friendGroupQuizCta").addEventListener("click", async () => {
+  document.getElementById("friendGroupInviteCta").addEventListener("click", () => {
+    document.getElementById("createGroupName")?.focus();
+    document.getElementById("createGroupCard")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  document.getElementById("friendGroupQuizCta")?.addEventListener("click", async () => {
     if (hasPurchasedQuizzes) {
       const { renderMyQuizzes } = await import("./myQuizzes.js");
       renderMyQuizzes(currentUserData);
@@ -347,7 +354,21 @@ async function handleCreateGroup() {
   }
 
   input.value = "";
-  alert(`Group created! Share this code with friends: ${result.code}`);
+  const shareText = `Join my Quiz Arena friend group "${name}" with code ${result.code}.`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  const invite = confirm(`Group created! Invite up to 3 friends with this code: ${result.code}\n\nPress OK to share the invite on WhatsApp, or Cancel to copy the code.`);
+  if (invite) {
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  } else if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(result.code);
+      alert("Group code copied. Share it with up to 3 friends.");
+    } catch {
+      alert(`Share this group code with up to 3 friends: ${result.code}`);
+    }
+  } else {
+    alert(`Share this group code with up to 3 friends: ${result.code}`);
+  }
   await loadMyGroups();
 }
 
@@ -402,8 +423,18 @@ async function loadMyGroups() {
   // the "Create a Group" form has nothing left to do — remove it and
   // let the Join form use the full row.
   const ownsGroup = groups.some((g) => g.ownerId === currentUserData.id);
+  const ownedGroup = groups.find((g) => g.ownerId === currentUserData.id);
   const createCard = document.getElementById("createGroupCard");
   if (createCard) createCard.hidden = ownsGroup;
+  const marketplaceCta = document.getElementById("friendGroupQuizCta");
+  if (marketplaceCta) {
+    const members = (ownedGroup?.memberIds || []).length;
+    const friendsAdded = Math.max(0, members - 1);
+    const ready = friendsAdded >= 3;
+    marketplaceCta.disabled = !ready;
+    marketplaceCta.setAttribute("aria-disabled", String(!ready));
+    marketplaceCta.textContent = ready ? "Go to Marketplace" : `Add ${3 - friendsAdded} more friend${3 - friendsAdded === 1 ? "" : "s"} first`;
+  }
   document
     .querySelector(".friend-group-forms")
     ?.classList.toggle("single-form", ownsGroup);
@@ -411,7 +442,7 @@ async function loadMyGroups() {
   if (groups.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        You're not in any groups yet. Create one or join a friend's group above.
+        You're not in any groups yet. Create a group and invite up to 3 friends, or join a friend's group above.
       </div>
     `;
     return groups;

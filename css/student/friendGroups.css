@@ -34,6 +34,22 @@
   margin-top: 12px;
 }
 
+.friend-group-onboarding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.friend-group-onboarding-actions .friend-group-quiz-cta {
+  margin-top: 12px;
+}
+
+.friend-group-onboarding-actions button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
 .friend-group-info-card ul {
   margin: 0;
   padding-left: 18px;

@@ -145,46 +145,34 @@ async function recomputeWeeklyChallengeScore(userId, weekStart, weekEnd, weekKey
 
 async function rebuildWeeklyChallengeLeaderboardSnapshot() {
   const { weekStart, weekEnd, weekKey } = lagosWeekBounds(new Date());
-  const [projectionSnap, groupsSnap] = await Promise.all([
-    db.collection("weeklyChallengeProjection").doc(weekKey).get(),
-    db.collection("friendGroups").get(),
-  ]);
+  const groupsSnap = await db.collection("friendGroups").get();
   const groups = groupsSnap.docs
-    .map((doc) => doc.data())
+    .map((doc) => ({ ...doc.data(), groupId: doc.id }))
     .filter((group) => (group.memberIds || []).length >= 3);
-  const eligibleIds = new Set(groups.flatMap((group) => group.memberIds || []));
-  const stats = new Map();
-
-  if (projectionSnap.exists && projectionSnap.data().ready === true) {
-    const scoreIds = [...eligibleIds].map((uid) => `${weekKey}_${uid}`);
-    for (let offset = 0; offset < scoreIds.length; offset += 30) {
-      const ids = scoreIds.slice(offset, offset + 30);
-      const scoreSnap = await db.collection("weeklyChallengeScores")
-        .where(admin.firestore.FieldPath.documentId(), "in", ids)
-        .get();
-      scoreSnap.docs.forEach((scoreDoc) => {
-        const score = scoreDoc.data();
-        stats.set(score.userId, {
-          score: Number(score.scoreBase) || 0,
-          purchasedCount: Number(score.purchasedCount) || 0,
-          varietyCount: Number(score.varietyCount) || Object.keys(score.quizCounts || {}).length,
-          engagement: Number(score.engagement) || 0,
-        });
-      });
-    }
-  } else {
-    const attempts = await getWeeklyScoringAttempts(null, weekStart, weekEnd);
-    const byUser = new Map();
-    attempts.forEach((attempt) => {
-      const userId = attempt.data().userId;
-      if (!userId) return;
-      const userAttempts = byUser.get(userId) || [];
-      userAttempts.push(attempt);
-      byUser.set(userId, userAttempts);
+  const eligibilityByUid = new Map();
+  groups.forEach((group) => {
+    (group.memberIds || []).forEach((uid) => {
+      const eligibleAt = group.createdAt?.toMillis?.() || 0;
+      const previous = eligibilityByUid.get(uid);
+      if (previous === undefined || eligibleAt < previous) eligibilityByUid.set(uid, eligibleAt);
     });
-    byUser.forEach((userAttempts, userId) => {
-      const summary = summarizeWeeklyAttempts(userId, weekKey, userAttempts);
-      if (summary.purchasedCount > 0) stats.set(userId, {
+  });
+  const eligibleIds = new Set(eligibilityByUid.keys());
+  const stats = new Map();
+  const eligibleUsers = [...eligibilityByUid.entries()];
+  for (let offset = 0; offset < eligibleUsers.length; offset += 25) {
+    const batch = eligibleUsers.slice(offset, offset + 25);
+    const attemptSets = await Promise.all(batch.map(async ([uid, eligibleAt]) => {
+      const attempts = await getWeeklyScoringAttempts(uid, weekStart, weekEnd);
+      return [uid, attempts.filter((attempt) => {
+        const completedAt = attempt.data().completedAt?.toMillis?.() || 0;
+        return completedAt >= eligibleAt;
+      })];
+    }));
+    attemptSets.forEach(([uid, attempts]) => {
+      if (!attempts.length) return;
+      const summary = summarizeWeeklyAttempts(uid, weekKey, attempts);
+      if (summary.purchasedCount > 0) stats.set(uid, {
         score: summary.scoreBase,
         purchasedCount: summary.purchasedCount,
         varietyCount: summary.varietyCount,
@@ -996,11 +984,23 @@ exports.recordWeeklyChallengeWinners = onSchedule(
       db.collection("attempts").where("completedAt", ">=", admin.firestore.Timestamp.fromDate(weekStart)).where("completedAt", "<=", admin.firestore.Timestamp.fromDate(weekEnd)).get(),
       db.collection("friendGroups").get(),
     ]);
+    const groups = groupsSnap.docs.map((d) => d.data()).filter((g) => (g.memberIds || []).length >= 3);
+    const eligibleAtByUid = new Map();
+    groups.forEach((group) => {
+      const groupCreatedAt = group.createdAt?.toMillis?.() || 0;
+      (group.memberIds || []).forEach((uid) => {
+        const previous = eligibleAtByUid.get(uid);
+        if (previous === undefined || groupCreatedAt < previous) eligibleAtByUid.set(uid, groupCreatedAt);
+      });
+    });
     const stats = new Map();
     attemptsSnap.docs
       .sort((a, b) => (a.data().completedAt?.toMillis() || 0) - (b.data().completedAt?.toMillis() || 0))
       .forEach((attemptDoc) => {
         const data = attemptDoc.data();
+        const eligibleAt = eligibleAtByUid.get(data.userId);
+        const completedAt = data.completedAt?.toMillis?.() || 0;
+        if (eligibleAt === undefined || !eligibleAt || completedAt < eligibleAt) return;
         const entry = stats.get(data.userId) || { quizzes: new Map(), purchased: 0, engagement: 0, score: 0 };
         const percentage = data.percentage || 0;
         if (data.quizId === WELCOME_QUIZ_ID) {
@@ -1015,7 +1015,6 @@ exports.recordWeeklyChallengeWinners = onSchedule(
         stats.set(data.userId, entry);
       });
 
-    const groups = groupsSnap.docs.map((d) => d.data()).filter((g) => (g.memberIds || []).length >= 3);
     const eligible = new Set(groups.flatMap((g) => g.memberIds || []));
     const results = [];
     eligible.forEach((uid) => {
