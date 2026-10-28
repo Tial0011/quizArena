@@ -1210,6 +1210,20 @@ body:has(.sd, .quiz-layout, .practice-page, .quiz-result) {
   background: color-mix(in srgb, var(--color-primary, #6c5ce7) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-primary, #6c5ce7) 35%, transparent);
   animation: sdRankIn 0.5s ease both;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .sd-rank {
+    gap: 3px;
+    padding: 2px 8px;
+    font-size: clamp(0.58rem, 2.8vw, 0.68rem);
+    letter-spacing: 0;
+  }
+
+  .sd-rank-emoji {
+    font-size: 0.75em;
+  }
 }
 
 .sd-rank-8 {

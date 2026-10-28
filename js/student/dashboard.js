@@ -647,11 +647,11 @@ function openWelcomeQuiz(userData) {
 
 function maybeShowFirstQuizPrompt(userData) {
   if (!userData?.id) return;
-  const storageKey = `quizArena:firstQuizPrompt:${userData.id}`;
+  const storageKey = `quizArena:firstQuizPrompt:${WELCOME_QUIZ_ID}:${userData.id}`;
   if (firstQuizPromptedUsers.has(userData.id)) return;
   try {
-    if (sessionStorage.getItem(storageKey)) return;
-    sessionStorage.setItem(storageKey, "shown");
+    if (localStorage.getItem(storageKey)) return;
+    localStorage.setItem(storageKey, "shown");
   } catch {
     // The in-memory guard still prevents repeated prompts if storage is unavailable.
   }
