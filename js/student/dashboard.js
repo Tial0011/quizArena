@@ -1,4 +1,9 @@
-import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  Timestamp,
+  doc,
+  runTransaction,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { db } from "../firebase/config.js";
 import { logoutUser } from "../auth.js";
 import { themeToggleButton } from "../theme.js";
 import { getRank } from "./packRank.js";
@@ -645,17 +650,30 @@ function openWelcomeQuiz(userData) {
   startPurchasedQuiz(userData, WELCOME_QUIZ_ID, "Free GES 111 Communications in English Quiz");
 }
 
-function maybeShowFirstQuizPrompt(userData) {
+async function maybeShowFirstQuizPrompt(userData) {
   if (!userData?.id) return;
-  const storageKey = `quizArena:firstQuizPrompt:${WELCOME_QUIZ_ID}:${userData.id}`;
   if (firstQuizPromptedUsers.has(userData.id)) return;
-  try {
-    if (localStorage.getItem(storageKey)) return;
-    localStorage.setItem(storageKey, "shown");
-  } catch {
-    // The in-memory guard still prevents repeated prompts if storage is unavailable.
-  }
   firstQuizPromptedUsers.add(userData.id);
+
+  try {
+    const userRef = doc(db, "users", userData.id);
+    const shouldShow = await runTransaction(db, async (transaction) => {
+      const userSnapshot = await transaction.get(userRef);
+      if (!userSnapshot.exists()) return false;
+      if (userSnapshot.get(`freeQuizPromptsShown.${WELCOME_QUIZ_ID}`) === true) {
+        return false;
+      }
+      transaction.update(userRef, {
+        [`freeQuizPromptsShown.${WELCOME_QUIZ_ID}`]: true,
+      });
+      return true;
+    });
+    if (!shouldShow) return;
+  } catch (error) {
+    firstQuizPromptedUsers.delete(userData.id);
+    console.warn("Could not save the free quiz prompt state:", error);
+    return;
+  }
 
   document.getElementById("firstQuizPromptOverlay")?.remove();
   const overlay = document.createElement("div");
