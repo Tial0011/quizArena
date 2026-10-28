@@ -170,9 +170,32 @@ Quiz Arena helps UNIMED students prepare for 100 Level courses with timed CBT pr
       <div class="story-cta-content reveal" data-reveal>
         <h2>Ready to start?</h2>
         <p>Create your free account and take your first quiz in minutes.</p>
+        <div class="landing-social-heading">
+          <h3>Stay connected with Quiz Arena</h3>
+          <p>Follow our updates or message us if you need help.</p>
+        </div>
         <nav class="landing-social-links" aria-label="Quiz Arena social media">
-          <a href="https://www.linkedin.com/company/quizarena01/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-          <a href="https://vt.tiktok.com/ZSgqhoUR5/" target="_blank" rel="noopener noreferrer">TikTok</a>
+          <a class="landing-social-link" href="https://www.linkedin.com/company/quizarena01/" target="_blank" rel="noopener noreferrer" aria-label="Quiz Arena on LinkedIn">
+            <span class="landing-social-icon landing-social-icon-linkedin" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5.2 8.7H2.4V21h2.8V8.7ZM3.8 2.5a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4ZM21.6 13.9c0-3.7-2-5.4-4.7-5.4a4 4 0 0 0-3.6 2v-1.8h-2.8V21h2.8v-6.1c0-1.6.3-3.2 2.4-3.2s2.1 1.9 2.1 3.3V21h2.8l1-7.1Z"/></svg>
+            </span>
+            <span class="landing-social-copy"><strong>LinkedIn</strong><small>Follow our company</small></span>
+            <span class="landing-social-arrow" aria-hidden="true">↗</span>
+          </a>
+          <a class="landing-social-link" href="https://vt.tiktok.com/ZSgqhoUR5/" target="_blank" rel="noopener noreferrer" aria-label="Quiz Arena on TikTok">
+            <span class="landing-social-icon landing-social-icon-tiktok" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M19.6 7.1a6.6 6.6 0 0 1-4.1-1.4v8.1a6.1 6.1 0 1 1-5.3-6v3.2a2.9 2.9 0 1 0 2.1 2.8V2.5h3.2c.2 2 1.5 3.7 3.5 4.3.5.2 1 .3 1.5.3v3.2a9.4 9.4 0 0 1-.9-.1Z"/></svg>
+            </span>
+            <span class="landing-social-copy"><strong>TikTok</strong><small>See quick updates</small></span>
+            <span class="landing-social-arrow" aria-hidden="true">↗</span>
+          </a>
+          <a class="landing-social-link" href="https://wa.me/2347060577255" target="_blank" rel="noopener noreferrer" aria-label="Chat with Quiz Arena on WhatsApp at +234 706 057 7255">
+            <span class="landing-social-icon landing-social-icon-whatsapp" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M20.5 11.7a8.4 8.4 0 0 1-12.4 7.4L3 20.3l1.2-4.9a8.4 8.4 0 1 1 16.3-3.7Z"/><path d="M9 8.1c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.3.1.5-.1.7l-.6.7c-.2.2-.2.4-.1.6.5.9 1.2 1.6 2.1 2.1.2.1.4.1.6-.1l.8-.9c.2-.2.4-.2.7-.1l1.6.8c.3.1.4.3.4.5 0 .3-.2 1-.6 1.3-.5.5-1.2.7-2 .5-1.1-.3-2.5-.9-3.8-2.1-1.5-1.3-2.4-2.9-2.6-3.9-.2-.8 0-1.4.4-1.8.4-.4.7-.5 1-.5Z"/></svg>
+            </span>
+            <span class="landing-social-copy"><strong>WhatsApp</strong><small>+234 706 057 7255</small></span>
+            <span class="landing-social-arrow" aria-hidden="true">↗</span>
+          </a>
         </nav>
       </div>
     </section>
