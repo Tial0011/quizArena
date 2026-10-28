@@ -42,7 +42,7 @@ import {
 ========================================================= */
 
 const functions = getFunctions(app);
-const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
+const WELCOME_QUIZ_ID = "kEvJYSuwFyY71jb5y0Yw";
 const verifyFlutterwavePurchaseCallable = httpsCallable(
   functions,
   "verifyFlutterwavePurchase",

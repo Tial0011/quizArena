@@ -26,6 +26,14 @@
   font-size: 14px;
 }
 
+.friend-group-info-card .friend-group-quiz-prompt {
+  margin-top: 10px;
+}
+
+.friend-group-quiz-cta {
+  margin-top: 12px;
+}
+
 .friend-group-info-card ul {
   margin: 0;
   padding-left: 18px;

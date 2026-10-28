@@ -38,6 +38,7 @@ export async function renderFriendGroups(userData = {}) {
 
 async function renderFriendGroupsPage(userData) {
   currentUserData = userData;
+  const hasPurchasedQuizzes = (userData.purchasedQuizzes || []).length > 0;
 
   registerBackHandler(() => {
     renderStudentDashboard(currentUserData);
@@ -56,11 +57,18 @@ async function renderFriendGroupsPage(userData) {
       <div class="friend-group-info-card">
         <div class="info-title">💡 How it works</div>
         <p>
-          Join a group with <strong>3+ members</strong>, then attempt at least
-          one purchased quiz during the week to qualify. Earn points for quiz
-          scores, trying different purchased quizzes, and groupmates who do
-          the same. The free Physics welcome quiz does not qualify you.
+          Join a group with <strong>3+ members</strong>, then complete an attempt
+          on a purchased quiz this week to qualify. The free GES 111 Communications
+          in English quiz does not count toward the challenge.
         </p>
+        <p class="friend-group-quiz-prompt">
+          ${hasPurchasedQuizzes
+            ? "You have quizzes ready. Take one this week to qualify and earn challenge points."
+            : "You don't own a paid quiz yet. Choose one in the Marketplace, then take it this week to qualify."}
+        </p>
+        <button type="button" id="friendGroupQuizCta" class="btn-primary friend-group-quiz-cta">
+          ${hasPurchasedQuizzes ? "Go to My Quizzes" : "Browse Marketplace"}
+        </button>
       </div>
 
       <div class="global-challenge-section">
@@ -136,6 +144,15 @@ async function renderFriendGroupsPage(userData) {
   document
     .getElementById("joinGroupBtn")
     .addEventListener("click", handleJoinGroup);
+  document.getElementById("friendGroupQuizCta").addEventListener("click", async () => {
+    if (hasPurchasedQuizzes) {
+      const { renderMyQuizzes } = await import("./myQuizzes.js");
+      renderMyQuizzes(currentUserData);
+      return;
+    }
+    const { renderMarketplace } = await import("./marketplace.js");
+    renderMarketplace(currentUserData);
+  });
 
   // Load groups first so only top 15 and group member profiles are fetched
   // for the Global Challenge display.

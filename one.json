@@ -1,168 +1,247 @@
 [
   {
-    "question": "What is the next term in the sequence 3, 6, 12, 24, ...?",
-    "image": "",
-    "options": ["36", "42", "48", "56"],
-    "answer": 2
-  },
-  {
-    "question": "What is the sum of the first 10 natural numbers?",
-    "image": "",
-    "options": ["45", "50", "55", "60"],
-    "answer": 2
-  },
-  {
-    "question": "In an arithmetic progression with first term 2 and common difference 3, the 5th term is:",
-    "image": "",
-    "options": ["11", "14", "17", "20"],
-    "answer": 1
-  },
-  {
-    "question": "In a geometric progression with first term 5 and ratio 2, the 4th term is:",
-    "image": "",
-    "options": ["20", "40", "80", "160"],
-    "answer": 1
-  },
-  {
-    "question": "What is the sum 1 + 2 + 3 + ... + 100?",
-    "image": "",
-    "options": ["4950", "5000", "5050", "5100"],
-    "answer": 2
-  },
-  {
-    "question": "If the first term of an A.P. is 7 and the 10th term is 34, the common difference is:",
-    "image": "",
-    "options": ["2", "3", "4", "5"],
-    "answer": 1
-  },
-  {
-    "question": "Find the 10th term of an A.P. whose nth term is given by aₙ = 4n − 3.",
-    "image": "",
-    "options": ["34", "37", "40", "43"],
-    "answer": 1
-  },
-  {
-    "question": "What is the formula for the sum of the first n terms of an A.P.?",
+    "question": "Which of the following best defines culture?",
     "image": "",
     "options": [
-      "Sₙ = n/2 [2a + (n−1)d]",
-      "Sₙ = a(1 − rⁿ)/(1 − r)",
-      "Sₙ = a + (n−1)d",
-      "Sₙ = n/2 (a + l)"
+      "The biological inheritance of a people",
+      "The total way of life of a people, including their beliefs, values and practices",
+      "The natural environment of a society",
+      "The political system of a state"
     ],
-    "answer": 0
-  },
-  {
-    "question": "What is the common difference in the A.P. 3, 7, 11, 15?",
-    "image": "",
-    "options": ["2", "3", "4", "5"],
-    "answer": 2
-  },
-  {
-    "question": "What is the sum of the infinite geometric series 4 + 2 + 1 + 0.5 + ...?",
-    "image": "",
-    "options": ["6", "8", "10", "12"],
     "answer": 1
   },
   {
-    "question": "Find the fourth term of a G.P. where a = 5 and r = 2.",
-    "image": "",
-    "options": ["20", "30", "40", "50"],
-    "answer": 2
-  },
-  {
-    "question": "The third term of a G.P. is 9 and the sixth term is 729. The common ratio is:",
-    "image": "",
-    "options": ["2", "3", "4", "6"],
-    "answer": 1
-  },
-  {
-    "question": "Find the sum of the first ten terms of an A.P. where a = 2 and d = 3.",
-    "image": "",
-    "options": ["155", "165", "175", "185"],
-    "answer": 0
-  },
-  {
-    "question": "What is the fifth term of the Fibonacci sequence 1, 1, 2, 3, ...?",
-    "image": "",
-    "options": ["3", "5", "8", "13"],
-    "answer": 1
-  },
-  {
-    "question": "If the nth term of a sequence is n² + 1, the sequence is:",
+    "question": "Which of the following is an example of material culture?",
     "image": "",
     "options": [
-      "Geometric",
-      "Arithmetic",
-      "Neither geometric nor arithmetic",
-      "Fibonacci"
+      "Religious beliefs",
+      "Value systems",
+      "Traditional textiles and pottery",
+      "Marriage customs"
     ],
     "answer": 2
   },
   {
-    "question": "What is the next term in the sequence 15.5, 14, 12.5, 11, 9.5, 8?",
+    "question": "Beliefs, values, norms and language are collectively classified as",
     "image": "",
-    "options": ["6.5", "7.5", "0", "3"],
+    "options": [
+      "Non-material culture",
+      "Material culture",
+      "Mechanical culture",
+      "Fossil culture"
+    ],
     "answer": 0
   },
   {
-    "question": "How many terms of the sequence 79, 75, 71, ... yield −173?",
+    "question": "The process by which culture is transmitted from one generation to the next is known as",
     "image": "",
-    "options": ["64", "63", "53", "56"],
-    "answer": 0
+    "options": ["Diffusion", "Assimilation", "Acculturation", "Enculturation"],
+    "answer": 3
   },
   {
-    "question": "Find the 150th partial sum of the A.P. 5, 16, 27, 38, 49, ...",
+    "question": "Which term describes the stage of social development characterized by cities, writing and advanced technology?",
     "image": "",
-    "options": ["122,675", "221,123", "123,675", "231,565"],
-    "answer": 2
-  },
-  {
-    "question": "The fourth term of an arithmetic sequence is 12 and the twentieth term is 92. What is the formula for the nth term of this sequence?",
-    "image": "",
-    "options": ["5n − 8", "8n − 4", "8n − 5", "5n + 4"],
-    "answer": 0
-  },
-  {
-    "question": "A sequence has terms Un = −2, 1, 6, 13, 22. Which formula defines Un as a function of n?",
-    "image": "",
-    "options": ["Un = n² − 3", "Un = n² − 2", "Un = n² − 1", "Un = n³ − 2"],
-    "answer": 0
-  },
-  {
-    "question": "The first term of a geometric series is 10 and the common ratio is 1/2. The sum to infinity is:",
-    "image": "",
-    "options": ["5", "15", "20", "25"],
-    "answer": 2
-  },
-  {
-    "question": "What is the 12th term of the sequence defined by aₙ = 3n − 1?",
-    "image": "",
-    "options": ["33", "35", "37", "39"],
+    "options": ["Civilization", "Barbarism", "Primitivism", "Nomadism"],
     "answer": 1
   },
   {
-    "question": "An arithmetic progression has first term 5 and common difference −2. What is the 15th term?",
+    "question": "The process by which a society adopts the cultural traits of another through sustained contact is called",
     "image": "",
-    "options": ["−23", "−25", "−27", "−29"],
-    "answer": 0
-  },
-  {
-    "question": "The sum of the first n terms of an A.P. is given by Sₙ = 3n² + 5n. What is the first term of the progression?",
-    "image": "",
-    "options": ["2", "5", "8", "13"],
+    "options": [
+      "Enculturation",
+      "Acculturation",
+      "Ethnocentrism",
+      "Segregation"
+    ],
     "answer": 2
   },
   {
-    "question": "In a geometric progression, the second term is 6 and the fifth term is 162. What is the common ratio?",
+    "question": "According to the Bayajida legend, the founder of the Hausa state of Daura won the hand of Queen Daurama after he",
     "image": "",
-    "options": ["2", "3", "4", "6"],
+    "options": [
+      "Killed the snake (Sarki) that prevented the people from drawing water at the well",
+      "Defeated the armies of Kanem-Bornu",
+      "Built the city walls of Kano",
+      "Introduced Islam to the Hausa states"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "The seven legitimate Hausa states (Hausa Bakwai) trace their origin to",
+    "image": "",
+    "options": [
+      "Oduduwa of Ile-Ife",
+      "Mai Idris Alooma of Bornu",
+      "Queen Amina of Zazzau",
+      "Bawo, son of Bayajida and Queen Daurama"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "In traditional Hausa society, Auren Budurwa refers to marriage with",
+    "image": "",
+    "options": [
+      "A widow",
+      "A virgin (first-time bride)",
+      "A divorced woman only",
+      "A woman from another ethnic group"
+    ],
     "answer": 1
   },
   {
-    "question": "The sum of the first n terms of an A.P. is Sₙ = 2n² + n. What is the common difference of the progression?",
+    "question": "In Hausa culture, the term Bazawara is used to describe",
     "image": "",
-    "options": ["2", "3", "4", "5"],
+    "options": [
+      "A young girl betrothed at birth",
+      "The bride price paid by the groom",
+      "A widow or divorced woman who remarries",
+      "The eldest wife in a polygamous home"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "The Fulani people are best described as",
+    "image": "",
+    "options": [
+      "Pastoral nomads whose life revolves around cattle rearing",
+      "Urban merchants of the forest zone",
+      "Fishermen of the Niger Delta",
+      "Terraced farmers of the Jos Plateau"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "The Sokoto Caliphate was established following the jihad declared in 1804 by",
+    "image": "",
+    "options": [
+      "Muhammadu Bello",
+      "Alimi of Ilorin",
+      "Yakubu of Bauchi",
+      "Usman dan Fodio"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "The traditional language of the Fulani people is called",
+    "image": "",
+    "options": ["Hausa", "Fulfulde", "Kanuri", "Tiv"],
+    "answer": 1
+  },
+  {
+    "question": "In Yoruba tradition, the progenitor of the Yoruba people and the first king of Ile-Ife was",
+    "image": "",
+    "options": ["Oranmiyan", "Sango", "Oduduwa", "Obatala"],
+    "answer": 2
+  },
+  {
+    "question": "When Benin requested a king from Ile-Ife, the Yoruba prince sent to rule over Benin was",
+    "image": "",
+    "options": ["Oranmiyan", "Oduduwa", "Sango", "Ajaka"],
+    "answer": 0
+  },
+  {
+    "question": "The Oba dynasty of Benin was founded by",
+    "image": "",
+    "options": [
+      "Ewuare the Great",
+      "Ozolua",
+      "Esigie",
+      "Eweka, son of Oranmiyan"
+    ],
+    "answer": 3
+  },
+  {
+    "question": "Western education contributed to the rise of Nigerian nationalism mainly because it",
+    "image": "",
+    "options": [
+      "Restricted trade among the ethnic groups",
+      "Produced educated elites who criticized colonial rule and mobilized the people",
+      "Encouraged Nigerians to fully support the colonial government",
+      "Prevented the formation of political parties"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "The famous bronzes and ivory works associated with the ancient kingdom of Benin demonstrate",
+    "image": "",
+    "options": [
+      "The absence of skilled craftsmanship in Africa",
+      "That Benin had no organized government",
+      "A high level of artistic and technological civilization",
+      "That Benin was isolated from its neighbours"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "In 1851, the British naval expedition against Lagos was aimed at",
+    "image": "",
+    "options": [
+      "Ending the slave trade and installing Oba Akitoye in place of Kosoko",
+      "Annexing Lagos as a colony immediately",
+      "Introducing cocoa farming in the interior",
+      "Building a railway to the North"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "Lagos became a British Crown Colony in",
+    "image": "",
+    "options": ["1900", "1914", "1851", "1861"],
+    "answer": 3
+  },
+  {
+    "question": "Indirect rule is a system in which the British colonial administration governed the people",
+    "image": "",
+    "options": [
+      "Through elected African parliaments",
+      "Through traditional rulers and existing native institutions",
+      "Through European district officers only",
+      "Directly through the British monarch"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "The Richards Constitution of 1946 is notable for introducing",
+    "image": "",
+    "options": [
+      "Universal adult suffrage",
+      "Full federalism in Nigeria",
+      "Regionalism, dividing Nigeria into three regions",
+      "Republican government"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "A major feature of the Macpherson Constitution of 1951 was",
+    "image": "",
+    "options": [
+      "The inclusion of elected African representatives in the legislative councils",
+      "The creation of twelve states",
+      "The abolition of traditional rulers",
+      "The declaration of Nigeria as a republic"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "The 1963 Constitution is significant in Nigerian history because it",
+    "image": "",
+    "options": [
+      "Made Nigeria a republic with a Nigerian Head of State",
+      "Introduced indirect rule",
+      "Made Nigeria a one-party state",
+      "Abolished the regions"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "According to Roscoe Pound, the primary function of law in society is",
+    "image": "",
+    "options": [
+      "To protect the privileges of the ruling class",
+      "To punish criminals only",
+      "To serve as an instrument of social control that balances conflicting interests",
+      "To preserve colonial authority"
+    ],
     "answer": 2
   }
 ]

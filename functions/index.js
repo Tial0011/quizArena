@@ -8,7 +8,7 @@ const fetch = require("node-fetch");
 admin.initializeApp();
 const db = admin.firestore();
 
-const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
+const WELCOME_QUIZ_ID = "kEvJYSuwFyY71jb5y0Yw";
 
 async function quoteFlutterwaveFee(amount, paymentType) {
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
@@ -666,7 +666,7 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
   }
 });
 
-// The Physics welcome quiz is intentionally free and isn't represented by
+// The GES 111 Communications in English welcome quiz is intentionally free and isn't represented by
 // a purchase document. Serve only this fixed quiz to signed-in users so its
 // launch doesn't depend on the paid-quiz Firestore read rules.
 exports.getWelcomeQuizQuestions = onCall(
@@ -745,7 +745,7 @@ exports.sendNotificationPush = onDocumentCreated(
 
     const { targetUserId } = data;
     const message = data.pushMessage || (data.actionType === "startWelcomeQuiz"
-      ? "Your free Physics quiz is ready. Tap to start now—no purchase needed."
+      ? "Your free GES 111 Communications in English quiz is ready. Tap to start now—no purchase needed."
       : data.message);
 
     const tokens = await collectTokens(targetUserId);
@@ -1005,7 +1005,7 @@ exports.recordWeeklyChallengeWinners = onSchedule(
         const data = attemptDoc.data();
         const entry = stats.get(data.userId) || { quizzes: new Map(), purchased: 0, engagement: 0, score: 0 };
         const percentage = data.percentage || 0;
-        if (data.quizId === "fMszqKjA0M1cYvz9samb") {
+        if (data.quizId === WELCOME_QUIZ_ID) {
           entry.score += percentage / 100;
         } else if (data.mode === "purchased" && data.quizId) {
           const count = entry.quizzes.get(data.quizId) || 0;

@@ -97,13 +97,13 @@ export async function recordQuizAttempt({
       completedAt: serverTimestamp(),
     });
 
-    if (quizId === "fMszqKjA0M1cYvz9samb") {
+    if (quizId === "kEvJYSuwFyY71jb5y0Yw") {
       updateDoc(doc(db, "users", userId), { welcomeQuizCompleted: true }).catch((error) =>
         console.error("Could not save welcome quiz completion:", error),
       );
       if (sendWelcomeQuizFollowup) {
         sendNotification({
-          message: "Great work finishing your free Physics quiz! Browse the Marketplace to unlock more quizzes for your courses.",
+          message: "Great work finishing your free GES 111 Communications in English quiz! Browse the Marketplace to unlock more quizzes for your courses.",
           createdBy: "Quiz Arena",
           targetUserId: userId,
           actionType: "openMarketplace",

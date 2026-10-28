@@ -38,7 +38,7 @@ import { showLoadingOverlay } from "./loadingOverlay.js";
 ========================================================= */
 const CBT_QUESTION_LIMIT = 25;
 const CBT_TIME_LIMIT_SECONDS = 10 * 60; // fixed 10-minute timer
-const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
+const WELCOME_QUIZ_ID = "kEvJYSuwFyY71jb5y0Yw";
 const getWelcomeQuizQuestions = httpsCallable(
   getFunctions(app),
   "getWelcomeQuizQuestions",
@@ -97,7 +97,7 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
     console.error("Failed to load quiz questions:", error);
     stopLoading();
     alert(quizId === WELCOME_QUIZ_ID
-      ? "Your free Physics quiz couldn't load right now. Please try again."
+      ? "Your free GES 111 Communications in English quiz couldn't load right now. Please try again."
       : "The quiz couldn't load right now. Please try again.");
     renderStudentDashboard(userData);
     return;

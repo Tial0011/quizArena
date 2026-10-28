@@ -514,7 +514,7 @@ async function routeStudentDashboard(user) {
   url.searchParams.delete("welcomeQuiz");
   history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
   if (userData?.welcomeQuizEligible && !userData.welcomeQuizCompleted) {
-    startPurchasedQuiz(userData, "fMszqKjA0M1cYvz9samb", "Free Physics Welcome Quiz");
+    startPurchasedQuiz(userData, "kEvJYSuwFyY71jb5y0Yw", "Free GES 111 Communications in English Quiz");
   }
 }
 

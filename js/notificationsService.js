@@ -364,10 +364,10 @@ export function sendWelcomeNotification(userId, name) {
   const greeting = name ? `Welcome to Quiz Arena, ${name}!` : "Welcome to Quiz Arena!";
 
   return sendNotification({
-    message: `${greeting} Your free Physics quiz is ready. It’s a quick first step—open Quiz Arena and tap “Start free quiz” in your notifications or “Try your free Physics quiz” on your dashboard. No purchase needed.`,
+    message: `${greeting} Your free GES 111 Communications in English quiz is ready. It’s a quick first step—open Quiz Arena and tap “Start free quiz” in your notifications or dashboard. No purchase needed.`,
     createdBy: "System",
     targetUserId: userId,
     actionType: "startWelcomeQuiz",
-    quizId: "fMszqKjA0M1cYvz9samb",
+    quizId: "kEvJYSuwFyY71jb5y0Yw",
   });
 }

@@ -39,7 +39,7 @@ const app = document.getElementById("app");
 
 const DEFAULT_HERO_MESSAGE =
   "Master one quiz today and keep your streak alive.";
-const WELCOME_QUIZ_ID = "fMszqKjA0M1cYvz9samb";
+const WELCOME_QUIZ_ID = "kEvJYSuwFyY71jb5y0Yw";
 
 // How many notifications the bell panel shows at once. The live
 // listener (see startNotificationsListener) fetches a larger batch
@@ -211,7 +211,7 @@ export function renderStudentDashboard(userData = {}) {
         ${shouldShowWelcomeQuiz(userData) ? `
         <button type="button" class="sd-cta sd-welcome-quiz-cta load-in" data-start-welcome-quiz>
           <span class="sd-cta-text">
-            <span class="sd-cta-title">${userData.welcomeQuizCompleted ? "Retake your free Physics quiz" : "Try your free Physics quiz"}</span>
+            <span class="sd-cta-title">${userData.welcomeQuizCompleted ? "Retake GES 111 Communications in English" : "Try free GES 111 Communications in English"}</span>
             <span class="sd-cta-sub">Always free and available here. No purchase needed.</span>
           </span>
           <span class="sd-cta-arrow">${icon("arrow", 22)}</span>
@@ -640,7 +640,7 @@ function setupDashboardEvents(userData) {
 }
 
 function openWelcomeQuiz(userData) {
-  startPurchasedQuiz(userData, WELCOME_QUIZ_ID, "Free Physics Welcome Quiz");
+  startPurchasedQuiz(userData, WELCOME_QUIZ_ID, "Free GES 111 Communications in English Quiz");
 }
 
 /* =========================================================
