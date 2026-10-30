@@ -327,6 +327,135 @@
   padding-left: 2.75rem;
 }
 
+/* =========================
+   USERNAME STATUS & SUGGESTIONS
+========================= */
+.field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.field-label-row label {
+  margin-bottom: 0;
+}
+
+.username-status {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.username-status.is-available {
+  color: #10b981;
+}
+
+.username-status.is-taken,
+.username-status.is-invalid {
+  color: #ef4444;
+}
+
+.username-status.is-checking {
+  display: inline-flex;
+  align-items: center;
+}
+
+.username-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(56, 150, 149, 0.25);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.username-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-top: 0.4rem;
+  line-height: 1.35;
+  transition: color 0.2s ease;
+}
+
+.username-hint.is-error {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.username-hint.is-success {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.username-suggestions {
+  margin-top: 0.6rem;
+  padding: 0.75rem 0.85rem;
+  background: rgba(56, 150, 149, 0.08);
+  border-radius: 12px;
+  border: 1px dashed rgba(56, 150, 149, 0.4);
+  animation: fadeInSuggestions 0.25s ease-out;
+}
+
+@keyframes fadeInSuggestions {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.suggestions-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text);
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.suggestions-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.username-chip {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border: 1px solid rgba(56, 150, 149, 0.35);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.username-chip:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(56, 150, 149, 0.25);
+}
+
+.username-chip:active {
+  transform: scale(0.96);
+}
+
 .submit-btn {
   width: 100%;
 

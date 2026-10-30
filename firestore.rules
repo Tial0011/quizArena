@@ -36,6 +36,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ---------- usernames (unique handles) ----------
+    // Anyone (including guests on the signup screen) can check if a handle is taken.
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
     // ---------- content (admin writes, signed-in reads) ----------
     match /subjects/{id} {
       allow read: if signedIn();

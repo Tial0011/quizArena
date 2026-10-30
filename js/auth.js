@@ -11,60 +11,247 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
   signOut,
+  updateProfile,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
+  deleteDoc,
+  writeBatch,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const googleProvider = new GoogleAuthProvider();
 
 // =========================
+// USERNAME VALIDATION & SUGGESTIONS
+// =========================
+export function validateUsername(name) {
+  if (!name || typeof name !== "string") {
+    return { valid: false, message: "Username is required." };
+  }
+  const clean = name.trim().replace(/^@/, "");
+  if (clean.length < 3) {
+    return { valid: false, message: "Username must be at least 3 characters." };
+  }
+  if (clean.length > 20) {
+    return { valid: false, message: "Username cannot exceed 20 characters." };
+  }
+  if (/\s/.test(clean)) {
+    return {
+      valid: false,
+      message: "Username cannot contain spaces. Use underscores (_) instead.",
+    };
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(clean)) {
+    return {
+      valid: false,
+      message: "Only letters, numbers, and underscores (_) are allowed.",
+    };
+  }
+  return { valid: true, clean, normalized: clean.toLowerCase() };
+}
+
+export async function checkUsernameAvailable(name) {
+  const check = validateUsername(name);
+  if (!check.valid) {
+    return { valid: false, available: false, message: check.message };
+  }
+
+  try {
+    const snap = await getDoc(doc(db, "usernames", check.normalized));
+    if (snap.exists()) {
+      return {
+        valid: true,
+        available: false,
+        normalized: check.normalized,
+        clean: check.clean,
+        message: "Username is already taken.",
+      };
+    }
+    return {
+      valid: true,
+      available: true,
+      normalized: check.normalized,
+      clean: check.clean,
+      message: "Username is available!",
+    };
+  } catch (err) {
+    console.error("[auth] checkUsernameAvailable error:", err);
+    return {
+      valid: true,
+      available: false,
+      error: true,
+      message: "Unable to verify username right now.",
+    };
+  }
+}
+
+export async function suggestUsernames(baseName, count = 3) {
+  let base = (baseName || "")
+    .trim()
+    .replace(/^@/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  if (!base || base.length < 2) {
+    base = "student";
+  }
+
+  if (base.length > 13) {
+    base = base.slice(0, 13);
+  }
+
+  const randInt = (min, max) =>
+    Math.floor(Math.random() * (max - min + 1)) + min;
+  const currentYearShort = new Date().getFullYear().toString().slice(-2);
+
+  const candidatePool = [
+    `${base}${randInt(10, 99)}`,
+    `${base}_${randInt(1, 99)}`,
+    `${base}_qa`,
+    `${base}_med`,
+    `${base}_cbt`,
+    `${base}${currentYearShort}`,
+    `the_${base}`,
+    `${base}_pro`,
+    `${base}_arena`,
+    `${base}${randInt(100, 999)}`,
+  ];
+
+  const uniquePool = Array.from(new Set(candidatePool)).filter(
+    (c) => c.length >= 3 && c.length <= 20 && /^[a-z0-9_]+$/.test(c),
+  );
+
+  const shuffled = uniquePool.sort(() => 0.5 - Math.random());
+  const available = [];
+
+  for (const candidate of shuffled) {
+    if (available.length >= count) break;
+    try {
+      const snap = await getDoc(doc(db, "usernames", candidate));
+      if (!snap.exists()) {
+        available.push(candidate);
+      }
+    } catch {
+      // Ignore read errors for candidates and continue
+    }
+  }
+
+  return available;
+}
+
+export async function generateAvailableUsername(preferredBase) {
+  let base = (preferredBase || "")
+    .trim()
+    .replace(/^@/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  if (!base || base.length < 3) base = "student";
+  if (base.length > 15) base = base.slice(0, 15);
+
+  try {
+    const snap = await getDoc(doc(db, "usernames", base));
+    if (!snap.exists()) return base;
+  } catch {}
+
+  const suggestions = await suggestUsernames(base, 1);
+  if (suggestions.length > 0) return suggestions[0];
+
+  return `${base}_${Date.now().toString().slice(-4)}`;
+}
+
+// =========================
 // REGISTER
 // =========================
 const REFERRAL_SOURCES = new Set(["linkedin", "whatsapp", "tiktok", "google"]);
 
-export async function registerUser(name, email, password, referralSource) {
-  if (!name || !email || !password) {
+export async function registerUser(fullName, username, email, password, referralSource) {
+  // Support both (fullName, username, email, password, referralSource)
+  // and legacy (name, email, password, referralSource)
+  let actualFullName = fullName;
+  let actualUsername = username;
+  let actualEmail = email;
+  let actualPassword = password;
+  let actualReferral = referralSource;
+
+  if (arguments.length === 4) {
+    actualFullName = arguments[0];
+    actualUsername = arguments[0];
+    actualEmail = arguments[1];
+    actualPassword = arguments[2];
+    actualReferral = arguments[3];
+  }
+
+  if (!actualFullName || !actualUsername || !actualEmail || !actualPassword) {
     return { success: false, message: "All fields are required" };
   }
-  if (!REFERRAL_SOURCES.has(referralSource)) {
+  if (!REFERRAL_SOURCES.has(actualReferral)) {
     return { success: false, message: "Choose how you found Quiz Arena." };
+  }
+
+  const usernameCheck = validateUsername(actualUsername);
+  if (!usernameCheck.valid) {
+    return { success: false, message: usernameCheck.message };
+  }
+
+  const availability = await checkUsernameAvailable(actualUsername);
+  if (!availability.available) {
+    const suggestions = await suggestUsernames(usernameCheck.clean, 3);
+    return {
+      success: false,
+      message: "Username is already taken.",
+      suggestions,
+    };
   }
 
   try {
     const credential = await createUserWithEmailAndPassword(
       auth,
-      email,
-      password,
+      actualEmail,
+      actualPassword,
     );
     const user = credential.user;
 
+    const cleanUsername = usernameCheck.clean;
+    const normalizedUsername = usernameCheck.normalized;
+    const cleanFullName = actualFullName.trim().replace(/\s+/g, " ");
+
+    // 1. Reserve unique username handle
+    await setDoc(doc(db, "usernames", normalizedUsername), {
+      uid: user.uid,
+      username: cleanUsername,
+      createdAt: serverTimestamp(),
+    });
+
+    // 2. Create user profile
     await setDoc(doc(db, "users", user.uid), {
-      name,
-      email,
+      name: cleanFullName,
+      username: cleanUsername,
+      usernameLower: normalizedUsername,
+      email: actualEmail,
       role: "student",
-      referralSource,
+      referralSource: actualReferral,
       welcomeQuizEligible: true,
       welcomeQuizCompleted: false,
       purchasedQuizzes: [],
       createdAt: serverTimestamp(),
     });
 
-    // Fire-and-forget: a welcome ping failing to send should never
-    // hold up registration or surface as a signup error.
-    sendWelcomeNotification(user.uid, name);
+    updateProfile(user, { displayName: cleanFullName }).catch(() => {});
+
+    // Fire-and-forget: welcome ping
+    sendWelcomeNotification(user.uid, cleanFullName || cleanUsername);
     recordLogin(user);
 
-    // Send the email-verification link. This is a real Firebase email
-    // send (not a Cloud Function) — it can genuinely fail (rate limits,
-    // bad SMTP relay on Firebase's side, etc.), but a failure here
-    // should never block account creation, which has already
-    // succeeded. The UI that shows next tells the student to check
-    // spam either way and offers a manual resend.
     let verificationEmailSent = true;
     try {
       await sendEmailVerification(user);
@@ -183,8 +370,31 @@ export async function completeGoogleSignup(user, referralSource) {
     if (existing.exists()) {
       return { success: true, user, role: existing.data().role || "student" };
     }
+
+    // Determine clean full name and unique username
+    const fullName = (user.displayName || "").trim() || "Student";
+    const emailPrefix = (user.email || "").split("@")[0] || "student";
+    const baseCandidate = (user.displayName || emailPrefix)
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+    const assignedUsername = await generateAvailableUsername(baseCandidate);
+    const normalizedUsername = assignedUsername.toLowerCase();
+
+    // 1. Reserve username
+    await setDoc(doc(db, "usernames", normalizedUsername), {
+      uid: user.uid,
+      username: assignedUsername,
+      createdAt: serverTimestamp(),
+    });
+
+    // 2. Create user profile
     await setDoc(userRef, {
-      name: user.displayName || "",
+      name: fullName,
+      username: assignedUsername,
+      usernameLower: normalizedUsername,
       email: user.email,
       role: "student",
       referralSource,
@@ -193,7 +403,8 @@ export async function completeGoogleSignup(user, referralSource) {
       purchasedQuizzes: [],
       createdAt: serverTimestamp(),
     });
-    sendWelcomeNotification(user.uid, user.displayName);
+
+    sendWelcomeNotification(user.uid, fullName);
     recordLogin(user);
     return { success: true, user, role: "student" };
   } catch (error) {
@@ -271,6 +482,73 @@ export async function getUserData(uid) {
   } catch (error) {
     console.error(error);
     return null;
+  }
+}
+
+// =========================
+// UPDATE USERNAME (SETTINGS)
+// =========================
+export async function updateUsername(uid, newUsername, oldUsername = "") {
+  if (!uid) return { success: false, message: "User not authenticated." };
+
+  const check = validateUsername(newUsername);
+  if (!check.valid) return { success: false, message: check.message };
+
+  const cleanOld = (oldUsername || "")
+    .trim()
+    .replace(/^@/, "")
+    .toLowerCase();
+  const newNormalized = check.normalized;
+
+  if (cleanOld && cleanOld === newNormalized) {
+    return { success: true, message: "No change to username.", username: check.clean };
+  }
+
+  // Check availability
+  const availability = await checkUsernameAvailable(newNormalized);
+  if (!availability.available) {
+    const suggestions = await suggestUsernames(check.clean, 3);
+    return {
+      success: false,
+      message: "Username is already taken.",
+      suggestions,
+    };
+  }
+
+  try {
+    const batch = writeBatch(db);
+
+    // 1. Create new username reservation
+    const newUsernameRef = doc(db, "usernames", newNormalized);
+    batch.set(newUsernameRef, {
+      uid,
+      username: check.clean,
+      createdAt: serverTimestamp(),
+    });
+
+    // 2. Delete old username doc if it existed
+    if (cleanOld) {
+      const oldUsernameRef = doc(db, "usernames", cleanOld);
+      batch.delete(oldUsernameRef);
+    }
+
+    // 3. Update user document
+    const userRef = doc(db, "users", uid);
+    batch.update(userRef, {
+      username: check.clean,
+      usernameLower: newNormalized,
+    });
+
+    await batch.commit();
+
+    return {
+      success: true,
+      username: check.clean,
+      message: "Username updated successfully!",
+    };
+  } catch (err) {
+    console.error("[auth] updateUsername failed:", err);
+    return { success: false, message: err.message || "Failed to update username." };
   }
 }
 

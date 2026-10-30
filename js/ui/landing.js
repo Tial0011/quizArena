@@ -7,6 +7,9 @@ import {
   signInWithGoogle,
   completeGoogleSignup,
   resetPassword,
+  validateUsername,
+  checkUsernameAvailable,
+  suggestUsernames,
 } from "../auth.js";
 import { renderAdminDashboard } from "../admin/dashboard.js";
 import { startPurchasedQuiz } from "../student/purchasedQuiz.js";
@@ -278,13 +281,38 @@ function registerMarkup() {
 
     ${pendingGoogleUser ? "" : `
     <div class="form-group">
-      <label for="name">User Name</label>
+      <label for="fullName">Full Name</label>
       <div class="input-with-icon">
         <span class="input-icon">👤</span>
         <input
-          id="name"
+          id="fullName"
           placeholder="e.g. Arjun Sharma"
+          autocomplete="name"
+          maxlength="40"
         >
+      </div>
+    </div>
+
+    <div class="form-group username-group">
+      <div class="field-label-row">
+        <label for="username">Username</label>
+        <span id="usernameStatus" class="username-status" aria-live="polite"></span>
+      </div>
+      <div class="input-with-icon">
+        <span class="input-icon">@</span>
+        <input
+          id="username"
+          placeholder="e.g. arjun_24"
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          maxlength="20"
+        >
+      </div>
+      <div id="usernameHint" class="username-hint">3–20 characters, letters, numbers, and _</div>
+      <div id="usernameSuggestions" class="username-suggestions" style="display: none;">
+        <span class="suggestions-title">💡 Suggested available handles:</span>
+        <div id="suggestionsChips" class="suggestions-chips"></div>
       </div>
     </div>
 
@@ -340,6 +368,103 @@ function registerMarkup() {
   `;
 }
 
+let usernameDebounceTimer = null;
+
+function setupUsernameListeners() {
+  const usernameInput = document.getElementById("username");
+  const statusEl = document.getElementById("usernameStatus");
+  const hintEl = document.getElementById("usernameHint");
+  const suggestionsBox = document.getElementById("usernameSuggestions");
+  const suggestionsChips = document.getElementById("suggestionsChips");
+
+  if (!usernameInput || !statusEl || !hintEl) return;
+
+  const renderSuggestions = (list) => {
+    if (!suggestionsBox || !suggestionsChips) return;
+    if (!list || list.length === 0) {
+      suggestionsBox.style.display = "none";
+      suggestionsChips.innerHTML = "";
+      return;
+    }
+    suggestionsChips.innerHTML = list
+      .map(
+        (uname) =>
+          `<button type="button" class="username-chip" data-uname="${uname}">@${uname}</button>`,
+      )
+      .join("");
+    suggestionsBox.style.display = "block";
+
+    suggestionsChips.querySelectorAll(".username-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const picked = btn.getAttribute("data-uname");
+        if (!picked) return;
+        usernameInput.value = picked;
+        suggestionsBox.style.display = "none";
+        checkUsername(picked);
+      });
+    });
+  };
+
+  const checkUsername = async (val) => {
+    const raw = (val || "").trim();
+    if (!raw) {
+      statusEl.textContent = "";
+      statusEl.className = "username-status";
+      hintEl.textContent = "3–20 characters, letters, numbers, and _";
+      hintEl.className = "username-hint";
+      renderSuggestions([]);
+      return;
+    }
+
+    const format = validateUsername(raw);
+    if (!format.valid) {
+      statusEl.textContent = "✕";
+      statusEl.className = "username-status is-invalid";
+      hintEl.textContent = format.message;
+      hintEl.className = "username-hint is-error";
+      renderSuggestions([]);
+      return;
+    }
+
+    statusEl.innerHTML = `<span class="username-spinner"></span>`;
+    statusEl.className = "username-status is-checking";
+
+    try {
+      const res = await checkUsernameAvailable(raw);
+      if (usernameInput.value.trim() !== raw) return;
+
+      if (res.available) {
+        statusEl.textContent = "✓ Available";
+        statusEl.className = "username-status is-available";
+        hintEl.textContent = "Great choice! This username is free.";
+        hintEl.className = "username-hint is-success";
+        renderSuggestions([]);
+      } else {
+        statusEl.textContent = "✕ Taken";
+        statusEl.className = "username-status is-taken";
+        hintEl.textContent = "That username is already taken. Try one of these:";
+        hintEl.className = "username-hint is-error";
+
+        const suggestions = await suggestUsernames(format.clean, 3);
+        if (usernameInput.value.trim() === raw) {
+          renderSuggestions(suggestions);
+        }
+      }
+    } catch {
+      statusEl.textContent = "";
+      statusEl.className = "username-status";
+    }
+  };
+
+  usernameInput.addEventListener("input", (e) => {
+    clearTimeout(usernameDebounceTimer);
+    const v = e.target.value;
+    usernameDebounceTimer = setTimeout(() => {
+      checkUsername(v);
+    }, 300);
+  });
+}
+
 function attachEvents() {
   document.getElementById("switchMode")?.addEventListener("click", () => {
     mode = mode === "login" ? "register" : "login";
@@ -356,6 +481,10 @@ function attachEvents() {
   document
     .getElementById("installAppBtn")
     ?.addEventListener("click", handleInstallClick);
+
+  if (mode === "register") {
+    setupUsernameListeners();
+  }
 }
 async function submitForm() {
   const submitBtn = document.getElementById("submitBtn");
@@ -378,12 +507,57 @@ async function submitForm() {
       result = await completeGoogleSignup(pendingGoogleUser, referralSource);
       if (result.success) pendingGoogleUser = null;
     } else {
+      const fullNameInput = document.getElementById("fullName");
+      const fullNameVal = (fullNameInput?.value || "").trim().replace(/\s+/g, " ");
+      if (!fullNameVal || fullNameVal.length < 2) {
+        alert("Please enter your full name.");
+        fullNameInput?.focus();
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "Register";
+        return;
+      }
+
+      const usernameInput = document.getElementById("username");
+      const usernameVal = (usernameInput?.value || "").trim();
+      const formatCheck = validateUsername(usernameVal);
+      if (!formatCheck.valid) {
+        alert(formatCheck.message);
+        usernameInput?.focus();
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "Register";
+        return;
+      }
+
       result = await registerUser(
-        document.getElementById("name").value,
+        fullNameVal,
+        usernameVal,
         document.getElementById("email").value,
         document.getElementById("password").value,
         referralSource,
       );
+
+      if (!result.success && result.suggestions?.length) {
+        const suggestionsBox = document.getElementById("usernameSuggestions");
+        const suggestionsChips = document.getElementById("suggestionsChips");
+        if (suggestionsBox && suggestionsChips) {
+          suggestionsChips.innerHTML = result.suggestions
+            .map(
+              (uname) =>
+                `<button type="button" class="username-chip" data-uname="${uname}">@${uname}</button>`,
+            )
+            .join("");
+          suggestionsBox.style.display = "block";
+          suggestionsChips.querySelectorAll(".username-chip").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const picked = btn.getAttribute("data-uname");
+              if (!picked) return;
+              if (usernameInput) usernameInput.value = picked;
+              suggestionsBox.style.display = "none";
+              usernameInput?.dispatchEvent(new Event("input"));
+            });
+          });
+        }
+      }
     }
   } else {
     result = await loginUser(

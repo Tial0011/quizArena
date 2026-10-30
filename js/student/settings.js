@@ -5,7 +5,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-import { logoutUser, resetPassword } from "../auth.js";
+import {
+  logoutUser,
+  resetPassword,
+  validateUsername,
+  checkUsernameAvailable,
+  suggestUsernames,
+  updateUsername,
+} from "../auth.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
 import { getThemeChoice, setThemeChoice } from "../theme.js";
@@ -58,7 +65,8 @@ export function renderSettings(userData = {}) {
   const methods = signInMethods();
   const email = userData.email || auth.currentUser?.email || "";
   const name = (userData.name || "").trim();
-  const initial = (name || email || "S").charAt(0).toUpperCase();
+  const username = (userData.username || "").trim();
+  const initial = (name || username || email || "S").charAt(0).toUpperCase();
   const theme = getThemeChoice();
   const desktopOn = isDesktopModeOn();
 
@@ -88,19 +96,38 @@ export function renderSettings(userData = {}) {
             <span class="st-avatar" id="stAvatar">${esc(initial)}</span>
             <div class="st-profile-meta">
               <strong id="stNameShown">${esc(name || "Student")}</strong>
+              <span id="stUsernameShown">@${esc(username || "student")}</span>
               <span>${esc(email)}</span>
             </div>
           </div>
 
-          <label class="st-label" for="stName">Display name</label>
+          <label class="st-label" for="stName">Full Name</label>
           <div class="st-row">
             <input id="stName" class="st-input" type="text" maxlength="${NAME_MAX}"
-                   autocomplete="name" value="${esc(name)}" placeholder="Your name" />
+                   autocomplete="name" value="${esc(name)}" placeholder="Your full name" />
             <button type="button" class="st-btn" id="stSaveName" disabled>Save</button>
           </div>
-          <p class="st-hint" id="stNameHint">This is the name friends see in groups and leaderboards.</p>
+          <p class="st-hint" id="stNameHint">Your display name shown on your profile and dashboard.</p>
 
-          <div class="st-kv"><span>Email</span><strong>${esc(email) || "—"}</strong></div>
+          <div class="st-username-block" style="margin-top: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="st-label" for="stUsername" style="margin-bottom:0;">Username</label>
+              <span id="stUsernameStatus" class="username-status" aria-live="polite"></span>
+            </div>
+            <div class="st-row">
+              <input id="stUsername" class="st-input" type="text" maxlength="20"
+                     autocomplete="username" autocapitalize="none" spellcheck="false"
+                     value="${esc(username)}" placeholder="Unique username" />
+              <button type="button" class="st-btn" id="stSaveUsername" disabled>Save</button>
+            </div>
+            <p class="st-hint" id="stUsernameHint">Unique handle for groups, rankings, and mentions.</p>
+            <div id="stUsernameSuggestions" class="username-suggestions" style="display: none; margin-top: 8px;">
+              <span class="suggestions-title">💡 Suggested available handles:</span>
+              <div id="stSuggestionsChips" class="suggestions-chips"></div>
+            </div>
+          </div>
+
+          <div class="st-kv" style="margin-top: 14px;"><span>Email</span><strong>${esc(email) || "—"}</strong></div>
           <div class="st-kv"><span>Signed in with</span><strong>${esc(methodText)}</strong></div>
         </section>
 
@@ -251,6 +278,144 @@ function wire(userData, email) {
     } finally {
       saveBtn.textContent = "Save";
       check();
+    }
+  });
+
+  /* ----- username ----- */
+  const usernameInput = $("stUsername");
+  const saveUsernameBtn = $("stSaveUsername");
+  const usernameHint = $("stUsernameHint");
+  const usernameStatus = $("stUsernameStatus");
+  const suggestionsBox = $("stUsernameSuggestions");
+  const suggestionsChips = $("stSuggestionsChips");
+  const originalUsername = () => (userData.username || "").trim();
+
+  let uTimer = null;
+
+  const renderSettingsSuggestions = (list) => {
+    if (!suggestionsBox || !suggestionsChips) return;
+    if (!list || list.length === 0) {
+      suggestionsBox.style.display = "none";
+      suggestionsChips.innerHTML = "";
+      return;
+    }
+    suggestionsChips.innerHTML = list
+      .map(
+        (uname) =>
+          `<button type="button" class="username-chip" data-uname="${uname}">@${uname}</button>`,
+      )
+      .join("");
+    suggestionsBox.style.display = "block";
+
+    suggestionsChips.querySelectorAll(".username-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const picked = btn.getAttribute("data-uname");
+        if (!picked) return;
+        usernameInput.value = picked;
+        suggestionsBox.style.display = "none";
+        checkUsernameLive(picked);
+      });
+    });
+  };
+
+  const checkUsernameLive = async (val) => {
+    const raw = (val || "").trim();
+    const orig = originalUsername();
+
+    if (!raw || raw.toLowerCase() === orig.toLowerCase()) {
+      saveUsernameBtn.disabled = true;
+      usernameStatus.textContent = "";
+      usernameStatus.className = "username-status";
+      usernameHint.textContent = "Unique handle for groups, rankings, and mentions.";
+      usernameHint.className = "st-hint";
+      renderSettingsSuggestions([]);
+      return;
+    }
+
+    const format = validateUsername(raw);
+    if (!format.valid) {
+      saveUsernameBtn.disabled = true;
+      usernameStatus.textContent = "✕";
+      usernameStatus.className = "username-status is-invalid";
+      usernameHint.textContent = format.message;
+      usernameHint.className = "st-hint is-error";
+      renderSettingsSuggestions([]);
+      return;
+    }
+
+    usernameStatus.innerHTML = `<span class="username-spinner"></span>`;
+    usernameStatus.className = "username-status is-checking";
+
+    try {
+      const res = await checkUsernameAvailable(raw);
+      if (usernameInput.value.trim() !== raw) return;
+
+      if (res.available) {
+        saveUsernameBtn.disabled = false;
+        usernameStatus.textContent = "✓ Available";
+        usernameStatus.className = "username-status is-available";
+        usernameHint.textContent = "This handle is available!";
+        usernameHint.className = "st-hint is-success";
+        renderSettingsSuggestions([]);
+      } else {
+        saveUsernameBtn.disabled = true;
+        usernameStatus.textContent = "✕ Taken";
+        usernameStatus.className = "username-status is-taken";
+        usernameHint.textContent = "That username is already taken. Try one of these:";
+        usernameHint.className = "st-hint is-error";
+
+        const suggestions = await suggestUsernames(format.clean, 3);
+        if (usernameInput.value.trim() === raw) {
+          renderSettingsSuggestions(suggestions);
+        }
+      }
+    } catch {
+      usernameStatus.textContent = "";
+      usernameStatus.className = "username-status";
+    }
+  };
+
+  usernameInput.addEventListener("input", (e) => {
+    clearTimeout(uTimer);
+    const v = e.target.value;
+    uTimer = setTimeout(() => {
+      checkUsernameLive(v);
+    }, 300);
+  });
+
+  saveUsernameBtn.addEventListener("click", async () => {
+    const v = usernameInput.value.trim();
+    saveUsernameBtn.disabled = true;
+    saveUsernameBtn.textContent = "Saving…";
+
+    try {
+      const result = await updateUsername(userData.id, v, originalUsername());
+      if (!result.success) {
+        usernameHint.textContent = result.message;
+        usernameHint.className = "st-hint is-error";
+        if (result.suggestions?.length) {
+          renderSettingsSuggestions(result.suggestions);
+        }
+        return;
+      }
+
+      userData.username = result.username;
+      userData.usernameLower = result.username.toLowerCase();
+      usernameInput.value = result.username;
+      $("stUsernameShown").textContent = `@${result.username}`;
+      usernameHint.textContent = "Username saved!";
+      usernameHint.className = "st-hint is-success";
+      usernameStatus.textContent = "✓";
+      usernameStatus.className = "username-status is-available";
+      renderSettingsSuggestions([]);
+      showToast("Username updated");
+    } catch (err) {
+      console.error("Failed to update username:", err);
+      usernameHint.textContent = "Failed to update username. Try again.";
+      usernameHint.className = "st-hint is-error";
+    } finally {
+      saveUsernameBtn.textContent = "Save";
+      saveUsernameBtn.disabled = usernameInput.value.trim().toLowerCase() === originalUsername().toLowerCase();
     }
   });
 
