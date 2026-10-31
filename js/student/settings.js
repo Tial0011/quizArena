@@ -66,6 +66,7 @@ export function renderSettings(userData = {}) {
   const email = userData.email || auth.currentUser?.email || "";
   const name = (userData.name || "").trim();
   const username = (userData.username || "").trim();
+  const hasChangedUsername = Boolean(userData.usernameChangedCount && userData.usernameChangedCount >= 1);
   const initial = (name || username || email || "S").charAt(0).toUpperCase();
   const theme = getThemeChoice();
   const desktopOn = isDesktopModeOn();
@@ -117,10 +118,15 @@ export function renderSettings(userData = {}) {
             <div class="st-row">
               <input id="stUsername" class="st-input" type="text" maxlength="20"
                      autocomplete="username" autocapitalize="none" spellcheck="false"
-                     value="${esc(username)}" placeholder="Unique username" />
-              <button type="button" class="st-btn" id="stSaveUsername" disabled>Save</button>
+                     value="${esc(username)}" placeholder="Unique username"
+                     ${hasChangedUsername ? "disabled" : ""} />
+              <button type="button" class="st-btn" id="stSaveUsername" disabled ${hasChangedUsername ? "style=\"display:none;\"" : ""}>Save</button>
             </div>
-            <p class="st-hint" id="stUsernameHint">Unique handle for groups, rankings, and mentions.</p>
+            <p class="st-hint" id="stUsernameHint">${
+              hasChangedUsername
+                ? "🔒 You have already changed your username once and cannot change it again."
+                : "⚠️ Note: You can only change your username once."
+            }</p>
             <div id="stUsernameSuggestions" class="username-suggestions" style="display: none; margin-top: 8px;">
               <span class="suggestions-title">💡 Suggested available handles:</span>
               <div id="stSuggestionsChips" class="suggestions-chips"></div>
@@ -289,8 +295,15 @@ function wire(userData, email) {
   const suggestionsBox = $("stUsernameSuggestions");
   const suggestionsChips = $("stSuggestionsChips");
   const originalUsername = () => (userData.username || "").trim();
+  const isAlreadyChanged = () => Boolean(userData.usernameChangedCount && userData.usernameChangedCount >= 1);
 
   let uTimer = null;
+
+  if (isAlreadyChanged()) {
+    usernameInput.disabled = true;
+    saveUsernameBtn.style.display = "none";
+    saveUsernameBtn.disabled = true;
+  }
 
   const renderSettingsSuggestions = (list) => {
     if (!suggestionsBox || !suggestionsChips) return;
@@ -319,6 +332,7 @@ function wire(userData, email) {
   };
 
   const checkUsernameLive = async (val) => {
+    if (isAlreadyChanged()) return;
     const raw = (val || "").trim();
     const orig = originalUsername();
 
@@ -326,7 +340,7 @@ function wire(userData, email) {
       saveUsernameBtn.disabled = true;
       usernameStatus.textContent = "";
       usernameStatus.className = "username-status";
-      usernameHint.textContent = "Unique handle for groups, rankings, and mentions.";
+      usernameHint.textContent = "⚠️ Note: You can only change your username once.";
       usernameHint.className = "st-hint";
       renderSettingsSuggestions([]);
       return;
@@ -376,6 +390,7 @@ function wire(userData, email) {
   };
 
   usernameInput.addEventListener("input", (e) => {
+    if (isAlreadyChanged()) return;
     clearTimeout(uTimer);
     const v = e.target.value;
     uTimer = setTimeout(() => {
@@ -384,6 +399,7 @@ function wire(userData, email) {
   });
 
   saveUsernameBtn.addEventListener("click", async () => {
+    if (isAlreadyChanged()) return;
     const v = usernameInput.value.trim();
     saveUsernameBtn.disabled = true;
     saveUsernameBtn.textContent = "Saving…";
@@ -401,21 +417,24 @@ function wire(userData, email) {
 
       userData.username = result.username;
       userData.usernameLower = result.username.toLowerCase();
+      userData.usernameChangedCount = result.usernameChangedCount || 1;
       usernameInput.value = result.username;
+      usernameInput.disabled = true;
+      saveUsernameBtn.style.display = "none";
       $("stUsernameShown").textContent = `@${result.username}`;
-      usernameHint.textContent = "Username saved!";
+      usernameHint.textContent = "🔒 Username updated! You have used your 1-time username change.";
       usernameHint.className = "st-hint is-success";
-      usernameStatus.textContent = "✓";
-      usernameStatus.className = "username-status is-available";
+      usernameStatus.textContent = "";
+      usernameStatus.className = "username-status";
       renderSettingsSuggestions([]);
-      showToast("Username updated");
+      showToast("Username updated (1-time change used)");
     } catch (err) {
       console.error("Failed to update username:", err);
       usernameHint.textContent = "Failed to update username. Try again.";
       usernameHint.className = "st-hint is-error";
     } finally {
       saveUsernameBtn.textContent = "Save";
-      saveUsernameBtn.disabled = usernameInput.value.trim().toLowerCase() === originalUsername().toLowerCase();
+      saveUsernameBtn.disabled = true;
     }
   });
 

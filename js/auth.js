@@ -487,6 +487,7 @@ export async function getUserData(uid) {
 
 // =========================
 // UPDATE USERNAME (SETTINGS)
+// Can only be changed once per user.
 // =========================
 export async function updateUsername(uid, newUsername, oldUsername = "") {
   if (!uid) return { success: false, message: "User not authenticated." };
@@ -502,6 +503,21 @@ export async function updateUsername(uid, newUsername, oldUsername = "") {
 
   if (cleanOld && cleanOld === newNormalized) {
     return { success: true, message: "No change to username.", username: check.clean };
+  }
+
+  // Check if user has already changed their username once
+  const userRef = doc(db, "users", uid);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) {
+    return { success: false, message: "User document not found." };
+  }
+
+  const uData = userSnap.data();
+  if (uData.usernameChangedCount && uData.usernameChangedCount >= 1) {
+    return {
+      success: false,
+      message: "You have already changed your username once. Username changes are limited to 1 time.",
+    };
   }
 
   // Check availability
@@ -532,11 +548,12 @@ export async function updateUsername(uid, newUsername, oldUsername = "") {
       batch.delete(oldUsernameRef);
     }
 
-    // 3. Update user document
-    const userRef = doc(db, "users", uid);
+    // 3. Update user document and track change count
     batch.update(userRef, {
       username: check.clean,
       usernameLower: newNormalized,
+      usernameChangedCount: (uData.usernameChangedCount || 0) + 1,
+      usernameLastChangedAt: serverTimestamp(),
     });
 
     await batch.commit();
@@ -544,6 +561,7 @@ export async function updateUsername(uid, newUsername, oldUsername = "") {
     return {
       success: true,
       username: check.clean,
+      usernameChangedCount: (uData.usernameChangedCount || 0) + 1,
       message: "Username updated successfully!",
     };
   } catch (err) {
