@@ -6,6 +6,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  writeBatch,
   query,
   where,
   serverTimestamp,
@@ -42,6 +43,7 @@ let currentQuizId = "";
 let editingQuestionId = null;
 let searchTerm = "";
 let currentContainer = null;
+let selectedQuestionIds = new Set();
 
 // Image state for the create/edit form. Kept separate from
 // getFormValues() because resolving the final image URL is
@@ -170,6 +172,21 @@ export async function renderQuestions(container) {
         </div>
       </div>
 
+      <!-- Bulk Selection & Action Bar -->
+      <div id="bulkActionBar" class="bulk-action-bar" style="display: none;">
+        <div class="bulk-action-left">
+          <label class="bulk-select-all-label">
+            <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox" />
+            <span id="selectAllText">Select All</span>
+          </label>
+          <span id="bulkSelectedCount" class="bulk-selected-count">0 selected</span>
+        </div>
+        <div class="bulk-action-right">
+          <button type="button" id="bulkDeselectBtn" class="btn-secondary btn-sm">Deselect All</button>
+          <button type="button" id="bulkDeleteBtn" class="btn-danger btn-sm">Delete Selected</button>
+        </div>
+      </div>
+
       <div id="questionList" class="question-list-wrapper">
         <p>Loading...</p>
       </div>
@@ -267,6 +284,21 @@ function attachStaticEventListeners() {
   container
     .querySelector("#searchInput")
     ?.addEventListener("input", handleSearchInput);
+
+  container
+    .querySelector("#selectAllCheckbox")
+    ?.addEventListener("change", handleSelectAllChange);
+
+  container
+    .querySelector("#bulkDeselectBtn")
+    ?.addEventListener("click", () => {
+      selectedQuestionIds.clear();
+      renderQuestionList();
+    });
+
+  container
+    .querySelector("#bulkDeleteBtn")
+    ?.addEventListener("click", handleBulkDelete);
 }
 
 /* =========================================================
@@ -276,6 +308,7 @@ function handleSubjectChange(e) {
   currentSubjectId = e.target.value;
   currentQuizId = "";
   questionsCache = [];
+  selectedQuestionIds.clear();
 
   populateQuizSelect(currentSubjectId);
   exitEditMode();
@@ -307,6 +340,7 @@ function populateQuizSelect(subjectId) {
 
 async function handleQuizChange(e) {
   currentQuizId = e.target.value;
+  selectedQuestionIds.clear();
   exitEditMode();
 
   if (!currentQuizId) {
@@ -683,6 +717,10 @@ function renderQuestionList() {
 
   const list = container.querySelector("#questionList");
   const counter = container.querySelector("#questionCounter");
+  const bulkBar = container.querySelector("#bulkActionBar");
+  const selectAllCheckbox = container.querySelector("#selectAllCheckbox");
+  const selectAllText = container.querySelector("#selectAllText");
+  const bulkCount = container.querySelector("#bulkSelectedCount");
 
   // If the admin switched to a different tab (or a different quiz
   // context) while a prior async load was still in flight, these
@@ -695,11 +733,48 @@ function renderQuestionList() {
       "Select a Subject and Quiz to see questions.",
     );
     counter.textContent = "Showing 0 Questions";
+    if (bulkBar) bulkBar.style.display = "none";
     return;
   }
 
   const filtered = getFilteredQuestions();
   counter.textContent = `Showing ${filtered.length} Question${filtered.length === 1 ? "" : "s"}`;
+
+  // Prune any selected IDs that aren't in current filtered view
+  const currentFilteredIds = new Set(filtered.map((q) => q.id));
+  for (const id of Array.from(selectedQuestionIds)) {
+    if (!currentFilteredIds.has(id)) {
+      selectedQuestionIds.delete(id);
+    }
+  }
+
+  // Update Bulk Bar UI
+  if (bulkBar) {
+    if (filtered.length > 0) {
+      bulkBar.style.display = "flex";
+      const totalSelected = selectedQuestionIds.size;
+      const allSelected = totalSelected > 0 && totalSelected === filtered.length;
+      const someSelected = totalSelected > 0 && totalSelected < filtered.length;
+
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = allSelected;
+        selectAllCheckbox.indeterminate = someSelected;
+      }
+      if (selectAllText) {
+        selectAllText.textContent = allSelected ? "Deselect All" : "Select All";
+      }
+      if (bulkCount) {
+        bulkCount.textContent = `${totalSelected} of ${filtered.length} selected`;
+      }
+      const bulkDeleteBtn = container.querySelector("#bulkDeleteBtn");
+      if (bulkDeleteBtn) {
+        bulkDeleteBtn.disabled = totalSelected === 0;
+        bulkDeleteBtn.textContent = totalSelected > 0 ? `Delete Selected (${totalSelected})` : "Delete Selected";
+      }
+    } else {
+      bulkBar.style.display = "none";
+    }
+  }
 
   if (filtered.length === 0) {
     list.innerHTML = renderEmptyState("No questions yet.");
@@ -715,6 +790,67 @@ function renderQuestionList() {
   attachQuestionListEvents(list);
 }
 
+function handleSelectAllChange(e) {
+  const filtered = getFilteredQuestions();
+  if (e.target.checked) {
+    filtered.forEach((q) => selectedQuestionIds.add(q.id));
+  } else {
+    selectedQuestionIds.clear();
+  }
+  renderQuestionList();
+}
+
+async function handleBulkDelete() {
+  const count = selectedQuestionIds.size;
+  if (count === 0) {
+    alert("Please select at least one question to delete.");
+    return;
+  }
+
+  const confirmMsg = count === 1
+    ? "Are you sure you want to delete 1 question?"
+    : `Are you sure you want to delete ${count} questions at once?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  const container = currentContainer;
+  const bulkDeleteBtn = container?.querySelector("#bulkDeleteBtn");
+  if (bulkDeleteBtn) {
+    bulkDeleteBtn.disabled = true;
+    bulkDeleteBtn.textContent = `Deleting ${count}...`;
+  }
+
+  try {
+    const idsToDelete = Array.from(selectedQuestionIds);
+    // Firestore writeBatch has a 500 operation limit per batch
+    const BATCH_SIZE = 450;
+    for (let i = 0; i < idsToDelete.length; i += BATCH_SIZE) {
+      const chunk = idsToDelete.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
+      chunk.forEach((id) => {
+        batch.delete(doc(db, "questions", id));
+      });
+      await batch.commit();
+    }
+
+    if (currentContainer !== container || !container.isConnected) return;
+
+    if (idsToDelete.includes(editingQuestionId)) {
+      exitEditMode();
+    }
+
+    selectedQuestionIds.clear();
+    await loadQuestionsForQuiz(currentQuizId);
+    renderQuestionList();
+  } catch (err) {
+    console.error("Bulk delete failed:", err);
+    alert("An error occurred while deleting selected questions. Check your connection.");
+    if (currentContainer === container && container.isConnected) {
+      renderQuestionList();
+    }
+  }
+}
+
 function renderEmptyState(message) {
   return `
     <div class="question-empty-state">
@@ -728,6 +864,7 @@ function renderQuestionCard(q) {
   const weekLabel = quiz ? `Week ${quiz.week}` : "";
   const quizTitle = quiz ? quiz.title : "Unknown Quiz";
   const letters = ["A", "B", "C", "D"];
+  const isSelected = selectedQuestionIds.has(q.id);
 
   const optionsHtml = q.options
     .map((opt, index) => {
@@ -747,9 +884,18 @@ function renderQuestionCard(q) {
     : "";
 
   return `
-    <div class="question-card" data-id="${q.id}">
+    <div class="question-card${isSelected ? " is-selected" : ""}" data-id="${q.id}">
       <div class="question-card-top">
-        <span class="badge badge-subject">${q.subjectName}</span>
+        <div class="question-select-wrap">
+          <input
+            type="checkbox"
+            class="question-checkbox"
+            data-select-id="${q.id}"
+            ${isSelected ? "checked" : ""}
+            aria-label="Select question"
+          />
+          <span class="badge badge-subject">${q.subjectName}</span>
+        </div>
         <span class="badge badge-quiz">${weekLabel} · ${quizTitle}</span>
       </div>
 
@@ -778,6 +924,19 @@ function attachQuestionListEvents(list) {
   list.querySelectorAll("[data-action]").forEach((btn) => {
     btn.addEventListener("click", () => {
       handleQuestionAction(btn.dataset.action, btn.dataset.id);
+    });
+  });
+
+  list.querySelectorAll(".question-checkbox").forEach((cb) => {
+    cb.addEventListener("change", (e) => {
+      const id = cb.dataset.selectId;
+      if (!id) return;
+      if (cb.checked) {
+        selectedQuestionIds.add(id);
+      } else {
+        selectedQuestionIds.delete(id);
+      }
+      renderQuestionList();
     });
   });
 }

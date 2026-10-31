@@ -1,247 +1,257 @@
 [
   {
-    "question": "Which of the following best defines culture?",
+    "question": "Which sentence correctly contains an object complement?",
     "image": "",
     "options": [
-      "The biological inheritance of a people",
-      "The total way of life of a people, including their beliefs, values and practices",
-      "The natural environment of a society",
-      "The political system of a state"
+      "She called her dog.",
+      "They painted the house blue.",
+      "He slept peacefully.",
+      "We went to the park."
     ],
     "answer": 1
   },
   {
-    "question": "Which of the following is an example of material culture?",
+    "question": "Choose the correct antonym of 'obfuscate':",
     "image": "",
-    "options": [
-      "Religious beliefs",
-      "Value systems",
-      "Traditional textiles and pottery",
-      "Marriage customs"
-    ],
-    "answer": 2
-  },
-  {
-    "question": "Beliefs, values, norms and language are collectively classified as",
-    "image": "",
-    "options": [
-      "Non-material culture",
-      "Material culture",
-      "Mechanical culture",
-      "Fossil culture"
-    ],
+    "options": ["Illuminate", "Confuse", "Darken", "Blur"],
     "answer": 0
   },
   {
-    "question": "The process by which culture is transmitted from one generation to the next is known as",
+    "question": "Complete the collective noun: 'A ___ of pigs.'",
     "image": "",
-    "options": ["Diffusion", "Assimilation", "Acculturation", "Enculturation"],
+    "options": ["swine", "herd", "Ariel", "none of the above"],
+    "answer": 1
+  },
+  {
+    "question": "Identify the object complement in the sentence: 'The committee elected John chairman.'",
+    "image": "",
+    "options": ["The committee", "elected", "John", "chairman"],
     "answer": 3
   },
   {
-    "question": "Which term describes the stage of social development characterized by cities, writing and advanced technology?",
+    "question": "What type of word formation process is used in the sentence: 'I house my friend for nine years'?",
     "image": "",
-    "options": ["Civilization", "Barbarism", "Primitivism", "Nomadism"],
-    "answer": 1
-  },
-  {
-    "question": "The process by which a society adopts the cultural traits of another through sustained contact is called",
-    "image": "",
-    "options": [
-      "Enculturation",
-      "Acculturation",
-      "Ethnocentrism",
-      "Segregation"
-    ],
+    "options": ["Affixation", "Blending", "Conversion", "Compounding"],
     "answer": 2
   },
   {
-    "question": "According to the Bayajida legend, the founder of the Hausa state of Daura won the hand of Queen Daurama after he",
+    "question": "Choose the correct sentence using a possessive pronoun:",
     "image": "",
     "options": [
-      "Killed the snake (Sarki) that prevented the people from drawing water at the well",
-      "Defeated the armies of Kanem-Bornu",
-      "Built the city walls of Kano",
-      "Introduced Islam to the Hausa states"
-    ],
-    "answer": 0
-  },
-  {
-    "question": "The seven legitimate Hausa states (Hausa Bakwai) trace their origin to",
-    "image": "",
-    "options": [
-      "Oduduwa of Ile-Ife",
-      "Mai Idris Alooma of Bornu",
-      "Queen Amina of Zazzau",
-      "Bawo, son of Bayajida and Queen Daurama"
-    ],
-    "answer": 3
-  },
-  {
-    "question": "In traditional Hausa society, Auren Budurwa refers to marriage with",
-    "image": "",
-    "options": [
-      "A widow",
-      "A virgin (first-time bride)",
-      "A divorced woman only",
-      "A woman from another ethnic group"
+      "That car is her.",
+      "That car is hers.",
+      "That car is she.",
+      "That car is her's."
     ],
     "answer": 1
   },
   {
-    "question": "In Hausa culture, the term Bazawara is used to describe",
+    "question": "What is the opposite of 'pernicious'?",
     "image": "",
-    "options": [
-      "A young girl betrothed at birth",
-      "The bride price paid by the groom",
-      "A widow or divorced woman who remarries",
-      "The eldest wife in a polygamous home"
-    ],
-    "answer": 2
-  },
-  {
-    "question": "The Fulani people are best described as",
-    "image": "",
-    "options": [
-      "Pastoral nomads whose life revolves around cattle rearing",
-      "Urban merchants of the forest zone",
-      "Fishermen of the Niger Delta",
-      "Terraced farmers of the Jos Plateau"
-    ],
+    "options": ["Harmless", "Deadly", "Malicious", "Toxic"],
     "answer": 0
   },
   {
-    "question": "The Sokoto Caliphate was established following the jihad declared in 1804 by",
+    "question": "Which word contains a short monophthong?",
+    "image": "",
+    "options": ["Sheep", "Sun", "Boat", "Time"],
+    "answer": 1
+  },
+  {
+    "question": "Putting two words together but parts of the two words have been removed is known as",
+    "image": "",
+    "options": ["blending", "clipping", "coining", "both A and B"],
+    "answer": 0
+  },
+  {
+    "question": "What is the sentence pattern of this sentence? 'The cake smells delicious.'",
+    "image": "",
+    "options": ["S-V-O", "S-V-A", "S-V-C", "S-V-IO-DO"],
+    "answer": 2
+  },
+  {
+    "question": "Select the best synonym for 'solitary' in this sentence: 'He lived a ___ lifestyle, away from the hustle of the city.'",
+    "image": "",
+    "options": ["lonely", "social", "lively", "abundant"],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following words does NOT contain a diphthong?",
+    "image": "",
+    "options": ["Toy", "Face", "Sun", "Coin"],
+    "answer": 2
+  },
+  {
+    "question": "Which diphthong is present in the word 'night'?",
+    "image": "",
+    "options": ["/aɪ/", "/eɪ/", "/oʊ/", "/ɔɪ/"],
+    "answer": 0
+  },
+  {
+    "question": "What is the correct plural form of 'basis'?",
+    "image": "",
+    "options": ["Basises", "Basis'", "Bases", "Basis"],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following words contains only monophthongs?",
+    "image": "",
+    "options": ["Goat", "Beat", "Coin", "Night"],
+    "answer": 1
+  },
+  {
+    "question": "The idiom 'to hit the books' means",
     "image": "",
     "options": [
-      "Muhammadu Bello",
-      "Alimi of Ilorin",
-      "Yakubu of Bauchi",
-      "Usman dan Fodio"
+      "to rest from study",
+      "to tear up one's books",
+      "to throw books away",
+      "to study hard"
     ],
     "answer": 3
   },
   {
-    "question": "The traditional language of the Fulani people is called",
+    "question": "The idiom 'to break the ice' means",
     "image": "",
-    "options": ["Hausa", "Fulfulde", "Kanuri", "Tiv"],
-    "answer": 1
-  },
-  {
-    "question": "In Yoruba tradition, the progenitor of the Yoruba people and the first king of Ile-Ife was",
-    "image": "",
-    "options": ["Oranmiyan", "Sango", "Oduduwa", "Obatala"],
-    "answer": 2
-  },
-  {
-    "question": "When Benin requested a king from Ile-Ife, the Yoruba prince sent to rule over Benin was",
-    "image": "",
-    "options": ["Oranmiyan", "Oduduwa", "Sango", "Ajaka"],
+    "options": [
+      "to do something that eases tension and starts conversation",
+      "to break something valuable",
+      "to go ice-skating",
+      "to end a friendship"
+    ],
     "answer": 0
   },
   {
-    "question": "The Oba dynasty of Benin was founded by",
+    "question": "The idiom 'to spill the beans' means",
     "image": "",
     "options": [
-      "Ewuare the Great",
-      "Ozolua",
-      "Esigie",
-      "Eweka, son of Oranmiyan"
+      "to cook a meal",
+      "to waste food",
+      "to reveal a secret",
+      "to drop something"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "The idiom 'to call it a day' means",
+    "image": "",
+    "options": [
+      "to name a special day",
+      "to stop working and end what one is doing for that day",
+      "to celebrate an occasion",
+      "to make a telephone call"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "The idiom 'to be in hot water' means",
+    "image": "",
+    "options": [
+      "to be taking a bath",
+      "to be feeling cold",
+      "to be very angry",
+      "to be in trouble"
     ],
     "answer": 3
   },
   {
-    "question": "Western education contributed to the rise of Nigerian nationalism mainly because it",
+    "question": "The idiom 'to cut corners' means",
     "image": "",
     "options": [
-      "Restricted trade among the ethnic groups",
-      "Produced educated elites who criticized colonial rule and mobilized the people",
-      "Encouraged Nigerians to fully support the colonial government",
-      "Prevented the formation of political parties"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "The famous bronzes and ivory works associated with the ancient kingdom of Benin demonstrate",
-    "image": "",
-    "options": [
-      "The absence of skilled craftsmanship in Africa",
-      "That Benin had no organized government",
-      "A high level of artistic and technological civilization",
-      "That Benin was isolated from its neighbours"
+      "to turn around a corner",
+      "to run very fast",
+      "to do something in the easiest or cheapest way, skipping proper steps",
+      "to cut paper into pieces"
     ],
     "answer": 2
   },
   {
-    "question": "In 1851, the British naval expedition against Lagos was aimed at",
+    "question": "Identify the subject complement in the sentence: 'The teacher seems angry today.'",
     "image": "",
-    "options": [
-      "Ending the slave trade and installing Oba Akitoye in place of Kosoko",
-      "Annexing Lagos as a colony immediately",
-      "Introducing cocoa farming in the interior",
-      "Building a railway to the North"
-    ],
-    "answer": 0
+    "options": ["The teacher", "seems", "angry", "today"],
+    "answer": 2
   },
   {
-    "question": "Lagos became a British Crown Colony in",
+    "question": "What is the sentence pattern of this sentence? 'She gave me a gift.'",
     "image": "",
-    "options": ["1900", "1914", "1851", "1861"],
+    "options": ["S-V-O", "S-V-C", "S-V-A", "S-V-IO-DO"],
     "answer": 3
   },
   {
-    "question": "Indirect rule is a system in which the British colonial administration governed the people",
+    "question": "The word formation process that produced 'TV' from 'television' is",
     "image": "",
-    "options": [
-      "Through elected African parliaments",
-      "Through traditional rulers and existing native institutions",
-      "Through European district officers only",
-      "Directly through the British monarch"
-    ],
+    "options": ["blending", "conversion", "compounding", "clipping"],
+    "answer": 3
+  },
+  {
+    "question": "The word 'smog', formed from 'smoke' and 'fog', is an example of",
+    "image": "",
+    "options": ["clipping", "conversion", "blending", "affixation"],
+    "answer": 2
+  },
+  {
+    "question": "The word 'unhappiness' is formed through the process of",
+    "image": "",
+    "options": ["affixation", "blending", "clipping", "conversion"],
+    "answer": 0
+  },
+  {
+    "question": "Complete the collective noun: 'A ___ of sheep.'",
+    "image": "",
+    "options": ["school", "flock", "swarm", "pack"],
     "answer": 1
   },
   {
-    "question": "The Richards Constitution of 1946 is notable for introducing",
+    "question": "What is the correct plural form of 'criterion'?",
+    "image": "",
+    "options": ["Criterions", "Criterias", "Criterion", "Criteria"],
+    "answer": 3
+  },
+  {
+    "question": "Choose the best synonym for 'candid':",
+    "image": "",
+    "options": ["secretive", "frank", "rude", "shy"],
+    "answer": 1
+  },
+  {
+    "question": "Choose the correct antonym of 'transparent':",
+    "image": "",
+    "options": ["clear", "visible", "bright", "opaque"],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following words contains a diphthong?",
+    "image": "",
+    "options": ["sheep", "ship", "house", "cup"],
+    "answer": 2
+  },
+  {
+    "question": "Which of the following words is stressed on the first syllable?",
+    "image": "",
+    "options": ["table", "banana", "succeed", "except"],
+    "answer": 0
+  },
+  {
+    "question": "They haven't arrived yet, ___?",
+    "image": "",
+    "options": ["haven't they", "have they", "didn't they", "aren't they"],
+    "answer": 1
+  },
+  {
+    "question": "The idiom 'to bury the hatchet' means",
     "image": "",
     "options": [
-      "Universal adult suffrage",
-      "Full federalism in Nigeria",
-      "Regionalism, dividing Nigeria into three regions",
-      "Republican government"
+      "to hide a weapon",
+      "to dig a grave",
+      "to make peace and end a quarrel",
+      "to start a fight"
     ],
     "answer": 2
   },
   {
-    "question": "A major feature of the Macpherson Constitution of 1951 was",
+    "question": "The word 'diagnosis' belongs to the register of",
     "image": "",
-    "options": [
-      "The inclusion of elected African representatives in the legislative councils",
-      "The creation of twelve states",
-      "The abolition of traditional rulers",
-      "The declaration of Nigeria as a republic"
-    ],
-    "answer": 0
-  },
-  {
-    "question": "The 1963 Constitution is significant in Nigerian history because it",
-    "image": "",
-    "options": [
-      "Made Nigeria a republic with a Nigerian Head of State",
-      "Introduced indirect rule",
-      "Made Nigeria a one-party state",
-      "Abolished the regions"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "According to Roscoe Pound, the primary function of law in society is",
-    "image": "",
-    "options": [
-      "To protect the privileges of the ruling class",
-      "To punish criminals only",
-      "To serve as an instrument of social control that balances conflicting interests",
-      "To preserve colonial authority"
-    ],
+    "options": ["law", "farming", "medicine", "music"],
     "answer": 2
   }
 ]
