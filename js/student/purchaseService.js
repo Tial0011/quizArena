@@ -1,5 +1,4 @@
-import { db } from "../firebase/config.js";
-import { app } from "../firebase/config.js";
+import { auth, db } from "../firebase/config.js";
 import {
   collection,
   addDoc,
@@ -12,10 +11,6 @@ import {
   serverTimestamp,
   arrayUnion,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {
-  getFunctions,
-  httpsCallable,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 /* =========================================================
    PURCHASE SERVICE
@@ -33,7 +28,7 @@ import {
    longer called by the Marketplace UI.
 
    Real payments now go through confirmFlutterwavePurchase(),
-   which calls the verifyFlutterwavePurchase Cloud Function.
+   which calls the protected Netlify payment function.
    That function independently re-verifies the transaction
    with Flutterwave's servers and does the equivalent
    Firestore writes (same "purchases" collection, same
@@ -41,21 +36,30 @@ import {
    the app needs to change.
 ========================================================= */
 
-const functions = getFunctions(app);
 const WELCOME_QUIZ_ID = "odlJoarhn2atl14EpZq6";
-const verifyFlutterwavePurchaseCallable = httpsCallable(
-  functions,
-  "verifyFlutterwavePurchase",
-);
-const quoteFlutterwavePurchaseCallable = httpsCallable(
-  functions,
-  "quoteFlutterwavePurchase",
-);
+
+async function callPaymentFunction(action, payload) {
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error("Please sign in again before checking out.");
+
+  const response = await fetch("/.netlify/functions/payment", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(data?.message || "Checkout is temporarily unavailable. Please try again.");
+  }
+  return data;
+}
 
 export async function quoteFlutterwavePurchase(userId, quizIds) {
   try {
-    const result = await quoteFlutterwavePurchaseCallable({ userId, quizIds });
-    return result.data;
+    return await callPaymentFunction("quote", { userId, quizIds });
   } catch (err) {
     console.error("quoteFlutterwavePurchase failed:", err);
     return {
@@ -168,8 +172,8 @@ export async function purchaseQuiz(userId, quizId) {
 }
 
 /**
- * Confirms a Flutterwave payment by calling the verifyFlutterwavePurchase
- * Cloud Function, which re-checks the transaction directly with
+ * Confirms a Flutterwave payment through the Netlify Function, which
+ * re-checks the transaction directly with
  * Flutterwave's servers before writing anything to Firestore.
  *
  * This is the ONLY way a Flutterwave purchase should be finalized —
@@ -189,14 +193,12 @@ export async function confirmFlutterwavePurchase(
     return { success: false, message: "The welcome quiz is free and cannot be purchased." };
   }
   try {
-    const result = await verifyFlutterwavePurchaseCallable({
+    return await callPaymentFunction("verify", {
       userId,
       quizIds: ids,
-      quizId: ids[0], // kept so an older deployed function still understands single buys
       txRef,
       transactionId,
     });
-    return result.data;
   } catch (err) {
     console.error("confirmFlutterwavePurchase failed:", err);
     return {

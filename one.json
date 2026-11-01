@@ -1,257 +1,252 @@
 [
   {
-    "question": "Which sentence correctly contains an object complement?",
+    "question": "Volume is given by V = At³ + Bt (V in m³, t in s). What are the dimensions of A and B?",
     "image": "",
     "options": [
-      "She called her dog.",
-      "They painted the house blue.",
-      "He slept peacefully.",
-      "We went to the park."
+      "[L³T⁻³] and [L³T⁻¹]",
+      "[L²T⁻³] and [L³T⁻²]",
+      "[L³T⁻³] and [L³T¹]",
+      "[L³T³] and [L³T⁻¹]"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "For x = pt² − qt³, what are the dimensions of p and q?",
+    "image": "",
+    "options": [
+      "[LT⁻²] and [LT⁻³]",
+      "[L²T⁻²] and [L³T⁻³]",
+      "[LT²] and [LT³]",
+      "[LT⁻²] and [LT⁻³] squared"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "If [P × Q] = ML²T⁻² and [P/Q] = MT⁻², then P and Q are:",
+    "image": "",
+    "options": [
+      "Force and velocity",
+      "Force and displacement",
+      "Work and velocity",
+      "Momentum and displacement"
     ],
     "answer": 1
   },
   {
-    "question": "Choose the correct antonym of 'obfuscate':",
+    "question": "If P = Q/T², where Q is energy and T is period, the dimensions of P are:",
     "image": "",
-    "options": ["Illuminate", "Confuse", "Darken", "Blur"],
-    "answer": 0
-  },
-  {
-    "question": "Complete the collective noun: 'A ___ of pigs.'",
-    "image": "",
-    "options": ["swine", "herd", "Ariel", "none of the above"],
+    "options": ["[ML²T⁻²]", "[ML²T⁻⁴]", "[ML²T⁴]", "None of the above"],
     "answer": 1
   },
   {
-    "question": "Identify the object complement in the sentence: 'The committee elected John chairman.'",
+    "question": "The SI unit of force is:",
     "image": "",
-    "options": ["The committee", "elected", "John", "chairman"],
+    "options": ["Joule", "Newton", "Dyne", "Pound"],
+    "answer": 1
+  },
+  {
+    "question": "The dimensional formula for energy is:",
+    "image": "",
+    "options": ["[MLT⁻²]", "[ML²T⁻²]", "[ML²T⁻³]", "[ML⁻²T²]"],
+    "answer": 1
+  },
+  {
+    "question": "What is the dimension of resistance?",
+    "image": "",
+    "options": ["ML²T⁻²I⁻²", "ML²T⁻³I⁻²", "MLT⁻²I⁻¹", "M²LT⁻³I⁻²"],
+    "answer": 1
+  },
+  {
+    "question": "What is the dimension of electric flux?",
+    "image": "",
+    "options": ["ML²T⁻²I⁻¹", "ML³T⁻³I⁻¹", "MLT⁻²I⁻¹", "M²L²T⁻²I⁻²"],
+    "answer": 1
+  },
+  {
+    "question": "How many significant figures are in 0.00450?",
+    "image": "",
+    "options": ["2", "3", "4", "5"],
+    "answer": 1
+  },
+  {
+    "question": "Which of the following is dimensionless?",
+    "image": "",
+    "options": ["Angular displacement", "Pressure", "Density", "Force"],
+    "answer": 0
+  },
+  {
+    "question": "Convert 13 kg·cm² to g·m².",
+    "image": "",
+    "options": ["0.13 g·m²", "1.3 g·m²", "13 g·m²", "130 g·m²"],
+    "answer": 1
+  },
+  {
+    "question": "Convert 13 g/cm³ to kg/m³.",
+    "image": "",
+    "options": ["130 kg/m³", "1300 kg/m³", "13000 kg/m³", "130000 kg/m³"],
+    "answer": 2
+  },
+  {
+    "question": "If F = KρˣVʸAᶻ, where ρ is density, V is velocity and A is cross-sectional area, what are the values of x, y and z?",
+    "image": "",
+    "options": ["1, 2, 1", "2, 1, 1", "1, 1, 2", "2, 2, 1"],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following is a set of base SI units?",
+    "image": "",
+    "options": [
+      "Metre, kilogram, second",
+      "Newton, joule, watt",
+      "Both of the above",
+      "None of the above"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following is NOT a base SI unit?",
+    "image": "",
+    "options": ["Metre", "Candela", "Newton", "Kelvin"],
+    "answer": 2
+  },
+  {
+    "question": "Which instrument is most suitable for precise length measurement?",
+    "image": "",
+    "options": [
+      "Meter rule",
+      "Vernier caliper",
+      "Measuring tape",
+      "Spring balance"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "The dimension of power is:",
+    "image": "",
+    "options": ["[MLT⁻²]", "[ML²T⁻²]", "[ML²T⁻³]", "[ML³T⁻³]"],
+    "answer": 2
+  },
+  {
+    "question": "The dimension of momentum is:",
+    "image": "",
+    "options": ["[MLT⁻²]", "[ML²T⁻²]", "[ML⁻¹T]", "[MLT⁻¹]"],
     "answer": 3
   },
   {
-    "question": "What type of word formation process is used in the sentence: 'I house my friend for nine years'?",
+    "question": "Impulse has the same dimension as:",
     "image": "",
-    "options": ["Affixation", "Blending", "Conversion", "Compounding"],
-    "answer": 2
-  },
-  {
-    "question": "Choose the correct sentence using a possessive pronoun:",
-    "image": "",
-    "options": [
-      "That car is her.",
-      "That car is hers.",
-      "That car is she.",
-      "That car is her's."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "What is the opposite of 'pernicious'?",
-    "image": "",
-    "options": ["Harmless", "Deadly", "Malicious", "Toxic"],
-    "answer": 0
-  },
-  {
-    "question": "Which word contains a short monophthong?",
-    "image": "",
-    "options": ["Sheep", "Sun", "Boat", "Time"],
-    "answer": 1
-  },
-  {
-    "question": "Putting two words together but parts of the two words have been removed is known as",
-    "image": "",
-    "options": ["blending", "clipping", "coining", "both A and B"],
-    "answer": 0
-  },
-  {
-    "question": "What is the sentence pattern of this sentence? 'The cake smells delicious.'",
-    "image": "",
-    "options": ["S-V-O", "S-V-A", "S-V-C", "S-V-IO-DO"],
-    "answer": 2
-  },
-  {
-    "question": "Select the best synonym for 'solitary' in this sentence: 'He lived a ___ lifestyle, away from the hustle of the city.'",
-    "image": "",
-    "options": ["lonely", "social", "lively", "abundant"],
-    "answer": 0
-  },
-  {
-    "question": "Which of the following words does NOT contain a diphthong?",
-    "image": "",
-    "options": ["Toy", "Face", "Sun", "Coin"],
-    "answer": 2
-  },
-  {
-    "question": "Which diphthong is present in the word 'night'?",
-    "image": "",
-    "options": ["/aɪ/", "/eɪ/", "/oʊ/", "/ɔɪ/"],
-    "answer": 0
-  },
-  {
-    "question": "What is the correct plural form of 'basis'?",
-    "image": "",
-    "options": ["Basises", "Basis'", "Bases", "Basis"],
-    "answer": 2
-  },
-  {
-    "question": "Which of the following words contains only monophthongs?",
-    "image": "",
-    "options": ["Goat", "Beat", "Coin", "Night"],
-    "answer": 1
-  },
-  {
-    "question": "The idiom 'to hit the books' means",
-    "image": "",
-    "options": [
-      "to rest from study",
-      "to tear up one's books",
-      "to throw books away",
-      "to study hard"
-    ],
+    "options": ["force", "energy", "power", "momentum"],
     "answer": 3
   },
   {
-    "question": "The idiom 'to break the ice' means",
+    "question": "The dimension of the spring constant k in F = kx is:",
+    "image": "",
+    "options": ["[MT⁻²]", "[MLT⁻²]", "[MT⁻¹]", "[ML⁻¹T⁻²]"],
+    "answer": 0
+  },
+  {
+    "question": "The dimension of electric charge (Q = It) is:",
+    "image": "",
+    "options": ["[IT⁻¹]", "[IT]", "[I²T]", "[I⁻¹T]"],
+    "answer": 1
+  },
+  {
+    "question": "The dimension of electric potential difference (V = W/Q) is:",
+    "image": "",
+    "options": ["[ML²T⁻³I⁻¹]", "[ML²T⁻²I⁻¹]", "[MLT⁻³I⁻¹]", "[ML²T⁻³I⁻²]"],
+    "answer": 0
+  },
+  {
+    "question": "Which of the following physical quantities has the dimension [ML²T⁻²]?",
+    "image": "",
+    "options": ["Force", "Power", "Work", "Pressure"],
+    "answer": 2
+  },
+  {
+    "question": "The length of a square is measured with an error of 2%. The percentage error in the calculated area is:",
+    "image": "",
+    "options": ["2%", "6%", "4%", "8%"],
+    "answer": 2
+  },
+  {
+    "question": "A length is measured as 25.0 cm with an absolute error of 0.1 cm. The relative (percentage) error is:",
+    "image": "",
+    "options": ["0.4%", "4%", "2.5%", "0.04%"],
+    "answer": 0
+  },
+  {
+    "question": "The number of significant figures in 2.010 × 10³ is:",
+    "image": "",
+    "options": ["2", "3", "4", "5"],
+    "answer": 2
+  },
+  {
+    "question": "The number of significant figures in 6.02 × 10²³ is:",
+    "image": "",
+    "options": ["2", "4", "5", "3"],
+    "answer": 3
+  },
+  {
+    "question": "Which of the following instruments is the most precise for length measurement?",
     "image": "",
     "options": [
-      "to do something that eases tension and starts conversation",
-      "to break something valuable",
-      "to go ice-skating",
-      "to end a friendship"
+      "Metre rule",
+      "Vernier caliper",
+      "Micrometer screw gauge",
+      "Measuring tape"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "Convert 5 m³ to cm³.",
+    "image": "",
+    "options": ["5 × 10⁴ cm³", "5 × 10⁵ cm³", "5 × 10³ cm³", "5 × 10⁶ cm³"],
+    "answer": 3
+  },
+  {
+    "question": "Convert 20 g·cm² to kg·m².",
+    "image": "",
+    "options": [
+      "2 × 10⁻⁶ kg·m²",
+      "2 × 10⁻⁴ kg·m²",
+      "2 × 10⁻⁵ kg·m²",
+      "2 × 10⁻³ kg·m²"
     ],
     "answer": 0
   },
   {
-    "question": "The idiom 'to spill the beans' means",
+    "question": "The dimension of the universal gravitational constant G is:",
     "image": "",
-    "options": [
-      "to cook a meal",
-      "to waste food",
-      "to reveal a secret",
-      "to drop something"
-    ],
-    "answer": 2
-  },
-  {
-    "question": "The idiom 'to call it a day' means",
-    "image": "",
-    "options": [
-      "to name a special day",
-      "to stop working and end what one is doing for that day",
-      "to celebrate an occasion",
-      "to make a telephone call"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "The idiom 'to be in hot water' means",
-    "image": "",
-    "options": [
-      "to be taking a bath",
-      "to be feeling cold",
-      "to be very angry",
-      "to be in trouble"
-    ],
-    "answer": 3
-  },
-  {
-    "question": "The idiom 'to cut corners' means",
-    "image": "",
-    "options": [
-      "to turn around a corner",
-      "to run very fast",
-      "to do something in the easiest or cheapest way, skipping proper steps",
-      "to cut paper into pieces"
-    ],
-    "answer": 2
-  },
-  {
-    "question": "Identify the subject complement in the sentence: 'The teacher seems angry today.'",
-    "image": "",
-    "options": ["The teacher", "seems", "angry", "today"],
-    "answer": 2
-  },
-  {
-    "question": "What is the sentence pattern of this sentence? 'She gave me a gift.'",
-    "image": "",
-    "options": ["S-V-O", "S-V-C", "S-V-A", "S-V-IO-DO"],
-    "answer": 3
-  },
-  {
-    "question": "The word formation process that produced 'TV' from 'television' is",
-    "image": "",
-    "options": ["blending", "conversion", "compounding", "clipping"],
-    "answer": 3
-  },
-  {
-    "question": "The word 'smog', formed from 'smoke' and 'fog', is an example of",
-    "image": "",
-    "options": ["clipping", "conversion", "blending", "affixation"],
-    "answer": 2
-  },
-  {
-    "question": "The word 'unhappiness' is formed through the process of",
-    "image": "",
-    "options": ["affixation", "blending", "clipping", "conversion"],
+    "options": ["[M⁻¹L³T⁻²]", "[ML³T⁻²]", "[M⁻¹L²T⁻²]", "[MLT⁻²]"],
     "answer": 0
   },
   {
-    "question": "Complete the collective noun: 'A ___ of sheep.'",
-    "image": "",
-    "options": ["school", "flock", "swarm", "pack"],
-    "answer": 1
-  },
-  {
-    "question": "What is the correct plural form of 'criterion'?",
-    "image": "",
-    "options": ["Criterions", "Criterias", "Criterion", "Criteria"],
-    "answer": 3
-  },
-  {
-    "question": "Choose the best synonym for 'candid':",
-    "image": "",
-    "options": ["secretive", "frank", "rude", "shy"],
-    "answer": 1
-  },
-  {
-    "question": "Choose the correct antonym of 'transparent':",
-    "image": "",
-    "options": ["clear", "visible", "bright", "opaque"],
-    "answer": 3
-  },
-  {
-    "question": "Which of the following words contains a diphthong?",
-    "image": "",
-    "options": ["sheep", "ship", "house", "cup"],
-    "answer": 2
-  },
-  {
-    "question": "Which of the following words is stressed on the first syllable?",
-    "image": "",
-    "options": ["table", "banana", "succeed", "except"],
-    "answer": 0
-  },
-  {
-    "question": "They haven't arrived yet, ___?",
-    "image": "",
-    "options": ["haven't they", "have they", "didn't they", "aren't they"],
-    "answer": 1
-  },
-  {
-    "question": "The idiom 'to bury the hatchet' means",
+    "question": "Which of the following pairs of quantities have the same dimensions?",
     "image": "",
     "options": [
-      "to hide a weapon",
-      "to dig a grave",
-      "to make peace and end a quarrel",
-      "to start a fight"
+      "Force and power",
+      "Pressure and force",
+      "Work and torque",
+      "Momentum and energy"
     ],
     "answer": 2
   },
   {
-    "question": "The word 'diagnosis' belongs to the register of",
+    "question": "The number of base SI units is:",
     "image": "",
-    "options": ["law", "farming", "medicine", "music"],
+    "options": ["5", "6", "7", "8"],
     "answer": 2
+  },
+  {
+    "question": "Which of the following equations is dimensionally correct?",
+    "image": "",
+    "options": ["v = u + at²", "v² = u² + as", "s = ut + at", "v = u + at"],
+    "answer": 3
+  },
+  {
+    "question": "The dimension of magnetic flux density B (from F = BIL) is:",
+    "image": "",
+    "options": ["[MT⁻¹I⁻¹]", "[MT⁻²I⁻²]", "[MT⁻³I⁻¹]", "[MT⁻²I⁻¹]"],
+    "answer": 3
   }
 ]
