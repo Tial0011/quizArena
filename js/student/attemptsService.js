@@ -42,8 +42,8 @@ import {
      streak days 10-14   -> 4 quizzes
      streak day 15+      -> 5 quizzes (the cap)
 
-   Change the ladder HERE (and in the matching function in
-   functions/index.js, which the reminder emails/pushes use).
+   Change the ladder HERE (and in the matching Netlify reminder
+   function, which uses the same thresholds).
 ========================================================= */
 export function dailyQuizTarget(streakDay) {
   if (streakDay >= 15) return 5;
@@ -223,7 +223,7 @@ export async function getRecentAttempts(userId, count = 10) {
    whole day passes without meeting the goal it drops to 0.
 
    Days are Africa/Lagos calendar days on BOTH the client and the
-   Cloud Functions, so the app and the reminders always agree on
+   Netlify reminder jobs, so the app and the reminders always agree on
    when "today" starts, whatever the phone's own timezone says.
 
    Students who had a streak before this change are migrated

@@ -1,0 +1,20 @@
+[functions."notification-push"]
+schedule = "* * * * *"
+
+[functions."score-projection"]
+schedule = "*/5 * * * *"
+
+[functions."leaderboard-refresh"]
+schedule = "0 5,11,17,23 * * *"
+
+[functions."score-backfill"]
+schedule = "25 23 * * *"
+
+[functions."streak-reminders-afternoon"]
+schedule = "0 13 * * *"
+
+[functions."streak-reminders-evening"]
+schedule = "0 19 * * *"
+
+[functions."weekly-winners"]
+schedule = "5 23 * * 0"

@@ -20,7 +20,7 @@
    3. PUSH       -- FCM background notifications (moved from
                     firebase-messaging-sw.js, same behaviour).
 
-   Everything else (Firestore, Auth, Cloud Functions, Flutterwave,
+   Everything else (Firestore, Auth, Netlify Functions, Flutterwave,
    Cloudinary) is deliberately NOT touched -- those go straight to the
    network. Firestore has its own offline cache (js/firebase/config.js).
 
@@ -31,7 +31,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "ec45b2725d";
+const PRECACHE_VERSION = "8c641cff19";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",
@@ -78,6 +78,7 @@ const PRECACHE_URLS = [
   "/js/cloudinary/config.js",
   "/js/emailVerificationGate.js",
   "/js/firebase/config.js",
+  "/js/firebase/netlifyFunctions.js",
   "/js/installPrompt.js",
   "/js/main.js",
   "/js/notificationsService.js",
@@ -119,7 +120,6 @@ const PRECACHE_CDN = [
   "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
   "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js",
   "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js",
-  "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js",
   "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js"
 ];
 /* </precache-manifest> */

@@ -6,9 +6,9 @@
    meter (1 / 3 / 5 / 8). Buy a 3-quiz pack and you're a Scholar.
 
    Single source of truth: the Marketplace cart meter and the
-   dashboard title both import this. (functions/index.js keeps a
-   matching copy for the "you ranked up" notification -- change
-   both together.)
+   dashboard title both import this. (The Netlify payment handler
+   keeps a matching copy for the "you ranked up" notification --
+   change both together.)
 ========================================================= */
 export const RANKS = [
   { at: 1, name: "Warm-up Pack", title: "Quiz Arena Rookie", emoji: "🌱" },

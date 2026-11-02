@@ -1010,7 +1010,7 @@ function showPurchaseSuccess(boughtQuizzes) {
  * FLUTTERWAVE PAYMENT FLOW (multi-quiz)
  * 1. One checkout for the summed price of everything in the cart.
  * 2. The client never trusts Flutterwave's callback: it calls the
- *    verifyFlutterwavePurchase Cloud Function, which re-verifies the
+ *    Netlify payment function, which re-verifies the
  *    transaction with Flutterwave and re-adds up the REAL prices itself.
  * 3. Bank transfers often report "pending"; those get polled.
  */

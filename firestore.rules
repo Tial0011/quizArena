@@ -60,8 +60,8 @@ service cloud.firestore {
     }
 
     // ---------- purchases ----------
-    // Created only by the Cloud Function after Flutterwave confirms payment
-    // (the Admin SDK bypasses these rules). Clients can't mint "paid" purchases.
+    // Created only by the trusted payment backend after Flutterwave confirms
+    // payment (the Admin SDK bypasses these rules). Clients can't mint paid purchases.
     match /purchases/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
       allow write: if false;
@@ -82,8 +82,8 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Weekly scores and leaderboard snapshots are backend-only. The callable
-    // returns only the top 15 and the signed-in user's group ranks.
+    // Weekly scores and leaderboard snapshots are backend-only. The leaderboard
+    // endpoint returns only the top 15 and the signed-in user's group ranks.
     match /weeklyChallengeScores/{scoreId} {
       allow read: if false;
       allow write: if false;
@@ -99,7 +99,7 @@ service cloud.firestore {
     }
 
     // Admin reviews weekly winners and records manual payout completion.
-    // Winner records are created by Cloud Functions through the Admin SDK.
+    // Winner records are created by the scheduled backend through the Admin SDK.
     match /weeklyWinners/{weekKey} {
       allow read, update: if isAdmin();
       allow create, delete: if false;
@@ -178,6 +178,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Everything else is Cloud-Function-only.
+    // Everything else is trusted-backend-only.
   }
 }

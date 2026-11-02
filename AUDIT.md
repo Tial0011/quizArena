@@ -38,9 +38,10 @@ All motion respects `prefers-reduced-motion`.
 
 ## Deploy checklist
 1. `node tools/build-sw.mjs` (already run once here)
-2. `firebase deploy --only functions` (multi-quiz verification lives there; deploy it BEFORE the frontend)
-3. Deploy the frontend
-4. Google Search: favicon updates are slow (days to weeks). Speed it up with Search Console > URL Inspection > Request indexing for `https://quizarena.name.ng/` and `/favicon.ico`.
+2. Deploy the site and scheduled functions through Netlify.
+3. Verify payment, push delivery, leaderboard updates, and scheduled jobs.
+4. Delete the old deployed Firebase Functions after Netlify replacements are verified.
+5. Google Search: favicon updates are slow (days to weeks). Speed it up with Search Console > URL Inspection > Request indexing for `https://quizarena.name.ng/` and `/favicon.ico`.
 
 ---
 

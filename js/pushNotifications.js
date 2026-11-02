@@ -21,8 +21,8 @@ import { registerServiceWorker } from "./pwa.js";
    bell) — this file is purely about getting an actual OS/phone-level
    notification delivered: registering the service worker, asking
    permission, and saving the resulting device token onto the
-   student's user doc. The Cloud Function in functions/index.js is
-   what actually sends the push when a notification doc is created —
+   student's user doc. The scheduled Netlify function is what
+   dispatches pushes for new notification documents —
    this file only handles the client's half (getting a token and
    keeping it saved).
 
@@ -32,7 +32,7 @@ import { registerServiceWorker } from "./pwa.js";
       Settings → Cloud Messaging → Web Push certificates).
    2. firebase-messaging-sw.js must be deployed at the site ROOT
       (same level as index.html).
-   3. functions/ must be deployed (firebase deploy --only functions).
+   3. Netlify scheduled functions must be deployed and configured.
 
    Two entry points, deliberately kept separate:
    - initPushNotifications(userId): called on every dashboard load.

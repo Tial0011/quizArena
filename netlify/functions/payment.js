@@ -1,6 +1,6 @@
-const { cert, getApps, initializeApp } = require("firebase-admin/app");
-const { getAuth } = require("firebase-admin/auth");
-const { FieldValue, getFirestore } = require("firebase-admin/firestore");
+const { FieldValue } = require("firebase-admin/firestore");
+const { getFirebaseAdmin, getProjectIdFromToken } = require("../lib/firebaseAdmin");
+const { json } = require("../lib/http");
 
 const WELCOME_QUIZ_ID = "odlJoarhn2atl14EpZq6";
 const RANKS = [
@@ -10,28 +10,13 @@ const RANKS = [
   { at: 8, title: "Quiz Arena Legend", emoji: "👑" },
 ];
 
-function paymentConfig() {
-  const rawServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  const flutterwaveSecret = process.env.FLUTTERWAVE_SECRET_KEY;
-  if (!rawServiceAccount || !flutterwaveSecret) {
-    throw new Error("Payment service is not configured.");
-  }
-  let serviceAccount;
-  try {
-    serviceAccount = JSON.parse(rawServiceAccount);
-  } catch {
-    throw new Error("Payment service is not configured.");
-  }
-  if (!getApps().length) initializeApp({ credential: cert(serviceAccount) });
-  return { db: getFirestore(), flutterwaveSecret };
-}
-
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-    body: JSON.stringify(body),
-  };
+function paymentConfig(projectId) {
+  const secretEnv = projectId === "quizarena-2c75e"
+    ? "FLUTTERWAVE_SECRET_KEY"
+    : "FLUTTERWAVE_SECRET_KEY_STAGING";
+  const flutterwaveSecret = process.env[secretEnv];
+  if (!flutterwaveSecret) throw new Error("Flutterwave is not configured.");
+  return { ...getFirebaseAdmin(projectId), flutterwaveSecret };
 }
 
 function validQuizIds(value) {
@@ -178,11 +163,22 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { success: false, message: "Method not allowed." });
   try {
     const body = JSON.parse(event.body || "{}");
-    const authorization = event.headers.authorization || event.headers.Authorization;
+    const authorization = event.headers?.authorization || event.headers?.Authorization;
     const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
-    const { db, flutterwaveSecret } = paymentConfig();
     if (!token) return json(401, { success: false, message: "Please sign in again." });
-    const decoded = await getAuth().verifyIdToken(token);
+    let projectId;
+    try {
+      projectId = getProjectIdFromToken(token);
+    } catch {
+      return json(401, { success: false, message: "Your session is invalid. Please sign in again." });
+    }
+    const { auth, db, flutterwaveSecret } = paymentConfig(projectId);
+    let decoded;
+    try {
+      decoded = await auth.verifyIdToken(token);
+    } catch {
+      return json(401, { success: false, message: "Your session has expired. Please sign in again." });
+    }
     if (body.userId && body.userId !== decoded.uid) return json(403, { success: false, message: "Not authorized." });
     const quizIds = validQuizIds(body.quizIds);
     const result = body.action === "quote"

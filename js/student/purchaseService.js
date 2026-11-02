@@ -172,7 +172,7 @@ export async function purchaseQuiz(userId, quizId) {
 }
 
 /**
- * Confirms a Flutterwave payment through the Netlify Function, which
+ * Confirms a Flutterwave payment through the Netlify payment function, which
  * re-checks the transaction directly with
  * Flutterwave's servers before writing anything to Firestore.
  *

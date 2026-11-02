@@ -92,8 +92,8 @@ export async function sendNotification({
       createdAt: serverTimestamp(),
       ...(actionType ? { actionType } : {}),
       ...(quizId ? { quizId } : {}),
-      // In-app (bell) entry only. The Cloud Function that sends phone
-      // pushes ignores docs with this flag.
+      // In-app (bell) entry only. The scheduled Netlify push dispatcher
+      // ignores docs with this flag.
       ...(skipPush ? { skipPush: true } : {}),
     });
 

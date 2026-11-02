@@ -1,5 +1,5 @@
 import { pickRandomQuestions } from "../utils/random.js";
-import { app, db } from "../firebase/config.js";
+import { db } from "../firebase/config.js";
 
 import {
   collection,
@@ -7,7 +7,7 @@ import {
   query,
   where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+import { callNetlifyFunction } from "../firebase/netlifyFunctions.js";
 import { registerBackHandler } from "./navigation.js";
 import { renderStudentDashboard } from "./dashboard.js";
 import {
@@ -39,11 +39,6 @@ import { showLoadingOverlay } from "./loadingOverlay.js";
 const CBT_QUESTION_LIMIT = 25;
 const CBT_TIME_LIMIT_SECONDS = 10 * 60; // fixed 10-minute timer
 const WELCOME_QUIZ_ID = "odlJoarhn2atl14EpZq6";
-const getWelcomeQuizQuestions = httpsCallable(
-  getFunctions(app),
-  "getWelcomeQuizQuestions",
-);
-
 let questions = [];
 let answers = [];
 let currentQuestion = 0;
@@ -84,7 +79,7 @@ export async function startPurchasedQuiz(userData, quizId, quizTitle = "Quiz") {
   const allQuestions = [];
   try {
     if (quizId === WELCOME_QUIZ_ID) {
-      const result = await getWelcomeQuizQuestions();
+      const result = await callNetlifyFunction("welcome-quiz");
       allQuestions.push(...(result.data.questions || []));
     } else {
       const q = query(collection(db, "questions"), where("quizId", "==", quizId));

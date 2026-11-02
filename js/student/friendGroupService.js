@@ -1,5 +1,5 @@
-import { app, db } from "../firebase/config.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+import { db } from "../firebase/config.js";
+import { callNetlifyFunction } from "../firebase/netlifyFunctions.js";
 import {
   collection,
   addDoc,
@@ -43,10 +43,6 @@ const MAX_GROUPS_OWNED = 1;
 const MAX_GROUPS_JOINED = 3;
 const MAX_GROUP_MEMBERS = 5;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 (avoid ambiguity)
-const getGlobalChallengeLeaderboardCallable = httpsCallable(
-  getFunctions(app),
-  "getGlobalChallengeLeaderboard",
-);
 const LEADERBOARD_CACHE_TTL_MS = 60 * 1000;
 const GROUP_DETAIL_CACHE_TTL_MS = 60 * 1000;
 const MY_GROUPS_CACHE_TTL_MS = 60 * 1000;
@@ -429,7 +425,9 @@ export async function getGlobalChallengeLeaderboard(limitCount = 15, rankUserIds
   const cached = leaderboardCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
-  const response = await getGlobalChallengeLeaderboardCallable({ limitCount: Math.min(15, limitCount) });
+  const response = await callNetlifyFunction("leaderboard", {
+    limitCount: Math.min(15, limitCount),
+  });
   const value = { ...response.data, weekLabel };
   leaderboardCache.set(cacheKey, { value, expiresAt: Date.now() + LEADERBOARD_CACHE_TTL_MS });
   for (const [key, entry] of leaderboardCache) {

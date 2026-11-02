@@ -1,17 +1,18 @@
-const functions = require("firebase-functions");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
 admin.initializeApp();
 const db = admin.firestore();
+const FLUTTERWAVE_SECRET_KEY = defineSecret("FLUTTERWAVE_SECRET_KEY");
 
 const WELCOME_QUIZ_ID = "odlJoarhn2atl14EpZq6";
 
 async function quoteFlutterwaveFee(amount, paymentType) {
-  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  const secretKey = FLUTTERWAVE_SECRET_KEY.value();
   if (!secretKey) throw new Error("Flutterwave secret key is not configured.");
   if (!Number.isInteger(amount)) {
     throw new Error("Flutterwave v3 fee quotes require a whole-naira amount.");
@@ -364,7 +365,9 @@ function rankFor(count) {
 /* =========================================================
    PAYMENTS — Flutterwave purchase verification
 ========================================================= */
-exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
+exports.verifyFlutterwavePurchase = onCall(
+  { secrets: [FLUTTERWAVE_SECRET_KEY] },
+  async (request) => {
   const { userId, txRef, transactionId } = request.data;
 
   // One payment can now unlock several quizzes. `quizId` is still
@@ -376,27 +379,27 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
 
   // Must be logged in, and can only confirm a purchase for themselves.
   if (!request.auth || request.auth.uid !== userId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Not authorized.",
     );
   }
 
   if (quizIds.length === 0 || quizIds.length > 50 || !txRef || !transactionId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Missing required fields.",
     );
   }
   if (quizIds.includes(WELCOME_QUIZ_ID)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "The free welcome quiz cannot be purchased.",
     );
   }
 
   // 1. Ask Flutterwave directly: did this transaction really succeed?
-  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  const secretKey = FLUTTERWAVE_SECRET_KEY.value();
   const verifyRes = await fetch(
     `https://api.flutterwave.com/v3/transactions/${transactionId}/verify`,
     { headers: { Authorization: `Bearer ${secretKey}` } },
@@ -587,7 +590,7 @@ exports.verifyFlutterwavePurchase = functions.https.onCall(async (request) => {
   };
 });
 
-exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
+exports.quoteFlutterwavePurchase = onCall({ cors: true, secrets: [FLUTTERWAVE_SECRET_KEY] }, async (request) => {
   const { userId } = request.data || {};
   const quizIds = Array.isArray(request.data?.quizIds)
     ? [...new Set(request.data.quizIds.filter((id) => typeof id === "string" && id))]
@@ -607,7 +610,7 @@ exports.quoteFlutterwavePurchase = onCall({ cors: true }, async (request) => {
     0,
   );
   const net = netKobo / 100;
-  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  const secretKey = FLUTTERWAVE_SECRET_KEY.value();
   if (!secretKey) {
     throw new HttpsError("unavailable", "Checkout is temporarily unavailable.");
   }

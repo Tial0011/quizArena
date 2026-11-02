@@ -36,9 +36,13 @@ There are two roles:
 - **Firebase** is the entire backend:
   - **Firebase Auth** — email/password + Google sign-in.
   - **Firestore** — the database (see §5).
-  - **Firebase Cloud Functions** (`functions/index.js`) — the only
-    trusted server-side code, used for payment verification and push
-    notifications.
+  - **Netlify Functions** (`netlify/functions/`) — trusted, authenticated
+    HTTP endpoints and scheduled jobs for payments, leaderboard data,
+    welcome quiz questions, push notifications, weekly winners, and streak
+    reminders. They use the Firebase Admin SDK, so Firestore remains the
+    database and Firebase Auth remains the identity provider.
+  - **Firebase Cloud Functions** (`functions/index.js`) — retained in the
+    repository only for a possible future return; the app no longer calls it.
   - **Firebase Cloud Messaging** — push notifications.
   - **Firebase Hosting** — where this is deployed on the custom
     domain `quizarena.name.ng`. Note: `firebase.json` currently only
@@ -54,8 +58,9 @@ There are two roles:
   screen, works offline via a service worker (`sw.js`) and
   `manifest.json` (see §12).
 
-There is no npm build for the frontend at all — the only `package.json`
-in the repo lives under `functions/`, for the Cloud Functions.
+There is no npm build for the frontend. The root `package.json` provides
+the Firebase Admin SDK used by Netlify Functions; `functions/package.json`
+is retained for a possible future Firebase Functions deployment.
 
 ## 3. How the app boots (and why the white-screen fix matters)
 
@@ -198,23 +203,37 @@ directly for that collection. This is enforced by convention/comments in
 the code, not by tooling — worth keeping in mind if you add a new
 feature.
 
-## 6. Cloud Functions (`functions/index.js`)
+## 6. Netlify Functions
 
-Only two functions, and both exist because the browser cannot be
-trusted with certain writes:
+The browser uses authenticated Netlify endpoints for payment quotes and
+verification (`payment`), the Global Challenge (`leaderboard`), the free welcome quiz
+(`welcome-quiz`), and weekly winner cooldown data (`weekly-cooldowns`). They
+verify Firebase ID tokens and
+use a Firebase Admin service account; all application data remains in
+Firestore.
 
-1. **`verifyFlutterwavePurchase`** (callable function) — the _only_ place
-   a purchase is ever marked `"paid"`. The client calls this after
-   Flutterwave's checkout widget reports success, but the function
-   **independently re-verifies the transaction directly with
-   Flutterwave's API** before writing to Firestore. This exists so a
-   student can't fake a browser-side "payment successful" response and
-   grant themselves a free quiz.
-2. **`sendNotificationPush`** (Firestore trigger) — fires automatically
-   whenever a document is created in `notifications`. Looks up FCM
-   device tokens (either one student, or every student for a broadcast)
-   and sends the push, then prunes any tokens that bounced (uninstalled
-   app, revoked permission, etc.).
+Scheduled Netlify functions replace Firebase event and schedule triggers:
+
+- `notification-push` polls for new notifications every minute and dispatches
+  FCM messages, recording a cursor in `netlifyFunctionState`.
+- `score-projection` polls recent quiz attempts every five minutes; the daily
+  `score-backfill` repairs missed updates and refreshes the leaderboard.
+- `leaderboard-refresh` rebuilds the leaderboard every six hours.
+- The two streak reminder jobs run at 14:00 and 20:00 Africa/Lagos time.
+- `weekly-winners` records winners at 00:05 each Monday Africa/Lagos time.
+
+Schedules are defined in the root `netlify.toml`; Netlify scheduled functions
+run in UTC. Before deploying, configure `FIREBASE_SERVICE_ACCOUNT_JSON` and
+`FLUTTERWAVE_SECRET_KEY` in Netlify site environment variables. The service
+account needs Firebase Auth, Firestore, and Firebase Cloud Messaging access.
+After the Netlify deployment is verified, delete the deployed Firebase
+Functions to avoid duplicate background processing. Keep `functions/` as
+source for a possible later switch back; do not deploy it while using Netlify.
+If the site is opened with `?firebaseEnv=staging`, also configure
+`FIREBASE_SERVICE_ACCOUNT_JSON_STAGING` for the `quiz-arena-staging` project.
+Staging checkout additionally requires `FLUTTERWAVE_SECRET_KEY_STAGING` (a
+Flutterwave test key); without these variables, staging requests fail closed
+instead of accessing production Firebase or payment services.
 
 ## 7. CSS approach
 
@@ -247,9 +266,9 @@ trusted with certain writes:
    5s, up to 6 tries) rather than treated as failed.
 4. Either way, the client never trusts Flutterwave's client-side status
    directly — it calls `confirmFlutterwavePurchase()`
-   (`purchaseService.js`), which hits the `verifyFlutterwavePurchase`
-   Cloud Function (§6) to re-verify server-side before anything is
-   written.
+   (`purchaseService.js`), which hits the
+   Netlify `payment` function (§6) to re-verify server-side before anything
+   is written.
 5. **Once confirmed**, the dialog now shows an explicit green
    "Payment Successful!" screen naming the quiz, with a "Continue"
    button — added in the latest fix, because previously the dialog just
