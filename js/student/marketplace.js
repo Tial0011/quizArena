@@ -1043,7 +1043,12 @@ async function handleConfirmPurchase() {
   document.getElementById("cancelPurchaseBtn").disabled = true;
   document.getElementById("mkCheckoutError").hidden = true;
 
-  const txRef = `pack_${currentUserId}_${Date.now()}`;
+  const txRef = latestCheckoutQuote.txRef;
+  if (!txRef) {
+    resetPayButton();
+    showCheckoutError("Checkout expired. Please recalculate the total and try again.");
+    return;
+  }
 
   if (typeof window.FlutterwaveCheckout !== "function") {
     resetPayButton();

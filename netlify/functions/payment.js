@@ -1,4 +1,5 @@
 const { FieldValue } = require("firebase-admin/firestore");
+const { randomUUID } = require("node:crypto");
 const { getFirebaseAdmin, getProjectIdFromToken } = require("../lib/firebaseAdmin");
 const { json } = require("../lib/http");
 
@@ -28,6 +29,16 @@ function rankFor(count) {
   let rank = null;
   RANKS.forEach((entry) => { if (count >= entry.at) rank = entry; });
   return rank;
+}
+
+function validPaymentAmount(tx, expectedNetKobo) {
+  const transactionAmountKobo = Math.round(Number(tx.amount) * 100);
+  const chargedAmountKobo = Math.round(Number(tx.charged_amount ?? tx.amount) * 100);
+  return tx.currency === "NGN"
+    && Number.isFinite(transactionAmountKobo)
+    && transactionAmountKobo >= expectedNetKobo
+    && Number.isFinite(chargedAmountKobo)
+    && chargedAmountKobo >= transactionAmountKobo;
 }
 
 async function flutterwaveJson(url, secret) {
@@ -102,8 +113,15 @@ async function verifyPurchase(db, secret, userId, quizIds, txRef, transactionId)
   const transactionRef = db.collection("flutterwaveTransactions").doc(String(transactionId));
 
   const outcome = await db.runTransaction(async (transaction) => {
+    const checkoutOrderRef = db.collection("checkoutOrders").doc(txRef);
+    const checkoutOrder = await transaction.get(checkoutOrderRef);
     const processed = await transaction.get(transactionRef);
     if (processed.exists) return { alreadyProcessed: true, purchasedIds: processed.data().quizIds || [] };
+    if (!checkoutOrder.exists) return { invalidOrder: true };
+    const order = checkoutOrder.data();
+    if (order.userId !== userId || order.quizIds?.join("|") !== quizIds.join("|")) {
+      return { invalidOrder: true };
+    }
 
     const ownedSnapshot = await transaction.get(
       db.collection("purchases").where("userId", "==", userId).where("status", "==", "paid"),
@@ -113,10 +131,7 @@ async function verifyPurchase(db, secret, userId, quizIds, txRef, transactionId)
     if (!toGrant.length) return { alreadyOwned: true, purchasedIds: [] };
 
     const expectedNetKobo = toGrant.reduce((sum, quiz) => sum + Math.round(Number(quiz.price || 0) * 100), 0);
-    const transactionAmountKobo = Math.round(Number(tx.amount) * 100);
-    const chargedAmountKobo = Math.round(Number(tx.charged_amount ?? tx.amount) * 100);
-    const settledKobo = Math.round(Number(tx.amount_settled) * 100);
-    if (tx.currency !== "NGN" || !Number.isFinite(transactionAmountKobo) || transactionAmountKobo < expectedNetKobo || !Number.isFinite(chargedAmountKobo) || chargedAmountKobo < transactionAmountKobo || !Number.isFinite(settledKobo) || settledKobo < expectedNetKobo) {
+    if (!validPaymentAmount(tx, expectedNetKobo)) {
       return { mismatch: true };
     }
 
@@ -130,6 +145,11 @@ async function verifyPurchase(db, secret, userId, quizIds, txRef, transactionId)
       userId, quizIds: toGrant.map((quiz) => quiz.id), txRef, amount: tx.amount,
       amountSettled: tx.amount_settled ?? null, flutterwaveFee: tx.app_fee ?? null,
       paymentType: tx.payment_type ?? null, processedAt: FieldValue.serverTimestamp(),
+    });
+    transaction.update(checkoutOrderRef, {
+      status: "completed",
+      transactionId: String(transactionId),
+      completedAt: FieldValue.serverTimestamp(),
     });
     transaction.update(db.collection("users").doc(userId), {
       purchasedQuizzes: FieldValue.arrayUnion(...purchaseIds),
@@ -152,6 +172,7 @@ async function verifyPurchase(db, secret, userId, quizIds, txRef, transactionId)
     }
     return { purchasedIds: toGrant.map((quiz) => quiz.id) };
   });
+  if (outcome.invalidOrder) return { success: false, message: "This checkout does not match the payment order." };
   if (outcome.mismatch) return { success: false, message: "Payment amount mismatch." };
   if (outcome.alreadyOwned) return { success: true, alreadyOwned: true, purchasedIds: [], message: "You already own these quizzes." };
   if (outcome.alreadyProcessed) return { success: true, purchasedIds: outcome.purchasedIds, message: "Already processed." };
@@ -181,14 +202,43 @@ exports.handler = async (event) => {
     }
     if (body.userId && body.userId !== decoded.uid) return json(403, { success: false, message: "Not authorized." });
     const quizIds = validQuizIds(body.quizIds);
-    const result = body.action === "quote"
-      ? await quotePurchase(db, flutterwaveSecret, quizIds)
-      : body.action === "verify"
-        ? await verifyPurchase(db, flutterwaveSecret, decoded.uid, quizIds, body.txRef, body.transactionId)
-        : { success: false, message: "Unknown payment action." };
+    let result;
+    if (body.action === "quote") {
+      result = await quotePurchase(db, flutterwaveSecret, quizIds);
+      if (result.success) {
+        const txRef = `pack_${decoded.uid}_${Date.now()}_${randomUUID()}`;
+        await db.collection("checkoutOrders").doc(txRef).create({
+          userId: decoded.uid,
+          quizIds,
+          status: "pending",
+          createdAt: FieldValue.serverTimestamp(),
+        });
+        result.txRef = txRef;
+      }
+    } else if (body.action === "verify") {
+      result = await verifyPurchase(
+        db, flutterwaveSecret, decoded.uid, quizIds, body.txRef, body.transactionId,
+      );
+    } else {
+      result = { success: false, message: "Unknown payment action." };
+    }
     return json(result.success ? 200 : 400, result);
   } catch (error) {
     console.error("Payment function failed:", error);
     return json(500, { success: false, message: "Checkout is temporarily unavailable. Please try again." });
   }
 };
+
+exports.verifyPaymentForOrder = async (projectId, order, txRef, transactionId) => {
+  const { db, flutterwaveSecret } = paymentConfig(projectId);
+  return verifyPurchase(
+    db,
+    flutterwaveSecret,
+    order.userId,
+    order.quizIds,
+    txRef,
+    transactionId,
+  );
+};
+
+exports.validPaymentAmount = validPaymentAmount;

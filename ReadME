@@ -223,9 +223,14 @@ Scheduled Netlify functions replace Firebase event and schedule triggers:
 - `weekly-winners` records winners at 00:05 each Monday Africa/Lagos time.
 
 Schedules are defined in the root `netlify.toml`; Netlify scheduled functions
-run in UTC. Before deploying, configure `FIREBASE_SERVICE_ACCOUNT_JSON` and
-`FLUTTERWAVE_SECRET_KEY` in Netlify site environment variables. The service
-account needs Firebase Auth, Firestore, and Firebase Cloud Messaging access.
+run in UTC. Before deploying, configure `FIREBASE_SERVICE_ACCOUNT_JSON`,
+`FLUTTERWAVE_SECRET_KEY`, and `FLUTTERWAVE_WEBHOOK_SECRET_HASH` in Netlify site
+environment variables. Configure Flutterwave's webhook URL as
+`https://<your-site>/.netlify/functions/payment-webhook`, subscribe to
+`charge.completed`, set the same webhook secret hash, and enable retries. The
+service account needs Firebase Auth, Firestore, and Firebase Cloud Messaging
+access. Checkout quotes create pending orders so the webhook can verify and
+grant paid quizzes even if the browser reloads before its payment callback.
 After the Netlify deployment is verified, delete the deployed Firebase
 Functions to avoid duplicate background processing. Keep `functions/` as
 source for a possible later switch back; do not deploy it while using Netlify.
@@ -233,7 +238,9 @@ If the site is opened with `?firebaseEnv=staging`, also configure
 `FIREBASE_SERVICE_ACCOUNT_JSON_STAGING` for the `quiz-arena-staging` project.
 Staging checkout additionally requires `FLUTTERWAVE_SECRET_KEY_STAGING` (a
 Flutterwave test key); without these variables, staging requests fail closed
-instead of accessing production Firebase or payment services.
+instead of accessing production Firebase or payment services. Staging webhook
+recovery also requires `FLUTTERWAVE_WEBHOOK_SECRET_HASH_STAGING`, configured
+as the matching staging-account webhook hash.
 
 ## 7. CSS approach
 
@@ -269,6 +276,11 @@ instead of accessing production Firebase or payment services.
    (`purchaseService.js`), which hits the
    Netlify `payment` function (§6) to re-verify server-side before anything
    is written.
+5. A signed Flutterwave `charge.completed` webhook also verifies pending
+   checkout orders server-side, so a browser reload after payment does not
+   lose the purchase confirmation. Flutterwave's `amount_settled` is recorded
+   for reconciliation but is not used as the customer's payment amount,
+   because processor fees can reduce the merchant settlement.
 5. **Once confirmed**, the dialog now shows an explicit green
    "Payment Successful!" screen naming the quiz, with a "Continue"
    button — added in the latest fix, because previously the dialog just
