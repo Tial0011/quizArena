@@ -305,7 +305,8 @@ function renderLeaderboardList(topMembers) {
     return `<div class="empty-state">No qualifying attempts yet this week — be the first!</div>`;
   }
 
-  const medals = ["🥇 ₦1,500", "🥈 ₦1,000", "🥉 ₦500"];
+  const medals = ["🥇", "🥈", "🥉"];
+  const prizes = ["₦1,500", "₦1,000", "₦500"];
 
   return `
     <div class="leaderboard-list">
@@ -319,12 +320,15 @@ function renderLeaderboardList(topMembers) {
     ${index === 0 ? "first-place" : ""}
     ${index === 1 ? "second-place" : ""}
     ${index === 2 ? "third-place" : ""}">
-              <span class="leaderboard-rank">${medals[index] || `#${index + 1}`}</span>
+              <span class="leaderboard-rank" aria-label="Rank ${index + 1}">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
                 ${escapeHtml(member.name)}${isMe ? " (You)" : ""}
                 ${member.varietyCount > 1 ? `<span class="challenge-rank-badge">${member.varietyCount} quizzes</span>` : ""}
               </span>
               <span class="leaderboard-score">${member.score} pts</span>
+              ${index < prizes.length
+                ? `<span class="leaderboard-prize">${prizes[index]}</span>`
+                : `<span class="leaderboard-prize leaderboard-prize-empty" aria-hidden="true"></span>`}
             </div>
           `;
         })

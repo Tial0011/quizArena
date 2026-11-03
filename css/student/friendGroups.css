@@ -618,7 +618,45 @@
 }
 
 .global-challenge-section .leaderboard-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto auto;
+  gap: 8px;
   min-height: 52px;
+  padding: 11px 13px;
+}
+
+.global-challenge-section .leaderboard-rank {
+  width: auto;
+  font-size: 19px;
+  line-height: 1;
+}
+
+.global-challenge-section .leaderboard-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.global-challenge-section .leaderboard-score {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.global-challenge-section .leaderboard-prize {
+  min-width: 62px;
+  padding: 5px 7px;
+  border: 1px solid var(--warn-border);
+  border-radius: 8px;
+  background: var(--warn-bg);
+  color: var(--color-text-strong);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.global-challenge-section .leaderboard-prize-empty {
+  visibility: hidden;
 }
 
 .global-challenge-section .leaderboard-row.first-place {
@@ -693,6 +731,27 @@
 
   .challenge-badge {
     white-space: normal;
+  }
+
+  .global-challenge-section .leaderboard-row {
+    grid-template-columns: 26px minmax(0, 1fr) auto auto;
+    gap: 6px;
+    padding: 10px 8px;
+  }
+
+  .global-challenge-section .leaderboard-rank {
+    font-size: 16px;
+  }
+
+  .global-challenge-section .leaderboard-name,
+  .global-challenge-section .leaderboard-score {
+    font-size: 11px;
+  }
+
+  .global-challenge-section .leaderboard-prize {
+    min-width: 54px;
+    padding: 4px 5px;
+    font-size: 10px;
   }
 }
 
