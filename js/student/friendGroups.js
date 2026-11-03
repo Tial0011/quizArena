@@ -118,7 +118,7 @@ async function renderFriendGroupsPage(userData) {
               <p>Choose a name. You can invite friends as soon as it’s created.</p>
             </div>
             <label class="friend-group-input-label" for="createGroupName">Group name</label>
-            <input id="createGroupName" type="text" placeholder="e.g. Team Physics" maxlength="40" />
+            <input id="createGroupName" type="text" placeholder="e.g. Team Alpha" maxlength="40" />
             <button id="createGroupBtn" class="btn-primary">Create group <span aria-hidden="true">→</span></button>
           </div>
 

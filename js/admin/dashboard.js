@@ -576,8 +576,9 @@ async function handleFriendGroupExpand(event) {
     memberContainer.innerHTML = memberIds.map((uid) => {
       const user = usersById.get(uid);
       const name = user?.name || user?.fullName || "Student";
+      const username = user?.username ? `@${user.username}` : "No username";
       const owner = uid === group.ownerId ? " · Owner" : "";
-      return `<div class="community-member"><span>${escapeHtml(String(name))}${owner}</span><small>${escapeHtml(uid)}</small></div>`;
+      return `<div class="community-member"><span>${escapeHtml(String(name))}${owner}</span><small>${escapeHtml(String(username))}</small></div>`;
     }).join("");
     button.textContent = "Hide members";
   } catch (error) {
