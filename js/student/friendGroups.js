@@ -47,47 +47,48 @@ async function renderFriendGroupsPage(userData) {
   const app = document.getElementById("app");
 
   app.innerHTML = `
-    <div class="dashboard">
+    <div class="dashboard friend-groups-page">
 
-      <header class="dashboard-header">
-        <h1>🏆 Friend Groups</h1>
-        <p>Team up to unlock the Global Challenge and climb together.</p>
+      <header class="friend-groups-hero">
+        <div class="friend-groups-hero-copy">
+          <span class="friend-groups-eyebrow">Study together · Compete together</span>
+          <h1>Friend Groups</h1>
+          <p>Build your squad, share quizzes, and climb the weekly challenge together.</p>
+        </div>
+        <div class="friend-groups-hero-mark" aria-hidden="true">
+          <span>3–5</span>
+          <small>people<br />per squad</small>
+        </div>
       </header>
 
       <div class="friend-group-info-card">
-        <div class="info-title">💡 How it works</div>
-        <p>
-          Join a group with <strong>3+ members</strong>, then complete an attempt
-          on a purchased quiz this week to qualify. The free GES 111 Communications
-          in English quiz does not count toward the challenge.
-        </p>
-        <p class="friend-group-quiz-prompt">
-          ${hasPurchasedQuizzes
-            ? "Invite up to 3 friends to build your group, then take one of your quizzes this week to qualify."
-            : "Start by creating your group and inviting up to 3 friends. Once your group is set, head to the Marketplace to get a quiz."}
-        </p>
+        <div class="friend-group-info-copy">
+          <span class="info-title">Your path to the prize</span>
+          <p>Have <strong>3 or more members</strong>, then complete a purchased quiz this week. The top three students share ₦3,000 in prizes. Rankings refresh every six hours.</p>
+        </div>
         <div class="friend-group-onboarding-actions">
+          <span class="friend-group-quiz-prompt">
+            ${hasPurchasedQuizzes
+              ? "Your next step: bring your squad together and take a quiz."
+              : "Build your squad first, then choose a quiz to enter this week's challenge."}
+          </span>
           <button type="button" id="friendGroupInviteCta" class="btn-primary friend-group-quiz-cta">
-            ${hasPurchasedQuizzes ? "Create a Group" : "Add Friends First"}
+            ${hasPurchasedQuizzes ? "Build your squad" : "Create or join a group"}
           </button>
-          ${!hasPurchasedQuizzes ? `<button type="button" id="friendGroupQuizCta" class="btn-secondary friend-group-quiz-cta" disabled aria-disabled="true">Go to Marketplace</button>` : ""}
+          ${!hasPurchasedQuizzes ? `<button type="button" id="friendGroupQuizCta" class="btn-secondary friend-group-quiz-cta" disabled aria-disabled="true">Browse quizzes</button>` : ""}
         </div>
       </div>
 
       <div class="global-challenge-section">
-
-        <h3>
-          🌍 Global Challenge
-          <span class="challenge-badge">₦1,500 · ₦1,000 · ₦500 weekly</span>
-        </h3>
-
-        <p class="challenge-subtitle" id="challengeSubtitle">
-          Groups of 3+ only.
-        </p>
-        <p class="challenge-refresh-note">
-          <span aria-hidden="true">↻</span>
-          Rankings refresh every 6 hours, so recent quiz activity may take a little while to appear.
-        </p>
+        <div class="challenge-section-heading">
+          <div>
+            <span class="friend-groups-section-kicker">This week's competition</span>
+            <h2>Global Challenge</h2>
+            <p class="challenge-subtitle" id="challengeSubtitle">Groups of 3+ only.</p>
+          </div>
+          <span class="challenge-badge">₦1,500 · ₦1,000 · ₦500</span>
+        </div>
+        <p class="challenge-refresh-note"><span aria-hidden="true">↻</span> Rankings refresh every 6 hours.</p>
 
         <div id="challengeBanner"></div>
 
@@ -100,43 +101,52 @@ async function renderFriendGroupsPage(userData) {
 
       </div>
 
-      <div class="friend-group-forms">
-
-        <div class="friend-group-form-card" id="createGroupCard">
-          <h3>Create a Group</h3>
-          <input
-            id="createGroupName"
-            type="text"
-            placeholder="Group name (e.g. Team Physics)"
-          />
-          <button id="createGroupBtn" class="btn-primary">
-            Create Group
-          </button>
+      <section class="friend-group-action-section" id="friendGroupActions">
+        <div class="friend-groups-section-heading">
+          <div>
+            <span class="friend-groups-section-kicker">Get your team together</span>
+            <h2>Create a group or join one</h2>
+          </div>
+          <p>Groups can have up to 5 people. You can own 1 group and join up to 3.</p>
         </div>
 
-        <div class="friend-group-form-card">
-          <h3>Join a Group</h3>
-          <input
-            id="joinGroupCode"
-            type="text"
-            placeholder="Enter group code"
-            maxlength="6"
-            style="text-transform: uppercase;"
-          />
-          <button id="joinGroupBtn" class="btn-secondary">
-            Join Group
-          </button>
+        <div class="friend-group-forms">
+          <div class="friend-group-form-card" id="createGroupCard">
+            <span class="friend-group-form-icon" aria-hidden="true">✦</span>
+            <div class="friend-group-form-copy">
+              <h3>Start a new squad</h3>
+              <p>Choose a name. You can invite friends as soon as it’s created.</p>
+            </div>
+            <label class="friend-group-input-label" for="createGroupName">Group name</label>
+            <input id="createGroupName" type="text" placeholder="e.g. Team Physics" maxlength="40" />
+            <button id="createGroupBtn" class="btn-primary">Create group <span aria-hidden="true">→</span></button>
+          </div>
+
+          <div class="friend-group-form-card friend-group-join-card">
+            <span class="friend-group-form-icon" aria-hidden="true">↗</span>
+            <div class="friend-group-form-copy">
+              <h3>Join a friend's squad</h3>
+              <p>Enter the 6-character invite code they shared with you.</p>
+            </div>
+            <label class="friend-group-input-label" for="joinGroupCode">Invite code</label>
+            <input id="joinGroupCode" type="text" placeholder="e.g. A7K2PQ" maxlength="6" autocomplete="off" />
+            <button id="joinGroupBtn" class="btn-secondary">Request to join <span aria-hidden="true">→</span></button>
+          </div>
         </div>
+      </section>
 
-      </div>
-
-      <p class="group-limits-note">
-        You can own 1 group, be part of up to 3 total, and each group can have up to 5 members.
-      </p>
-
-      <div id="myGroupsList" class="my-groups-list">
-        <p>Loading your groups...</p>
-      </div>
+      <section class="friend-group-your-squads">
+        <div class="friend-groups-section-heading friend-groups-squads-heading">
+          <div>
+            <span class="friend-groups-section-kicker">Your teams</span>
+            <h2>Your squads <span id="myGroupsCount" class="friend-groups-count"></span></h2>
+          </div>
+          <p>Share your invite code so friends can find you.</p>
+        </div>
+        <div id="myGroupsList" class="my-groups-list">
+          <p>Loading your groups...</p>
+        </div>
+      </section>
 
     </div>
   `;
@@ -148,8 +158,12 @@ async function renderFriendGroupsPage(userData) {
     .getElementById("joinGroupBtn")
     .addEventListener("click", handleJoinGroup);
   document.getElementById("friendGroupInviteCta").addEventListener("click", () => {
-    document.getElementById("createGroupName")?.focus();
-    document.getElementById("createGroupCard")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("friendGroupActions")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      const createInput = document.getElementById("createGroupName");
+      const joinInput = document.getElementById("joinGroupCode");
+      (createInput && !createInput.closest("[hidden]") ? createInput : joinInput)?.focus();
+    }, 350);
   });
   document.getElementById("friendGroupQuizCta")?.addEventListener("click", async () => {
     if (hasPurchasedQuizzes) {
@@ -428,25 +442,44 @@ async function loadMyGroups() {
   if (createCard) createCard.hidden = ownsGroup;
   const marketplaceCta = document.getElementById("friendGroupQuizCta");
   if (marketplaceCta) {
-    const members = (ownedGroup?.memberIds || []).length;
-    const friendsAdded = Math.max(0, members - 1);
-    const ready = friendsAdded >= 3;
+    const largestGroup = groups.reduce(
+      (largest, group) => Math.max(largest, (group.memberIds || []).length),
+      0,
+    );
+    const ready = largestGroup >= 3;
     marketplaceCta.disabled = !ready;
     marketplaceCta.setAttribute("aria-disabled", String(!ready));
-    marketplaceCta.textContent = ready ? "Go to Marketplace" : `Add ${3 - friendsAdded} more friend${3 - friendsAdded === 1 ? "" : "s"} first`;
+    marketplaceCta.textContent = ready
+      ? "Browse quizzes"
+      : groups.length
+        ? `Add ${3 - largestGroup} more ${3 - largestGroup === 1 ? "person" : "people"} first`
+        : "Create or join a group first";
   }
   document
     .querySelector(".friend-group-forms")
     ?.classList.toggle("single-form", ownsGroup);
 
   if (groups.length === 0) {
+    const count = document.getElementById("myGroupsCount");
+    if (count) count.textContent = "0";
     container.innerHTML = `
-      <div class="empty-state">
-        You're not in any groups yet. Create a group and invite up to 3 friends, or join a friend's group above.
+      <div class="friend-groups-empty">
+        <span class="friend-groups-empty-icon" aria-hidden="true">✦</span>
+        <div>
+          <h3>Your squad starts here</h3>
+          <p>Create a group and invite friends, or join a squad with an invite code.</p>
+        </div>
+        <button type="button" class="btn-secondary" id="emptyGroupsAction">Find your squad <span aria-hidden="true">↑</span></button>
       </div>
     `;
+    document.getElementById("emptyGroupsAction")?.addEventListener("click", () => {
+      document.getElementById("friendGroupActions")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     return groups;
   }
+
+  const count = document.getElementById("myGroupsCount");
+  if (count) count.textContent = String(groups.length);
 
   container.innerHTML = groups
     .map((group) => renderGroupCardSkeleton(group))
@@ -463,64 +496,48 @@ function renderGroupCardSkeleton(group) {
   const qualified = memberCount >= 3;
 
   return `
-    <div class="friend-group-card" data-group-id="${group.id}">
+    <article class="friend-group-card ${qualified ? "is-qualified" : ""}" data-group-id="${escapeHtml(group.id)}">
+      <header class="friend-group-card-header">
+        <div class="friend-group-card-identity">
+          <span class="friend-group-avatar" aria-hidden="true">${escapeHtml((group.name || "G").trim().charAt(0).toUpperCase() || "G")}</span>
+          <div class="friend-group-title">
+            <div class="group-title-row">
+              <h3>${escapeHtml(group.name || "Study squad")}</h3>
+              <span class="group-status ${qualified ? "qualified" : "not-qualified"}">
+                <span aria-hidden="true">${qualified ? "✓" : "＋"}</span>
+                ${qualified ? "Challenge ready" : `${Math.max(0, 3 - memberCount)} more to qualify`}
+              </span>
+            </div>
+            <p class="group-meta">${memberCount} of 5 members <span aria-hidden="true">·</span> ${isOwner ? "You’re the owner" : "Squad member"}</p>
+          </div>
+        </div>
+        <div class="friend-group-invite">
+          <span>INVITE CODE</span>
+          <strong>${escapeHtml(group.code)}</strong>
+          <button type="button" class="btn-copy-code" data-code="${escapeHtml(group.code)}">Copy code</button>
+        </div>
+      </header>
 
-    <div class="friend-group-card-header">
+      <div class="friend-group-card-footer">
+        <p>${qualified
+          ? "Your squad can qualify for this week’s Global Challenge."
+          : `Invite ${Math.max(0, 3 - memberCount)} more ${3 - memberCount === 1 ? "person" : "people"} to unlock the challenge.`}</p>
+        <button type="button" class="btn-share-code" data-code="${escapeHtml(group.code)}" data-name="${escapeHtml(group.name)}">
+          <span aria-hidden="true">↗</span> Share invite
+        </button>
+      </div>
 
-  <div>
-
-    <div class="group-title-row">
-
-      <h3>${escapeHtml(group.name)}</h3>
-
-      <span class="group-status ${qualified ? "qualified" : "not-qualified"}">
-
-        ${qualified ? "✅ Qualified" : "⚠ Needs More Members"}
-
-      </span>
-
-    </div>
-
-    <span class="friend-group-code">
-
-      Code:
-      <strong>${escapeHtml(group.code)}</strong>
-
-    </span>
-
-    <div class="group-meta">
-
-      👥 ${memberCount} Members
-
-      ${
-        qualified
-          ? "• Eligible for Global Challenge"
-          : `• ${3 - memberCount} more needed`
-      }
-
-    </div>
-
-  </div>
-
-  <button
-      class="btn-share-code"
-      data-code="${escapeHtml(group.code)}"
-      data-name="${escapeHtml(group.name)}"
-  >
-      Share via WhatsApp
-  </button>
-
-</div>
-
-      ${isOwner ? `<div id="pendingRequests-${group.id}" class="pending-requests"></div>` : ""}
+      ${isOwner ? `<div id="pendingRequests-${escapeHtml(group.id)}" class="pending-requests"></div>` : ""}
 
       <details class="group-leaderboard-details">
-        <summary>View leaderboard</summary>
-        <div id="leaderboard-${group.id}" class="group-leaderboard">
-          <p>Loading leaderboard...</p>
+        <summary>
+          <span>Squad leaderboard</span>
+          <small>See how your team is doing</small>
+        </summary>
+        <div id="leaderboard-${escapeHtml(group.id)}" class="group-leaderboard">
+          <p>Loading squad leaderboard…</p>
         </div>
       </details>
-
     </div>
   `;
 }
@@ -535,7 +552,19 @@ function attachShareButtons(groups) {
         `Join my "${name}" squad on Quiz Arena and let's see who tops the Global Challenge 🔥 Use code: ${code}`,
       );
 
-      window.open(`https://wa.me/?text=${text}`, "_blank");
+      window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+    });
+  });
+  document.querySelectorAll(".btn-copy-code").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.code);
+        btn.textContent = "Copied!";
+        window.setTimeout(() => { btn.textContent = "Copy code"; }, 1600);
+      } catch (error) {
+        console.error("Could not copy friend group invite code:", error);
+        alert(`Copy this invite code: ${btn.dataset.code}`);
+      }
     });
   });
 }

@@ -774,9 +774,122 @@
   cursor: pointer;
 }
 
+.admin-wrap .admin-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-wrap .community-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.admin-wrap .community-leaderboard-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 84px 76px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.admin-wrap .community-leaderboard-heading {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-wrap .community-group {
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface-2);
+}
+
+.admin-wrap .community-group-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-wrap .community-group-summary h3 {
+  margin: 0 0 4px;
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.admin-wrap .community-group-summary p {
+  margin: 2px 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.admin-wrap .community-group-members {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-wrap .community-group-members[hidden] {
+  display: none;
+}
+
+.admin-wrap .community-member {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.admin-wrap .community-member small {
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-wrap .community-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 16px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
 .admin-wrap .overview-sub {
   opacity: 0.7;
   font-size: 0.85em;
+}
+
+@media (max-width: 480px) {
+  .admin-wrap .community-leaderboard-row {
+    grid-template-columns: 34px minmax(0, 1fr) 64px 58px;
+    gap: 6px;
+    padding: 9px 7px;
+    font-size: 11px;
+  }
+
+  .admin-wrap .community-group-summary {
+    align-items: flex-start;
+  }
+
+  .admin-wrap .community-group-summary .admin-refresh-btn {
+    flex: 0 0 auto;
+    padding: 6px 8px;
+  }
 }
 
 .admin-wrap .live-dot {

@@ -737,3 +737,666 @@
     animation: none;
   }
 }
+
+/* =========================================================
+   FRIEND GROUPS PAGE
+========================================================= */
+
+.friend-groups-page {
+  max-width: 1040px;
+  padding-top: 20px;
+}
+
+.friend-groups-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  overflow: hidden;
+  padding: clamp(24px, 5vw, 42px);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 88% 20%, rgba(255, 255, 255, 0.13), transparent 26%),
+    linear-gradient(125deg, var(--color-primary-deep), var(--color-primary));
+  color: #fff;
+  box-shadow: 0 18px 42px rgba(39, 128, 127, 0.18);
+}
+
+.friend-groups-hero::after {
+  position: absolute;
+  right: 12%;
+  bottom: -96px;
+  width: 220px;
+  height: 220px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.friend-groups-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+}
+
+.friend-groups-eyebrow,
+.friend-groups-section-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-link);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.friend-groups-eyebrow {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.friend-groups-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+}
+
+.friend-groups-hero p {
+  max-width: 520px;
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.friend-groups-hero-mark {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: 0 0 112px;
+  width: 112px;
+  height: 112px;
+  align-content: center;
+  justify-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.12);
+  transform: rotate(4deg);
+}
+
+.friend-groups-hero-mark span {
+  font-size: 29px;
+  font-weight: 850;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.friend-groups-hero-mark small {
+  margin-top: 7px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.friend-groups-page .friend-group-info-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.8fr);
+  align-items: center;
+  gap: 18px 28px;
+  margin: 16px 0 22px;
+  padding: 18px 22px;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.friend-group-info-copy .info-title {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.friend-groups-page .friend-group-info-card p {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.friend-groups-page .friend-group-info-card strong {
+  color: var(--color-text-strong);
+}
+
+.friend-groups-page .friend-group-onboarding-actions {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+
+.friend-groups-page .friend-group-quiz-prompt {
+  flex: 1 1 100%;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.friend-groups-page .friend-group-onboarding-actions .friend-group-quiz-cta {
+  margin: 0;
+  min-height: 42px;
+}
+
+.friend-groups-page .friend-group-quiz-cta {
+  padding: 10px 15px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.friend-groups-page .global-challenge-section {
+  margin: 0 0 34px;
+  padding: clamp(18px, 3vw, 28px);
+  border-radius: 22px;
+  box-shadow: var(--shadow-md);
+}
+
+.challenge-section-heading,
+.friend-groups-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.challenge-section-heading h2,
+.friend-groups-section-heading h2 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: clamp(1.25rem, 3vw, 1.55rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.friend-groups-section-kicker {
+  margin-bottom: 5px;
+  font-size: 10px;
+}
+
+.friend-groups-page .challenge-subtitle {
+  margin-top: 7px;
+  font-size: 12px;
+}
+
+.friend-groups-page .challenge-refresh-note {
+  margin-top: 12px;
+  font-size: 11px;
+}
+
+.friend-groups-page .challenge-badge {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border-radius: 999px;
+}
+
+.friend-groups-page .challenge-banner {
+  margin: 18px 0;
+  border-radius: 18px;
+  box-shadow: 0 12px 26px rgba(39, 128, 127, 0.16);
+}
+
+.friend-groups-page .friend-group-action-section,
+.friend-groups-page .friend-group-your-squads {
+  margin: 32px 0;
+  scroll-margin-top: 24px;
+}
+
+.friend-groups-section-heading {
+  margin-bottom: 15px;
+}
+
+.friend-groups-section-heading > p {
+  max-width: 370px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.friend-groups-page .friend-group-forms {
+  gap: 14px;
+  margin: 0;
+}
+
+.friend-groups-page .friend-group-form-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: start;
+  gap: 0 12px;
+  padding: 20px;
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.friend-group-form-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--color-tint);
+  color: var(--color-link);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.friend-group-form-copy h3 {
+  margin: 1px 0 4px;
+  color: var(--color-text-strong);
+  font-size: 15px;
+}
+
+.friend-group-form-copy p {
+  min-height: 36px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.friend-groups-page .friend-group-input-label {
+  grid-column: 1 / -1;
+  margin: 16px 0 6px;
+  color: var(--color-text-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.friend-groups-page .friend-group-form-card input {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+}
+
+.friend-groups-page .friend-group-form-card input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.friend-groups-page #joinGroupCode {
+  letter-spacing: 0.16em;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.friend-groups-page .friend-group-form-card button {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.friend-groups-page .friend-group-form-card .btn-secondary {
+  border: 1px solid var(--color-border);
+}
+
+.friend-groups-page .friend-group-your-squads {
+  margin-top: 38px;
+}
+
+.friend-groups-page .friend-groups-count {
+  display: inline-grid;
+  min-width: 25px;
+  height: 25px;
+  place-items: center;
+  margin-left: 4px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--color-tint);
+  color: var(--color-link);
+  font-size: 12px;
+  vertical-align: 3px;
+}
+
+.friend-groups-page .my-groups-list {
+  gap: 14px;
+}
+
+.friend-groups-page .friend-group-card {
+  overflow: hidden;
+  padding: 0;
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.friend-groups-page .friend-group-card-header {
+  align-items: stretch;
+  margin: 0;
+  padding: 18px;
+  border: 0;
+}
+
+.friend-group-card-identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}
+
+.friend-group-avatar {
+  display: grid;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 15px;
+  background: linear-gradient(145deg, var(--color-tint), var(--color-surface-2));
+  color: var(--color-link);
+  font-size: 19px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.friend-group-title {
+  min-width: 0;
+}
+
+.friend-groups-page .group-title-row {
+  gap: 8px;
+  margin: 0;
+}
+
+.friend-groups-page .friend-group-card-header h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+}
+
+.friend-groups-page .group-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.friend-groups-page .group-meta {
+  margin: 5px 0 0;
+  font-size: 11px;
+}
+
+.friend-group-invite {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 3px 8px;
+  align-self: center;
+  padding: 8px 10px;
+  border: 1px dashed var(--color-border-tint);
+  border-radius: 12px;
+  background: var(--color-surface-2);
+}
+
+.friend-group-invite > span {
+  grid-column: 1 / -1;
+  color: var(--color-text-faint);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.friend-group-invite > strong {
+  color: var(--color-text-strong);
+  font-size: 15px;
+  letter-spacing: 0.13em;
+}
+
+.friend-groups-page .btn-copy-code {
+  border: 0;
+  background: transparent;
+  color: var(--color-link);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.friend-group-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 18px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+
+.friend-group-card-footer p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.friend-groups-page .btn-share-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: auto;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.friend-groups-page .btn-share-code:hover {
+  border-color: var(--color-border-tint);
+  background: var(--color-tint);
+}
+
+.friend-groups-page .pending-requests {
+  padding: 0 18px;
+}
+
+.friend-groups-page .group-leaderboard-details {
+  margin: 0;
+  padding: 0 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.friend-groups-page .group-leaderboard-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0;
+  color: var(--color-text-strong);
+}
+
+.friend-groups-page .group-leaderboard-details summary::before {
+  content: none;
+}
+
+.friend-groups-page .group-leaderboard-details summary span {
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.friend-groups-page .group-leaderboard-details summary small {
+  color: var(--color-text-faint);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.friend-groups-page .group-leaderboard-details .group-leaderboard {
+  margin: 0 0 14px;
+}
+
+.friend-groups-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border: 1px dashed var(--color-border-tint);
+  border-radius: 18px;
+  background: var(--color-surface);
+}
+
+.friend-groups-empty-icon {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--color-tint);
+  color: var(--color-link);
+  font-size: 20px;
+}
+
+.friend-groups-empty h3 {
+  margin: 0 0 4px;
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.friend-groups-empty p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.friend-groups-empty button {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-2);
+  color: var(--color-text-strong);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .friend-groups-page {
+    padding: 16px 14px 90px;
+  }
+
+  .friend-groups-page .friend-group-info-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .friend-groups-page .friend-group-onboarding-actions {
+    justify-content: flex-start;
+  }
+
+  .friend-groups-page .friend-group-quiz-prompt {
+    flex-basis: 100%;
+    text-align: left;
+  }
+
+  .friend-groups-section-heading,
+  .challenge-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .friend-groups-section-heading > p {
+    text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .friend-groups-hero {
+    min-height: 170px;
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+
+  .friend-groups-hero-mark {
+    flex-basis: 74px;
+    width: 74px;
+    height: 74px;
+    border-radius: 20px;
+  }
+
+  .friend-groups-hero-mark span {
+    font-size: 22px;
+  }
+
+  .friend-groups-hero-mark small {
+    font-size: 8px;
+  }
+
+  .friend-groups-page .friend-group-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px;
+  }
+
+  .friend-group-invite {
+    grid-template-columns: auto auto auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .friend-group-invite > span {
+    grid-column: auto;
+  }
+
+  .friend-group-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 12px 15px;
+  }
+
+  .friend-groups-page .btn-share-code {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .friend-groups-page .friend-group-forms.single-form {
+    grid-template-columns: 1fr;
+  }
+
+  .friend-groups-empty {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .friend-groups-empty > div {
+    flex: 1 1 calc(100% - 60px);
+  }
+
+  .friend-groups-empty button {
+    margin-left: 56px;
+  }
+
+  .friend-groups-page .challenge-badge {
+    white-space: normal;
+  }
+}

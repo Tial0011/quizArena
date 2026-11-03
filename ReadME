@@ -147,7 +147,7 @@ quizArena/
 │   │   └── scrollEffects.js      Landing-page scroll reveal/parallax
 │   │
 │   └── admin/                  Admin-only panel
-│       ├── dashboard.js         Admin home / stats
+│       ├── dashboard.js         Admin home, stats, leaderboard and paged groups
 │       ├── subjects.js          CRUD for subjects
 │       ├── quizzes.js           CRUD for paid quizzes
 │       ├── questions.js         CRUD for quiz questions
