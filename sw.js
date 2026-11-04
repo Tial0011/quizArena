@@ -31,7 +31,7 @@
 "use strict";
 
 /* <precache-manifest> */
-const PRECACHE_VERSION = "2ee9480f55";
+const PRECACHE_VERSION = "583621d00e";
 const PRECACHE_URLS = [
   "/",
   "/css/admin/dashboard.css",

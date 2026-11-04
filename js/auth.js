@@ -26,6 +26,14 @@ import {
 
 const googleProvider = new GoogleAuthProvider();
 
+function getVerificationActionCodeSettings() {
+  const continueUrl = new URL("/", window.location.origin);
+  if (new URLSearchParams(window.location.search).get("firebaseEnv") === "staging") {
+    continueUrl.searchParams.set("firebaseEnv", "staging");
+  }
+  return { url: continueUrl.toString() };
+}
+
 // =========================
 // USERNAME VALIDATION & SUGGESTIONS
 // =========================
@@ -254,7 +262,7 @@ export async function registerUser(fullName, username, email, password, referral
 
     let verificationEmailSent = true;
     try {
-      await sendEmailVerification(user);
+      await sendEmailVerification(user, getVerificationActionCodeSettings());
     } catch (verificationError) {
       console.error("[auth] sendEmailVerification failed", verificationError);
       verificationEmailSent = false;
@@ -356,6 +364,30 @@ export async function signInWithGoogle(referralSource = null) {
       };
     }
 
+    if (error.code === "auth/unauthorized-domain") {
+      return {
+        success: false,
+        message:
+          "Google sign-in isn't authorized for this website yet. Add this site's domain under Firebase Console > Authentication > Settings > Authorized domains.",
+      };
+    }
+
+    if (error.code === "auth/operation-not-allowed") {
+      return {
+        success: false,
+        message:
+          "Google sign-in is disabled for this app. Enable the Google provider under Firebase Console > Authentication > Sign-in method.",
+      };
+    }
+
+    if (error.code === "auth/account-exists-with-different-credential") {
+      return {
+        success: false,
+        message:
+          "An account already exists with this email. Sign in using the method you used when you created the account.",
+      };
+    }
+
     return { success: false, message: error.message };
   }
 }
@@ -449,7 +481,7 @@ export async function resendVerificationEmail(user) {
   }
 
   try {
-    await sendEmailVerification(user);
+    await sendEmailVerification(user, getVerificationActionCodeSettings());
     return {
       success: true,
       message:
