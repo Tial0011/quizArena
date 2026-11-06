@@ -1,5 +1,9 @@
 const { authenticate, json, methodNotAllowed } = require("../lib/http");
-const { ensureWeeklyLeaderboardSnapshot, lagosWeekBounds } = require("../lib/challenge");
+const {
+  ensureWeeklyLeaderboardSnapshot,
+  lagosWeekBounds,
+  rebuildWeeklyChallengeLeaderboardSnapshot,
+} = require("../lib/challenge");
 
 exports.handler = async (event) => {
   const methodResponse = methodNotAllowed(event);
@@ -8,10 +12,29 @@ exports.handler = async (event) => {
   const authentication = await authenticate(event);
   if (authentication.error) return authentication.error;
 
+  let requestBody;
+  try {
+    requestBody = JSON.parse(event.body || "{}");
+  } catch {
+    return json(400, { message: "Invalid request body." });
+  }
+
+  const refreshSnapshot = requestBody?.refreshSnapshot === true;
+  if (refreshSnapshot && authentication.user.email !== "admin@test.com") {
+    return json(403, { message: "Only administrators can refresh the leaderboard snapshot." });
+  }
+
   try {
     const { db, Timestamp, FieldValue } = authentication.admin;
-    const week = lagosWeekBounds(new Date());
-    const snapshot = await ensureWeeklyLeaderboardSnapshot(db, Timestamp, FieldValue, new Date());
+    const now = new Date();
+    const week = lagosWeekBounds(now);
+    let snapshot;
+    if (refreshSnapshot) {
+      await rebuildWeeklyChallengeLeaderboardSnapshot(db, Timestamp, FieldValue, now);
+      snapshot = await db.collection("weeklyChallengeLeaderboardSnapshots").doc(week.weekKey).get();
+    } else {
+      snapshot = await ensureWeeklyLeaderboardSnapshot(db, Timestamp, FieldValue, now);
+    }
     if (!snapshot.exists) {
       return json(503, { message: "The weekly leaderboard is preparing. Please try again shortly." });
     }
