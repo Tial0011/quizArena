@@ -10,14 +10,12 @@ import { callNetlifyFunction } from "../firebase/netlifyFunctions.js";
 
 import {
   collection,
-  documentId,
   getDoc,
   getDocs,
   query,
   where,
   orderBy,
   limit,
-  startAfter,
   getCountFromServer,
   getAggregateFromServer,
   sum,
@@ -30,11 +28,6 @@ import { ONLINE_WINDOW_MS } from "../activityTracker.js";
 const app = document.getElementById("app");
 
 let activeTab = "dashboard";
-const FRIEND_GROUP_PAGE_SIZE = 10;
-let friendGroupPageCursors = [null];
-let friendGroupPageRequest = 0;
-let friendGroupPage = 0;
-let friendGroupDataById = new Map();
 
 // Live user-activity numbers refresh on their own while the Dashboard
 // tab is open. Cleared whenever the tab content is re-rendered.
@@ -375,9 +368,6 @@ async function renderTabContent() {
       break;
 
     case "community":
-      friendGroupPageCursors = [null];
-      friendGroupPage = 0;
-      friendGroupDataById = new Map();
       await renderCommunity(content);
       break;
   }
@@ -392,57 +382,36 @@ async function renderCommunity(content) {
       <div class="admin-card-head">
         <div>
           <h2>Global Challenge — Top 15</h2>
-          <p>Current weekly leaderboard.</p>
+          <p id="communityLeaderboardSnapshot">Current weekly leaderboard snapshot.</p>
         </div>
         <button id="refreshCommunityLeaderboard" class="admin-refresh-btn" type="button">↻ Refresh</button>
       </div>
       <div id="communityLeaderboard" class="community-list" aria-live="polite">Loading leaderboard…</div>
     </section>
-
-    <section class="admin-card">
-      <div class="admin-card-head">
-        <div>
-          <h2>Friend Groups</h2>
-          <p>Browse groups page by page. Member profiles load only when you expand a group.</p>
-        </div>
-        <button id="refreshFriendGroups" class="admin-refresh-btn" type="button">↻ Refresh</button>
-      </div>
-      <div id="adminFriendGroups" class="community-list" aria-live="polite">Loading groups…</div>
-      <div class="community-pagination">
-        <button id="friendGroupsPrevious" class="admin-refresh-btn" type="button" disabled>Previous</button>
-        <span id="friendGroupsPageLabel">Page 1</span>
-        <button id="friendGroupsNext" class="admin-refresh-btn" type="button" disabled>Next</button>
-      </div>
-    </section>
   `;
 
   document.getElementById("refreshCommunityLeaderboard")
     ?.addEventListener("click", loadCommunityLeaderboard);
-  document.getElementById("refreshFriendGroups")
-    ?.addEventListener("click", () => {
-      friendGroupPageCursors = [null];
-      friendGroupPage = 0;
-      renderFriendGroupPage(0);
-    });
-  document.getElementById("friendGroupsPrevious")
-    ?.addEventListener("click", () => renderFriendGroupPage(Math.max(0, friendGroupPage - 1)));
-  document.getElementById("friendGroupsNext")
-    ?.addEventListener("click", () => renderFriendGroupPage(friendGroupPage + 1));
-  document.getElementById("adminFriendGroups")
-    ?.addEventListener("click", handleFriendGroupExpand);
 
-  await Promise.all([loadCommunityLeaderboard(), renderFriendGroupPage(0)]);
+  await loadCommunityLeaderboard();
 }
 
 async function loadCommunityLeaderboard() {
   const container = document.getElementById("communityLeaderboard");
+  const snapshotLabel = document.getElementById("communityLeaderboardSnapshot");
   if (!container) return;
   container.textContent = "Loading leaderboard…";
 
   try {
     const response = await callNetlifyFunction("leaderboard");
     if (activeTab !== "community" || !container.isConnected) return;
-    const top = response.data?.top || [];
+    const top = (response.data?.top || []).slice(0, 15);
+    const updatedAt = response.data?.updatedAt;
+    if (snapshotLabel) {
+      snapshotLabel.textContent = updatedAt
+        ? `Current weekly snapshot · updated ${new Date(updatedAt).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}`
+        : "Current weekly leaderboard snapshot.";
+    }
     if (!top.length) {
       container.textContent = "No leaderboard entries are available yet.";
       return;
@@ -464,129 +433,6 @@ async function loadCommunityLeaderboard() {
   } catch (error) {
     console.error("Failed to load admin Global Challenge leaderboard:", error);
     if (container.isConnected) container.textContent = "Could not load the leaderboard. Try again.";
-  }
-}
-
-async function renderFriendGroupPage(pageIndex) {
-  const container = document.getElementById("adminFriendGroups");
-  if (!container || activeTab !== "community") return;
-  const requestId = ++friendGroupPageRequest;
-  container.textContent = "Loading groups…";
-
-  const groupQuery = query(
-    collection(db, "friendGroups"),
-    orderBy(documentId(), "asc"),
-    ...(friendGroupPageCursors[pageIndex]
-      ? [startAfter(friendGroupPageCursors[pageIndex])]
-      : []),
-    limit(FRIEND_GROUP_PAGE_SIZE + 1),
-  );
-
-  try {
-    const snapshot = await getDocs(groupQuery);
-    if (
-      requestId !== friendGroupPageRequest ||
-      activeTab !== "community" ||
-      !container.isConnected
-    ) return;
-
-    const pageDocs = snapshot.docs.slice(0, FRIEND_GROUP_PAGE_SIZE);
-    const hasNextPage = snapshot.docs.length > FRIEND_GROUP_PAGE_SIZE;
-    friendGroupPageCursors = friendGroupPageCursors.slice(0, pageIndex + 1);
-    if (hasNextPage) friendGroupPageCursors[pageIndex + 1] = pageDocs.at(-1);
-    friendGroupPage = pageIndex;
-    friendGroupDataById = new Map(pageDocs.map((groupDoc) => [groupDoc.id, groupDoc.data()]));
-
-    document.getElementById("friendGroupsPageLabel").textContent = `Page ${pageIndex + 1}`;
-    document.getElementById("friendGroupsPrevious").disabled = pageIndex === 0;
-    document.getElementById("friendGroupsNext").disabled = !hasNextPage;
-
-    if (!pageDocs.length) {
-      container.textContent = pageIndex === 0 ? "No friend groups have been created yet." : "No more groups.";
-      return;
-    }
-
-    container.innerHTML = pageDocs.map((groupDoc) => {
-      const group = groupDoc.data();
-      const memberIds = Array.isArray(group.memberIds) ? group.memberIds : [];
-      const memberLabel = `${memberIds.length} member${memberIds.length === 1 ? "" : "s"}`;
-      return `
-        <article class="community-group" data-group-id="${escapeHtml(groupDoc.id)}">
-          <div class="community-group-summary">
-            <div>
-              <h3>${escapeHtml(String(group.name || "Unnamed group"))}</h3>
-              <p>Code: ${escapeHtml(String(group.code || "—"))} · ${memberLabel}</p>
-              <p>Owner: ${escapeHtml(String(group.ownerName || "Student"))}</p>
-            </div>
-            <button type="button" class="admin-refresh-btn" data-group-toggle="${escapeHtml(groupDoc.id)}" aria-expanded="false">
-              Show members
-            </button>
-          </div>
-          <div class="community-group-members" data-group-members="${escapeHtml(groupDoc.id)}" hidden></div>
-        </article>
-      `;
-    }).join("");
-  } catch (error) {
-    console.error("Failed to load admin friend groups:", error);
-    if (requestId === friendGroupPageRequest && container.isConnected) {
-      container.textContent = "Could not load friend groups. Try again.";
-    }
-  }
-}
-
-async function handleFriendGroupExpand(event) {
-  const button = event.target.closest("[data-group-toggle]");
-  if (!button) return;
-
-  const groupId = button.dataset.groupToggle;
-  const memberContainer = button.closest(".community-group")?.querySelector(".community-group-members");
-  if (!memberContainer) return;
-  if (!memberContainer.hidden && button.textContent !== "Retry members") {
-    memberContainer.hidden = true;
-    button.textContent = "Show members";
-    button.setAttribute("aria-expanded", "false");
-    return;
-  }
-
-  const group = friendGroupDataById.get(groupId);
-  if (!group) return;
-  button.disabled = true;
-  button.textContent = "Loading…";
-  memberContainer.hidden = false;
-  button.setAttribute("aria-expanded", "true");
-  memberContainer.textContent = "Loading member profiles…";
-
-  try {
-    const memberIds = [...new Set(group.memberIds || [])].filter(
-      (uid) => typeof uid === "string" && uid,
-    );
-    if (!memberIds.length) {
-      memberContainer.textContent = "This group has no members.";
-      return;
-    }
-
-    const membersSnapshot = await getDocs(query(
-      collection(db, "users"),
-      where(documentId(), "in", memberIds),
-    ));
-    const usersById = new Map(membersSnapshot.docs.map((userDoc) => [
-      userDoc.id,
-      userDoc.data(),
-    ]));
-    memberContainer.innerHTML = memberIds.map((uid) => {
-      const user = usersById.get(uid);
-      const name = user?.name || user?.fullName || "Student";
-      const username = user?.username ? `@${user.username}` : "No username";
-      const owner = uid === group.ownerId ? " · Owner" : "";
-      return `<div class="community-member"><span>${escapeHtml(String(name))}${owner}</span><small>${escapeHtml(String(username))}</small></div>`;
-    }).join("");
-    button.textContent = "Hide members";
-  } catch (error) {
-    console.error("Failed to load friend group members:", error);
-    memberContainer.textContent = "Could not load members. Try again.";
-    button.textContent = "Retry members";
-  } finally {
-    button.disabled = false;
   }
 }
 
