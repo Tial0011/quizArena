@@ -21,10 +21,10 @@ import {
    same pattern as purchaseService.js / attemptsService.js.
 
    friendGroups/{id}:
-   { name, code, ownerId, ownerName, memberIds: [uid...], createdAt }
+   { name, code, ownerId, ownerUsername, memberIds: [uid...], createdAt }
 
    groupJoinRequests/{id}:
-   { groupId, requesterId, requesterEmail, requesterName, status: "pending"|"accepted"|"rejected", createdAt }
+   { groupId, requesterId, requesterUsername, status: "pending"|"accepted"|"rejected", createdAt }
 
    RULES:
    - A user can OWN at most MAX_GROUPS_OWNED group.
@@ -50,6 +50,23 @@ const leaderboardCache = new Map();
 const groupDetailsCache = new Map();
 const myGroupsCache = new Map();
 
+async function getUsernameForUser(uid) {
+  const userSnap = await getDoc(doc(db, "users", uid));
+  const profileUsername = userSnap.exists() && typeof userSnap.data().username === "string"
+    ? userSnap.data().username.trim()
+    : "";
+  if (profileUsername) return profileUsername;
+
+  const usernameSnap = await getDocs(query(
+    collection(db, "usernames"),
+    where("uid", "==", uid),
+  ));
+  return usernameSnap.docs
+    .map((usernameDoc) => usernameDoc.data().username)
+    .find((username) => typeof username === "string" && username.trim())
+    ?.trim() || "";
+}
+
 function generateCode(length = 6) {
   let code = "";
   for (let i = 0; i < length; i++) {
@@ -63,7 +80,7 @@ function generateCode(length = 6) {
  * 1-group-owned and 3-groups-joined caps before touching Firestore.
  * Retries a few times on the rare chance of a code collision.
  */
-export async function createFriendGroup(ownerId, ownerName, groupName) {
+export async function createFriendGroup(ownerId, ownerUsername, groupName) {
   if (!ownerId || !groupName) {
     return { success: false, message: "Missing group name." };
   }
@@ -102,7 +119,7 @@ export async function createFriendGroup(ownerId, ownerName, groupName) {
       name: groupName,
       code,
       ownerId,
-      ownerName: ownerName || "",
+      ownerUsername: ownerUsername || "",
       memberIds: [ownerId],
       createdAt: serverTimestamp(),
     });
@@ -125,8 +142,7 @@ export async function createFriendGroup(ownerId, ownerName, groupName) {
 export async function requestToJoinGroup(
   code,
   requesterId,
-  requesterEmail,
-  requesterName,
+  requesterUsername,
 ) {
   if (!code || !requesterId) {
     return { success: false, message: "Missing information." };
@@ -181,8 +197,7 @@ export async function requestToJoinGroup(
   await addDoc(collection(db, "groupJoinRequests"), {
     groupId: groupDoc.id,
     requesterId,
-    requesterEmail: requesterEmail || "",
-    requesterName: requesterName || "",
+    requesterUsername: requesterUsername || "",
     status: "pending",
     createdAt: serverTimestamp(),
   });
@@ -229,10 +244,15 @@ export async function getPendingRequests(groupId) {
     ),
   );
 
-  return snapshot.docs.map((docSnap) => ({
+  const requests = snapshot.docs.map((docSnap) => ({
     id: docSnap.id,
     ...docSnap.data(),
   }));
+  await Promise.all(requests.map(async (request) => {
+    if (request.requesterUsername || !request.requesterId) return;
+    request.requesterUsername = await getUsernameForUser(request.requesterId);
+  }));
+  return requests;
 }
 
 /**
@@ -451,14 +471,10 @@ export async function getGroupLeaderboard(group, rankedMembers = []) {
   const ranksByUid = new Map(rankedMembers.map((member) => [member.uid, member]));
   const memberResults = await Promise.allSettled(
     memberIds.map(async (uid) => {
-      const userSnap = await getDoc(doc(db, "users", uid));
-
-      const name = userSnap.exists()
-        ? userSnap.data().name || "Student"
-        : "Student";
+      const username = await getUsernameForUser(uid);
 
       const rank = ranksByUid.get(uid);
-      return { uid, name, rank: rank?.rank || null, attemptCount: rank?.attemptCount || 0, score: rank?.score || 0 };
+      return { uid, username, rank: rank?.rank || null, attemptCount: rank?.attemptCount || 0, score: rank?.score || 0 };
     }),
   );
 

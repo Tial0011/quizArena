@@ -38,6 +38,23 @@ exports.handler = async (event) => {
         ? userDoc.data().username.trim()
         : "",
     ]));
+    const missingUsernameIds = winners
+      .map((winner) => winner.uid)
+      .filter((uid) => typeof uid === "string" && uid && !usernames.get(uid));
+    for (let offset = 0; offset < missingUsernameIds.length; offset += 30) {
+      const chunk = missingUsernameIds.slice(offset, offset + 30);
+      if (!chunk.length) continue;
+      const usernameDocs = await authentication.admin.db
+        .collection("usernames")
+        .where("uid", "in", chunk)
+        .get();
+      usernameDocs.docs.forEach((usernameDoc) => {
+        const usernameData = usernameDoc.data();
+        if (typeof usernameData.username === "string" && usernameData.username.trim()) {
+          usernames.set(usernameData.uid, usernameData.username.trim());
+        }
+      });
+    }
 
     return json(200, {
       data: {
@@ -46,7 +63,7 @@ exports.handler = async (event) => {
         weekEnd: week.weekEnd?.toMillis?.() || null,
         winners: winners.map((winner) => ({
           place: winner.place,
-          username: usernames.get(winner.uid) || "Student",
+          username: usernames.get(winner.uid) || "Username unavailable",
           prizeNaira: winner.prizeNaira || 0,
         })),
       },

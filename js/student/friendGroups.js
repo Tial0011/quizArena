@@ -260,7 +260,7 @@ async function loadPreviousWeekWinners() {
           return `
             <div class="previous-winner-row">
               <span class="previous-winner-medal" aria-hidden="true">${medals[index] || "🏅"}</span>
-              <span class="previous-winner-name">${escapeHtml(winner.username ? `@${winner.username}` : "Student")}<small>${place}${suffix} place</small></span>
+              <span class="previous-winner-name">${escapeHtml(winner.username ? `@${winner.username}` : "Username unavailable")}<small>${place}${suffix} place</small></span>
               <strong class="previous-winner-prize">₦${Number(winner.prizeNaira || 0).toLocaleString("en-NG")}</strong>
             </div>`;
         }).join("")}
@@ -326,7 +326,7 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
     ? `
       <div class="challenge-banner-half">
         <span class="challenge-banner-label">🥇 Leading</span>
-        <strong>${escapeHtml(topEntry.name)}</strong>
+        <strong>        ${escapeHtml(topEntry.username ? `@${topEntry.username}` : "Username unavailable")}</strong>
         <span class="challenge-banner-meta">${topEntry.score} points · ${topEntry.attemptCount} purchased attempt${topEntry.attemptCount === 1 ? "" : "s"} · ${topEntry.varietyCount} quiz${topEntry.varietyCount === 1 ? "" : "zes"}</span>
       </div>
     `
@@ -390,7 +390,7 @@ function renderLeaderboardList(topMembers) {
     ${index === 2 ? "third-place" : ""}">
               <span class="leaderboard-rank" aria-label="Rank ${index + 1}">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
-                ${escapeHtml(member.name)}${isMe ? " (You)" : ""}
+                ${escapeHtml(member.username ? `@${member.username}` : "Username unavailable")}${isMe ? " (You)" : ""}
                 ${member.varietyCount > 1 ? `<span class="challenge-rank-badge">${member.varietyCount} quizzes</span>` : ""}
               </span>
               <span class="leaderboard-score">${member.score} pts</span>
@@ -422,7 +422,7 @@ async function handleCreateGroup() {
   try {
     result = await createFriendGroup(
       currentUserData.id,
-      currentUserData.name,
+      currentUserData.username,
       name,
     );
   } catch (error) {
@@ -476,8 +476,7 @@ async function handleJoinGroup() {
     result = await requestToJoinGroup(
       code,
       currentUserData.id,
-      currentUserData.email,
-      currentUserData.name,
+      currentUserData.username,
     );
   } catch (error) {
     console.error("Could not request group membership:", error);
@@ -685,8 +684,7 @@ function renderPendingRequests(groupId, requests) {
           (req) => `
             <div class="pending-request-item">
               <div>
-                <strong>${escapeHtml(req.requesterName || "Unknown")}</strong>
-                <span class="pending-request-email">${escapeHtml(req.requesterEmail || "")}</span>
+                <strong>${escapeHtml(req.requesterUsername ? `@${req.requesterUsername}` : "Username unavailable")}</strong>
               </div>
               <div class="pending-request-actions">
                 <button
@@ -761,7 +759,7 @@ function renderLeaderboard(members) {
     ${index === 2 ? "third-place" : ""}">
               <span class="leaderboard-rank">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
-                ${escapeHtml(member.name)}${isMe ? " (You)" : ""}
+                ${escapeHtml(member.username ? `@${member.username}` : "Username unavailable")}${isMe ? " (You)" : ""}
                 <span class="challenge-rank-badge">${challengeRankLabel}</span>
               </span>
               <span class="leaderboard-score">

@@ -55,10 +55,39 @@ exports.handler = async (event) => {
       .map((memberId) => ranksByUid[memberId])
       .filter(Boolean)
       .sort((a, b) => a.rank - b.rank);
+    const top = snapshotData.top || [];
+    const publicEntries = [...top, ...rankedMembers];
+    const publicIds = [...new Set(publicEntries.map((entry) => entry.uid).filter(Boolean))];
+    const publicUserDocs = publicIds.length
+      ? await db.getAll(...publicIds.map((uid) => db.collection("users").doc(uid)))
+      : [];
+    const usernamesByUid = new Map(publicUserDocs.map((userDoc) => [
+      userDoc.id,
+      userDoc.exists && typeof userDoc.data().username === "string"
+        ? userDoc.data().username.trim()
+        : "",
+    ]));
+    const missingUsernameIds = publicIds.filter((uid) => !usernamesByUid.get(uid));
+    for (let offset = 0; offset < missingUsernameIds.length; offset += 30) {
+      const chunk = missingUsernameIds.slice(offset, offset + 30);
+      if (!chunk.length) continue;
+      const usernameDocs = await db.collection("usernames").where("uid", "in", chunk).get();
+      usernameDocs.docs.forEach((usernameDoc) => {
+        const usernameData = usernameDoc.data();
+        if (typeof usernameData.username === "string" && usernameData.username.trim()) {
+          usernamesByUid.set(usernameData.uid, usernameData.username.trim());
+        }
+      });
+    }
+    const withUsername = (entry) => {
+      const publicEntry = { ...entry };
+      delete publicEntry.name;
+      return { ...publicEntry, username: usernamesByUid.get(entry.uid) || "Username unavailable" };
+    };
     return json(200, {
       data: {
-        top: snapshotData.top || [],
-        rankedMembers,
+        top: top.map(withUsername),
+        rankedMembers: rankedMembers.map(withUsername),
         weekKey: week.weekKey,
         updatedAt: snapshotData.computedAt?.toMillis?.() || null,
       },

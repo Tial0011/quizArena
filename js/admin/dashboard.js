@@ -480,7 +480,7 @@ async function loadCommunityLeaderboard() {
       ${top.map((entry) => `
         <div class="community-leaderboard-row">
           <span>${Number(entry.rank) || "—"}</span>
-          <span>${escapeHtml(String(entry.name || "Student"))}</span>
+          <span>${escapeHtml(entry.username ? `@${entry.username}` : "Username unavailable")}</span>
           <span>${Number(entry.score || 0).toFixed(2)}</span>
           <span>${Number(entry.attemptCount) || 0}</span>
         </div>
@@ -533,17 +533,43 @@ async function renderFriendGroupPage(pageIndex) {
       return;
     }
 
+    const ownerIds = [...new Set(pageDocs
+      .map((groupDoc) => groupDoc.data().ownerId)
+      .filter((uid) => typeof uid === "string" && uid))];
+    const ownerDocs = ownerIds.length
+      ? await getDocs(query(collection(db, "users"), where(documentId(), "in", ownerIds)))
+      : { docs: [] };
+    const ownerUsernames = new Map(ownerDocs.docs.map((userDoc) => [
+      userDoc.id,
+      typeof userDoc.data().username === "string" ? userDoc.data().username.trim() : "",
+    ]));
+    const missingOwnerIds = ownerIds.filter((uid) => !ownerUsernames.get(uid));
+    if (missingOwnerIds.length) {
+      const usernameSnapshot = await getDocs(query(
+        collection(db, "usernames"),
+        where("uid", "in", missingOwnerIds),
+      ));
+      usernameSnapshot.docs.forEach((usernameDoc) => {
+        const usernameData = usernameDoc.data();
+        if (typeof usernameData.username === "string" && usernameData.username.trim()) {
+          ownerUsernames.set(usernameData.uid, usernameData.username.trim());
+        }
+      });
+    }
+    if (requestId !== friendGroupPageRequest || !container.isConnected) return;
+
     container.innerHTML = pageDocs.map((groupDoc) => {
       const group = groupDoc.data();
       const memberIds = Array.isArray(group.memberIds) ? group.memberIds : [];
       const memberLabel = `${memberIds.length} member${memberIds.length === 1 ? "" : "s"}`;
+      const ownerUsername = ownerUsernames.get(group.ownerId);
       return `
         <article class="community-group" data-group-id="${escapeHtml(groupDoc.id)}">
           <div class="community-group-summary">
             <div>
               <h3>${escapeHtml(String(group.name || "Unnamed group"))}</h3>
               <p>Code: ${escapeHtml(String(group.code || "—"))} · ${memberLabel}</p>
-              <p>Owner: ${escapeHtml(String(group.ownerName || "Student"))}</p>
+              <p>Owner: ${escapeHtml(ownerUsername ? `@${ownerUsername}` : "Username unavailable")}</p>
             </div>
             <button type="button" class="admin-refresh-btn" data-group-toggle="${escapeHtml(groupDoc.id)}" aria-expanded="false">
               Show members
@@ -596,16 +622,27 @@ async function handleFriendGroupExpand(event) {
       collection(db, "users"),
       where(documentId(), "in", memberIds),
     ));
-    const usersById = new Map(membersSnapshot.docs.map((userDoc) => [
+    const usernamesById = new Map(membersSnapshot.docs.map((userDoc) => [
       userDoc.id,
-      userDoc.data(),
+      typeof userDoc.data().username === "string" ? userDoc.data().username.trim() : "",
     ]));
+    const missingUsernameIds = memberIds.filter((uid) => !usernamesById.get(uid));
+    if (missingUsernameIds.length) {
+      const usernameSnapshot = await getDocs(query(
+        collection(db, "usernames"),
+        where("uid", "in", missingUsernameIds),
+      ));
+      usernameSnapshot.docs.forEach((usernameDoc) => {
+        const usernameData = usernameDoc.data();
+        if (typeof usernameData.username === "string" && usernameData.username.trim()) {
+          usernamesById.set(usernameData.uid, usernameData.username.trim());
+        }
+      });
+    }
     memberContainer.innerHTML = memberIds.map((uid) => {
-      const user = usersById.get(uid);
-      const name = user?.name || user?.fullName || "Student";
-      const username = user?.username ? `@${user.username}` : "No username";
+      const username = usernamesById.get(uid) ? `@${usernamesById.get(uid)}` : "Username unavailable";
       const owner = uid === group.ownerId ? " · Owner" : "";
-      return `<div class="community-member"><span>${escapeHtml(String(name))}${owner}</span><small>${escapeHtml(String(username))}</small></div>`;
+      return `<div class="community-member"><span>${escapeHtml(String(username))}${owner}</span></div>`;
     }).join("");
     button.textContent = "Hide members";
   } catch (error) {
