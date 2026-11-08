@@ -203,7 +203,23 @@ async function renderTabContent() {
               <div class="overview-icon">📝</div>
               <div class="overview-info">
                 <h3 id="quizCount">--</h3>
-                <p>Weekly Quizzes</p>
+                <p>Quizzes This Week</p>
+              </div>
+            </div>
+
+            <div class="overview-card load-in">
+              <div class="overview-icon">📋</div>
+              <div class="overview-info">
+                <h3 id="totalQuizCount">--</h3>
+                <p>Total Quizzes</p>
+              </div>
+            </div>
+
+            <div class="overview-card load-in">
+              <div class="overview-icon">🛒</div>
+              <div class="overview-info">
+                <h3 id="purchasedQuizCount">--</h3>
+                <p>Quizzes Bought</p>
               </div>
             </div>
 
@@ -681,11 +697,22 @@ async function loadReferralSourceStats() {
 }
 
 async function loadDashboardStats() {
-  const [subjectCountSnap, quizSnap, questionCountSnap, studentCountSnap] = await Promise.all([
+  const weekStart = getLagosWeekStart();
+  const now = Timestamp.fromDate(new Date());
+  const [subjectCountSnap, quizSnap, questionCountSnap, studentCountSnap, weeklyQuizCountSnap, purchasedQuizCountSnap] = await Promise.all([
     getCountFromServer(collection(db, "subjects")),
     getDocs(collection(db, "quizzes")),
     getCountFromServer(collection(db, "questions")),
     getCountFromServer(query(collection(db, "users"), where("role", "==", "student"))),
+    getCountFromServer(query(
+      collection(db, "quizzes"),
+      where("createdAt", ">=", Timestamp.fromDate(weekStart)),
+      where("createdAt", "<=", now),
+    )),
+    getCountFromServer(query(
+      collection(db, "purchases"),
+      where("status", "==", "paid"),
+    )),
   ]);
 
   // If the admin switched to a different tab while these reads were
@@ -696,7 +723,9 @@ async function loadDashboardStats() {
   if (activeTab !== "dashboard") return;
 
   setStatText("subjectCount", subjectCountSnap.data().count);
-  setStatText("quizCount", quizSnap.size);
+  setStatText("quizCount", weeklyQuizCountSnap.data().count);
+  setStatText("totalQuizCount", quizSnap.size);
+  setStatText("purchasedQuizCount", purchasedQuizCountSnap.data().count);
   setStatText("questionCount", questionCountSnap.data().count);
   setStatText("studentCount", studentCountSnap.data().count);
 
@@ -728,13 +757,7 @@ async function loadDashboardStats() {
 async function loadRevenueStats() {
   const hourMs = 60 * 60 * 1000;
   const lagosNow = new Date(Date.now() + hourMs);
-  const localMidnight = Date.UTC(
-    lagosNow.getUTCFullYear(),
-    lagosNow.getUTCMonth(),
-    lagosNow.getUTCDate(),
-  );
-  const daysSinceMonday = (new Date(localMidnight).getUTCDay() + 6) % 7;
-  const weekStart = new Date(localMidnight - daysSinceMonday * 24 * hourMs - hourMs);
+  const weekStart = getLagosWeekStart();
   const monthStart = new Date(Date.UTC(lagosNow.getUTCFullYear(), lagosNow.getUTCMonth(), 1) - hourMs);
   const now = Timestamp.fromDate(new Date());
   const transactions = collection(db, "flutterwaveTransactions");
@@ -762,6 +785,18 @@ async function loadRevenueStats() {
     console.error("Failed to load verified revenue totals:", error);
     ["revenueTotal", "weeklyRevenue", "monthlyRevenue"].forEach((id) => setStatText(id, "!"));
   }
+}
+
+function getLagosWeekStart() {
+  const hourMs = 60 * 60 * 1000;
+  const lagosNow = new Date(Date.now() + hourMs);
+  const localMidnight = Date.UTC(
+    lagosNow.getUTCFullYear(),
+    lagosNow.getUTCMonth(),
+    lagosNow.getUTCDate(),
+  );
+  const daysSinceMonday = (new Date(localMidnight).getUTCDay() + 6) % 7;
+  return new Date(localMidnight - daysSinceMonday * 24 * hourMs - hourMs);
 }
 
 // ---- User activity (online / active / logins / new users) ----
