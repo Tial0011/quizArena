@@ -163,6 +163,111 @@
   box-shadow: var(--shadow-sm);
 }
 
+.previous-winners-card {
+  margin: -4px 0 28px;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-tint);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 38%),
+    var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.previous-winners-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.previous-winners-heading h2 {
+  margin: 3px 0 0;
+  color: var(--color-text-strong);
+  font-size: 1.15rem;
+}
+
+.previous-winners-prize-total {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid var(--color-border-tint);
+  border-radius: 999px;
+  background: var(--color-tint);
+  color: var(--color-link);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.previous-winners-date {
+  margin: 0 0 12px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.previous-winners-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.previous-winner-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface-2);
+}
+
+.previous-winner-medal {
+  flex: 0 0 auto;
+  font-size: 22px;
+}
+
+.previous-winner-name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--color-text-strong);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.previous-winner-name small {
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.previous-winner-prize {
+  flex: 0 0 auto;
+  color: var(--color-link);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.previous-winners-empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .previous-winners-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 .global-challenge-section h3 {
   display: flex;
   align-items: center;

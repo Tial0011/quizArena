@@ -626,9 +626,15 @@ function setAdminLoading(isLoading) {
 
 async function renderWeeklyPrizes(content) {
   content.innerHTML = `
-    <div class="admin-card">
-      <h2>Weekly Challenge Prizes</h2>
-      <p>Winners are recorded automatically every Monday. Pay prizes manually by airtime, transfer, or data, then mark each payout here.</p>
+    <div class="admin-card weekly-prizes-shell">
+      <div class="weekly-prizes-heading">
+        <div>
+          <span class="weekly-prizes-kicker">Global Challenge</span>
+          <h2>Weekly winners &amp; payouts</h2>
+          <p>Review each week's winners, then record manual payouts by airtime, transfer, or data.</p>
+        </div>
+        <span class="weekly-prizes-schedule"><span aria-hidden="true">↻</span> Recorded every Monday</span>
+      </div>
       <div id="weeklyPrizeHistory">Loading weekly winners…</div>
     </div>`;
 
@@ -638,37 +644,73 @@ async function renderWeeklyPrizes(content) {
     const history = document.getElementById("weeklyPrizeHistory");
     if (!history) return;
     if (winnersSnap.empty) {
-      history.innerHTML = `<p>No weekly winner records yet. The first record is created on Monday after a completed challenge week.</p>`;
+      history.innerHTML = `<div class="weekly-prize-empty"><span aria-hidden="true">🏆</span><strong>No winner records yet</strong><p>The first record is created on Monday after a completed challenge week.</p></div>`;
       return;
     }
     history.innerHTML = winnersSnap.docs.map((weekDoc) => {
       const week = weekDoc.data();
       const dateRange = week.weekStart?.toDate && week.weekEnd?.toDate
-        ? `${week.weekStart.toDate().toLocaleDateString()} – ${week.weekEnd.toDate().toLocaleDateString()}`
+        ? `${week.weekStart.toDate().toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short", year: "numeric" })} – ${week.weekEnd.toDate().toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short", year: "numeric" })}`
         : week.weekKey;
-      const rows = (week.winners || []).map((winner) => `
-        <tr>
-          <td>${winner.place}</td><td>${escapeHtml(winner.name || "Student")}</td>
-          <td>₦${(winner.prizeNaira || 0).toLocaleString()}</td>
-          <td>${escapeHtml(winner.payoutStatus || "pending")}</td>
-          <td>${winner.payoutStatus === "paid" ? escapeHtml(winner.payoutMethod || "") : `<select aria-label="Payout method" data-payout-method><option value="airtime">Airtime</option><option value="transfer">Transfer</option><option value="data">Data</option></select> <button type="button" class="admin-refresh-btn" data-paid-week="${escapeHtml(weekDoc.id)}" data-paid-uid="${escapeHtml(winner.uid)}">Mark paid</button>`}</td>
-        </tr>`).join("");
-      return `<section class="admin-card"><h3>${escapeHtml(week.weekKey)} <small>${dateRange}</small></h3>
-        <div class="table-wrap"><table><thead><tr><th>Place</th><th>Student</th><th>Prize</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows || `<tr><td colspan="5">No qualifying winners</td></tr>`}</tbody></table></div></section>`;
+      const winners = Array.isArray(week.winners) ? week.winners : [];
+      const paidCount = winners.filter((winner) => winner.payoutStatus === "paid").length;
+      const winnerCards = winners.map((winner, index) => {
+        const place = Number(winner.place || index + 1);
+        const suffix = place === 1 ? "st" : place === 2 ? "nd" : place === 3 ? "rd" : "th";
+        const paid = winner.payoutStatus === "paid";
+        const medal = ["🥇", "🥈", "🥉"][index] || "🏅";
+        return `
+          <div class="weekly-prize-winner ${paid ? "is-paid" : "is-pending"}">
+            <span class="weekly-prize-medal" aria-hidden="true">${medal}</span>
+            <div class="weekly-prize-winner-info">
+              <strong>${escapeHtml(winner.name || "Student")}</strong>
+              <span>${place}${suffix} place</span>
+            </div>
+            <strong class="weekly-prize-amount">₦${Number(winner.prizeNaira || 0).toLocaleString("en-NG")}</strong>
+            <span class="weekly-prize-status ${paid ? "is-paid" : "is-pending"}">${paid ? "Paid" : "Pending"}</span>
+            <div class="weekly-prize-actions">
+              ${paid
+                ? `<span class="weekly-prize-method">${escapeHtml(winner.payoutMethod || "Payout recorded")}</span>`
+                : `<select aria-label="Payout method for ${escapeHtml(winner.name || "winner")}" data-payout-method><option value="airtime">Airtime</option><option value="transfer">Transfer</option><option value="data">Data</option></select><button type="button" class="weekly-prize-paid-btn" data-paid-week="${escapeHtml(weekDoc.id)}" data-paid-uid="${escapeHtml(winner.uid || "")}">Mark paid</button>`}
+            </div>
+          </div>`;
+      }).join("");
+      return `
+        <section class="weekly-prize-week">
+          <div class="weekly-prize-week-heading">
+            <div><h3>${escapeHtml(week.weekKey || "Weekly results")}</h3><p>${escapeHtml(dateRange || "")}</p></div>
+            <span class="weekly-prize-progress">${paidCount}/${winners.length} payouts complete</span>
+          </div>
+          <div class="weekly-prize-winners">
+            ${winnerCards || `<p class="weekly-prize-empty-inline">No qualifying winners were recorded for this week.</p>`}
+          </div>
+        </section>`;
     }).join("");
     history.querySelectorAll("[data-paid-week]").forEach((button) => button.addEventListener("click", async () => {
       button.disabled = true;
-      const weekRef = doc(db, "weeklyWinners", button.dataset.paidWeek);
-      const currentSnap = await getDoc(weekRef);
-      if (!currentSnap.exists()) return;
-      const winners = currentSnap.data().winners || [];
-      const target = winners.find((winner) => winner.uid === button.dataset.paidUid);
-      if (!target) return;
-      target.payoutStatus = "paid";
-      target.paidAt = new Date();
-      target.payoutMethod = button.parentElement.querySelector("[data-payout-method]")?.value || "airtime";
-      await updateDoc(weekRef, { winners });
-      await renderWeeklyPrizes(content);
+      button.textContent = "Saving…";
+      try {
+        const weekRef = doc(db, "weeklyWinners", button.dataset.paidWeek);
+        const currentSnap = await getDoc(weekRef);
+        if (!currentSnap.exists()) throw new Error("Weekly winner record no longer exists.");
+        const winners = currentSnap.data().winners || [];
+        const target = winners.find((winner) => winner.uid === button.dataset.paidUid);
+        if (!target) throw new Error("Winner was not found in this weekly record.");
+        target.payoutStatus = "paid";
+        target.paidAt = new Date();
+        target.payoutMethod = button.parentElement.querySelector("[data-payout-method]")?.value || "airtime";
+        await updateDoc(weekRef, { winners });
+        await renderWeeklyPrizes(content);
+      } catch (error) {
+        console.error("Failed to record weekly prize payout:", error);
+        if (!button.isConnected) return;
+        button.disabled = false;
+        button.textContent = "Retry";
+        const errorMessage = document.createElement("p");
+        errorMessage.className = "weekly-prize-error";
+        errorMessage.textContent = "Payout could not be saved. Check your connection and retry.";
+        button.closest(".weekly-prize-week")?.prepend(errorMessage);
+      }
     }));
   } catch (error) {
     console.error("Failed to load weekly prize history:", error);

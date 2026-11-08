@@ -295,6 +295,225 @@
   margin-bottom: 16px;
 }
 
+.admin-wrap .weekly-prizes-shell {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-wrap .weekly-prizes-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  border-bottom: 1px solid var(--color-border);
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 38%),
+    var(--color-surface-2);
+}
+
+.admin-wrap .weekly-prizes-kicker {
+  color: var(--color-link);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.admin-wrap .weekly-prizes-shell .weekly-prizes-heading h2 {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+}
+
+.admin-wrap .weekly-prizes-heading p {
+  max-width: 620px;
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.admin-wrap .weekly-prizes-schedule {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid var(--color-border-tint);
+  border-radius: 999px;
+  background: var(--color-tint);
+  color: var(--color-link);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-wrap #weeklyPrizeHistory {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.admin-wrap .weekly-prize-week {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.admin-wrap .weekly-prize-week-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+
+.admin-wrap .weekly-prize-week-heading h3 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.admin-wrap .weekly-prize-week-heading p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.admin-wrap .weekly-prize-progress {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-wrap .weekly-prize-winners {
+  display: grid;
+}
+
+.admin-wrap .weekly-prize-winner {
+  display: grid;
+  grid-template-columns: 32px minmax(100px, 1fr) 92px 74px minmax(195px, auto);
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+}
+
+.admin-wrap .weekly-prize-winner + .weekly-prize-winner {
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-wrap .weekly-prize-medal {
+  font-size: 20px;
+}
+
+.admin-wrap .weekly-prize-winner-info {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.admin-wrap .weekly-prize-winner-info strong {
+  overflow-wrap: anywhere;
+  color: var(--color-text-strong);
+  font-size: 13px;
+}
+
+.admin-wrap .weekly-prize-winner-info > span,
+.admin-wrap .weekly-prize-method {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.admin-wrap .weekly-prize-amount {
+  color: var(--color-text-strong);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.admin-wrap .weekly-prize-status {
+  justify-self: start;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-wrap .weekly-prize-status.is-paid {
+  background: var(--success-bg);
+  color: var(--color-success);
+}
+
+.admin-wrap .weekly-prize-status.is-pending {
+  background: var(--warn-bg);
+  color: var(--color-warning);
+}
+
+.admin-wrap .weekly-prize-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.admin-wrap .weekly-prize-actions select {
+  min-width: 94px;
+  padding: 7px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 11px;
+}
+
+.admin-wrap .weekly-prize-paid-btn {
+  padding: 7px 10px;
+  border: 1px solid var(--color-border-tint);
+  border-radius: 8px;
+  background: var(--color-tint);
+  color: var(--color-link);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-wrap .weekly-prize-paid-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.admin-wrap .weekly-prize-empty,
+.admin-wrap .weekly-prize-empty-inline {
+  margin: 0;
+  padding: 20px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.admin-wrap .weekly-prize-empty > span {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.admin-wrap .weekly-prize-empty strong {
+  color: var(--color-text-strong);
+}
+
+.admin-wrap .weekly-prize-empty p {
+  margin: 5px 0 0;
+  font-size: 12px;
+}
+
+.admin-wrap .weekly-prize-error {
+  margin: 10px 14px 0;
+  color: var(--color-danger);
+  font-size: 12px;
+}
+
 /* =========================
    OVERVIEW STATS
    Icon badge is smaller and neutral-toned (light gray, not a
@@ -874,7 +1093,62 @@
   font-size: 0.85em;
 }
 
+@media (max-width: 760px) {
+  .admin-wrap .weekly-prize-winner {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .admin-wrap .weekly-prize-status {
+    grid-column: 2;
+  }
+
+  .admin-wrap .weekly-prize-actions {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 480px) {
+  .admin-wrap .weekly-prizes-heading {
+    flex-direction: column;
+    padding: 17px;
+  }
+
+  .admin-wrap #weeklyPrizeHistory {
+    padding: 10px;
+  }
+
+  .admin-wrap .weekly-prize-week-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+  }
+
+  .admin-wrap .weekly-prize-winner {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .admin-wrap .weekly-prize-amount {
+    justify-self: end;
+  }
+
+  .admin-wrap .weekly-prize-status {
+    grid-column: 2;
+  }
+
+  .admin-wrap .weekly-prize-actions {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+  }
+
+  .admin-wrap .weekly-prize-actions select {
+    flex: 1;
+  }
+
   .admin-wrap .community-leaderboard-row {
     grid-template-columns: 34px minmax(0, 1fr) 64px 58px;
     gap: 6px;

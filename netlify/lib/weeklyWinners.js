@@ -10,6 +10,18 @@ function priorWeekKey(monday, weeksAgo) {
   return `${date.getUTCFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
 }
 
+function getPreviousWeekKey(now = new Date()) {
+  const nowLagos = new Date(now.getTime() + 60 * 60 * 1000);
+  const monday = new Date(Date.UTC(
+    nowLagos.getUTCFullYear(),
+    nowLagos.getUTCMonth(),
+    nowLagos.getUTCDate(),
+  ));
+  const daysSinceMonday = (monday.getUTCDay() + 6) % 7;
+  monday.setUTCDate(monday.getUTCDate() - daysSinceMonday - 7);
+  return priorWeekKey(monday, 0);
+}
+
 async function recordWeeklyChallengeWinners(db, Timestamp, FieldValue, now = new Date()) {
   const nowLagos = new Date(now.getTime() + 60 * 60 * 1000);
   const monday = new Date(Date.UTC(
@@ -146,4 +158,4 @@ async function recordWeeklyChallengeWinners(db, Timestamp, FieldValue, now = new
   }, { merge: true });
 }
 
-module.exports = { recordWeeklyChallengeWinners };
+module.exports = { getPreviousWeekKey, recordWeeklyChallengeWinners };

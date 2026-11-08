@@ -11,6 +11,7 @@ import {
   getGlobalChallengeLeaderboard,
   findGlobalRank,
 } from "./friendGroupService.js";
+import { callNetlifyFunction } from "../firebase/netlifyFunctions.js";
 
 let currentUserData = {};
 let challengeRankedCache = []; // requested group members and their exact Global Challenge ranks
@@ -39,6 +40,10 @@ export async function renderFriendGroups(userData = {}) {
 async function renderFriendGroupsPage(userData) {
   currentUserData = userData;
   const hasPurchasedQuizzes = (userData.purchasedQuizzes || []).length > 0;
+  const showPreviousWeekWinners = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Africa/Lagos",
+    weekday: "short",
+  }).format(new Date()) === "Mon";
 
   registerBackHandler(() => {
     renderStudentDashboard(currentUserData);
@@ -100,6 +105,24 @@ async function renderFriendGroupsPage(userData) {
         </div>
 
       </div>
+
+      ${showPreviousWeekWinners ? `
+        <section class="previous-winners-card" aria-labelledby="previousWinnersTitle">
+          <div class="previous-winners-heading">
+            <div>
+              <span class="friend-groups-section-kicker">Last week's results</span>
+              <h2 id="previousWinnersTitle">Challenge winners</h2>
+            </div>
+            <span class="previous-winners-prize-total">₦3,000 in prizes</span>
+          </div>
+          <div id="previousWeekWinners" aria-live="polite" aria-busy="true">
+            <div class="challenge-loading" role="status">
+              <span class="challenge-spinner" aria-hidden="true"></span>
+              <span>Loading last week's winners…</span>
+            </div>
+          </div>
+        </section>
+      ` : ""}
 
       <section class="friend-group-action-section" id="friendGroupActions">
         <div class="friend-groups-section-heading">
@@ -202,7 +225,52 @@ async function renderFriendGroupsPage(userData) {
       container.innerHTML = `<div class="empty-state">Leaderboard unavailable right now. Please try again.</div>`;
     }
   }
-  await Promise.all(groups.map((group) => loadGroupDetails(group)));
+  const groupDetailsPromise = Promise.all(groups.map((group) => loadGroupDetails(group)));
+  if (showPreviousWeekWinners) {
+    await Promise.all([loadPreviousWeekWinners(), groupDetailsPromise]);
+  } else {
+    await groupDetailsPromise;
+  }
+}
+
+async function loadPreviousWeekWinners() {
+  const container = document.getElementById("previousWeekWinners");
+  if (!container) return;
+
+  try {
+    const response = await callNetlifyFunction("previous-week-winners");
+    if (!container.isConnected) return;
+    container.setAttribute("aria-busy", "false");
+    const week = response.data;
+    if (!week?.winners?.length) {
+      container.innerHTML = `<p class="previous-winners-empty">Last week's results are not available yet. Please check back shortly.</p>`;
+      return;
+    }
+
+    const dateRange = week.weekStart && week.weekEnd
+      ? `${new Date(week.weekStart).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short" })} – ${new Date(week.weekEnd).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short" })}`
+      : week.weekKey;
+    const medals = ["🥇", "🥈", "🥉"];
+    container.innerHTML = `
+      <p class="previous-winners-date">${escapeHtml(dateRange || "")}</p>
+      <div class="previous-winners-list">
+        ${week.winners.map((winner, index) => {
+          const place = Number(winner.place || index + 1);
+          const suffix = place === 1 ? "st" : place === 2 ? "nd" : place === 3 ? "rd" : "th";
+          return `
+            <div class="previous-winner-row">
+              <span class="previous-winner-medal" aria-hidden="true">${medals[index] || "🏅"}</span>
+              <span class="previous-winner-name">${escapeHtml(winner.name || "Student")}<small>${place}${suffix} place</small></span>
+              <strong class="previous-winner-prize">₦${Number(winner.prizeNaira || 0).toLocaleString("en-NG")}</strong>
+            </div>`;
+        }).join("")}
+      </div>`;
+  } catch (error) {
+    console.error("Could not load previous week's winners:", error);
+    if (!container.isConnected) return;
+    container.setAttribute("aria-busy", "false");
+    container.innerHTML = `<p class="previous-winners-empty">Last week's winners could not be loaded. Please try again later.</p>`;
+  }
 }
 
 /**
