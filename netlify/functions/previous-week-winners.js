@@ -24,14 +24,29 @@ exports.handler = async (event) => {
     if (!winnerSnapshot.exists) return json(200, { data: null });
 
     const week = winnerSnapshot.data();
+    const winners = (week.winners || []).slice(0, 3);
+    const userRefs = winners
+      .map((winner) => winner.uid)
+      .filter((uid) => typeof uid === "string" && uid)
+      .map((uid) => authentication.admin.db.collection("users").doc(uid));
+    const userDocs = userRefs.length
+      ? await authentication.admin.db.getAll(...userRefs)
+      : [];
+    const usernames = new Map(userDocs.map((userDoc) => [
+      userDoc.id,
+      userDoc.exists && typeof userDoc.data().username === "string"
+        ? userDoc.data().username.trim()
+        : "",
+    ]));
+
     return json(200, {
       data: {
         weekKey: week.weekKey,
         weekStart: week.weekStart?.toMillis?.() || null,
         weekEnd: week.weekEnd?.toMillis?.() || null,
-        winners: (week.winners || []).slice(0, 3).map((winner) => ({
+        winners: winners.map((winner) => ({
           place: winner.place,
-          name: winner.name || "Student",
+          username: usernames.get(winner.uid) || "Student",
           prizeNaira: winner.prizeNaira || 0,
         })),
       },

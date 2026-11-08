@@ -260,7 +260,7 @@ async function loadPreviousWeekWinners() {
           return `
             <div class="previous-winner-row">
               <span class="previous-winner-medal" aria-hidden="true">${medals[index] || "🏅"}</span>
-              <span class="previous-winner-name">${escapeHtml(winner.name || "Student")}<small>${place}${suffix} place</small></span>
+              <span class="previous-winner-name">${escapeHtml(winner.username ? `@${winner.username}` : "Student")}<small>${place}${suffix} place</small></span>
               <strong class="previous-winner-prize">₦${Number(winner.prizeNaira || 0).toLocaleString("en-NG")}</strong>
             </div>`;
         }).join("")}

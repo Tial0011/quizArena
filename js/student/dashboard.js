@@ -39,6 +39,7 @@ import {
   initScrollReveal,
   animateCountUp,
 } from "./scrollEffects.js";
+import { callNetlifyFunction } from "../firebase/netlifyFunctions.js";
 
 const app = document.getElementById("app");
 
@@ -214,6 +215,8 @@ export function renderStudentDashboard(userData = {}) {
           </div>
         </header>
 
+        <div id="weeklyAwardRecognition"></div>
+
         ${shouldShowWelcomeQuiz(userData) ? `
         <button type="button" class="sd-cta sd-welcome-quiz-cta load-in" data-start-welcome-quiz>
           <span class="sd-cta-text">
@@ -315,10 +318,55 @@ export function renderStudentDashboard(userData = {}) {
   setupDashboardEvents(userData);
   initDashboardEffects();
   loadAnalytics(userData);
+  loadWeeklyAwardRecognition();
 
   startNotificationsListener(userData);
   initPushNotifications(userData.id);
   maybeShowFirstQuizPrompt(userData);
+}
+
+async function loadWeeklyAwardRecognition() {
+  const container = document.getElementById("weeklyAwardRecognition");
+  if (!container) return;
+
+  try {
+    const response = await callNetlifyFunction("weekly-award");
+    if (!container.isConnected || !response.data) return;
+
+    const award = response.data;
+    const place = Number(award.place);
+    const recognition = place === 1
+      ? {
+          icon: "👑",
+          eyebrow: "Last week's champion",
+          title: "Standing Champ of Quiz Arena",
+          message: "You earned the top spot through your focus and effort. Your next chapter starts this week.",
+          className: "is-champion",
+        }
+      : {
+          icon: place === 2 ? "🥈" : "🥉",
+          eyebrow: "Last week's podium",
+          title: place === 2 ? "Quiz Arena Runner-up" : "Quiz Arena Top 3",
+          message: "Your hard work earned a place among last week's prize winners. Keep building on that progress.",
+          className: "is-podium",
+        };
+    const dateRange = award.weekStart && award.weekEnd
+      ? `${new Date(award.weekStart).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short" })} – ${new Date(award.weekEnd).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short" })}`
+      : award.weekKey;
+
+    container.innerHTML = `
+      <section class="sd-award ${recognition.className}" aria-label="${recognition.title}">
+        <span class="sd-award-mark" aria-hidden="true">${recognition.icon}</span>
+        <div class="sd-award-copy">
+          <span class="sd-award-eyebrow">${recognition.eyebrow}${dateRange ? ` · ${escapeHtml(dateRange)}` : ""}</span>
+          <h2>${recognition.title}</h2>
+          <p>${recognition.message}</p>
+        </div>
+        <span class="sd-award-prize">₦${Number(award.prizeNaira || 0).toLocaleString("en-NG")} <small>prize</small></span>
+      </section>`;
+  } catch (error) {
+    console.error("Could not load weekly award recognition:", error);
+  }
 }
 
 /* =========================================================
