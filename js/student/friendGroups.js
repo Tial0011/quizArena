@@ -10,7 +10,6 @@ import {
   getGroupLeaderboard,
   getGlobalChallengeLeaderboard,
   findGlobalRank,
-  getUsernameForUser,
 } from "./friendGroupService.js";
 import { callNetlifyFunction } from "../firebase/netlifyFunctions.js";
 
@@ -252,20 +251,16 @@ async function loadPreviousWeekWinners() {
       ? `${new Date(week.weekStart).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short" })} – ${new Date(week.weekEnd).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short" })}`
       : week.weekKey;
     const medals = ["🥇", "🥈", "🥉"];
-    const winners = await Promise.all(week.winners.map(async (winner) => ({
-      ...winner,
-      username: winner.username || (winner.uid ? await getUsernameForUser(winner.uid) : ""),
-    })));
     container.innerHTML = `
       <p class="previous-winners-date">${escapeHtml(dateRange || "")}</p>
       <div class="previous-winners-list">
-        ${winners.map((winner, index) => {
+        ${week.winners.map((winner, index) => {
           const place = Number(winner.place || index + 1);
           const suffix = place === 1 ? "st" : place === 2 ? "nd" : place === 3 ? "rd" : "th";
           return `
             <div class="previous-winner-row">
               <span class="previous-winner-medal" aria-hidden="true">${medals[index] || "🏅"}</span>
-              <span class="previous-winner-name">${escapeHtml(winner.username ? `@${winner.username}` : "Username unavailable")}<small>${place}${suffix} place</small></span>
+              <span class="previous-winner-name">${escapeHtml(winner.name || "Student")}<small>${place}${suffix} place</small></span>
               <strong class="previous-winner-prize">₦${Number(winner.prizeNaira || 0).toLocaleString("en-NG")}</strong>
             </div>`;
         }).join("")}
@@ -331,7 +326,7 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
     ? `
       <div class="challenge-banner-half">
         <span class="challenge-banner-label">🥇 Leading</span>
-        <strong>${escapeHtml(topEntry.username ? `@${topEntry.username}` : "Username unavailable")}</strong>
+        <strong>${escapeHtml(topEntry.name || "Student")}</strong>
         <span class="challenge-banner-meta">${topEntry.score} points · ${topEntry.attemptCount} purchased attempt${topEntry.attemptCount === 1 ? "" : "s"} · ${topEntry.varietyCount} quiz${topEntry.varietyCount === 1 ? "" : "zes"}</span>
       </div>
     `
@@ -395,7 +390,7 @@ function renderLeaderboardList(topMembers) {
     ${index === 2 ? "third-place" : ""}">
               <span class="leaderboard-rank" aria-label="Rank ${index + 1}">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
-                ${escapeHtml(member.username ? `@${member.username}` : "Username unavailable")}${isMe ? " (You)" : ""}
+                ${escapeHtml(member.name || "Student")}${isMe ? " (You)" : ""}
                 ${member.varietyCount > 1 ? `<span class="challenge-rank-badge">${member.varietyCount} quizzes</span>` : ""}
               </span>
               <span class="leaderboard-score">${member.score} pts</span>
@@ -427,7 +422,7 @@ async function handleCreateGroup() {
   try {
     result = await createFriendGroup(
       currentUserData.id,
-      currentUserData.username,
+      currentUserData.name,
       name,
     );
   } catch (error) {
@@ -481,7 +476,8 @@ async function handleJoinGroup() {
     result = await requestToJoinGroup(
       code,
       currentUserData.id,
-      currentUserData.username,
+      currentUserData.email,
+      currentUserData.name,
     );
   } catch (error) {
     console.error("Could not request group membership:", error);
@@ -689,7 +685,8 @@ function renderPendingRequests(groupId, requests) {
           (req) => `
             <div class="pending-request-item">
               <div>
-                <strong>${escapeHtml(req.requesterUsername ? `@${req.requesterUsername}` : "Username unavailable")}</strong>
+                <strong>${escapeHtml(req.requesterName || "Unknown")}</strong>
+                <span class="pending-request-email">${escapeHtml(req.requesterEmail || "")}</span>
               </div>
               <div class="pending-request-actions">
                 <button
@@ -764,7 +761,7 @@ function renderLeaderboard(members) {
     ${index === 2 ? "third-place" : ""}">
               <span class="leaderboard-rank">${medals[index] || `#${index + 1}`}</span>
               <span class="leaderboard-name">
-                ${escapeHtml(member.username ? `@${member.username}` : "Username unavailable")}${isMe ? " (You)" : ""}
+                ${escapeHtml(member.name || "Student")}${isMe ? " (You)" : ""}
                 <span class="challenge-rank-badge">${challengeRankLabel}</span>
               </span>
               <span class="leaderboard-score">

@@ -56,38 +56,31 @@ exports.handler = async (event) => {
       .filter(Boolean)
       .sort((a, b) => a.rank - b.rank);
     const top = snapshotData.top || [];
-    const publicEntries = [...top, ...rankedMembers];
-    const publicIds = [...new Set(publicEntries.map((entry) => entry.uid).filter(Boolean))];
-    const publicUserDocs = publicIds.length
-      ? await db.getAll(...publicIds.map((uid) => db.collection("users").doc(uid)))
+    const entries = [...top, ...rankedMembers];
+    const userIds = [...new Set(entries
+      .map((entry) => entry.uid)
+      .filter((uid) => typeof uid === "string" && uid))];
+    const userDocs = userIds.length
+      ? await db.getAll(...userIds.map((uid) => db.collection("users").doc(uid)))
       : [];
-    const usernamesByUid = new Map(publicUserDocs.map((userDoc) => [
+    const namesByUid = new Map(userDocs.map((userDoc) => [
       userDoc.id,
-      userDoc.exists && typeof userDoc.data().username === "string"
-        ? userDoc.data().username.trim()
-        : "",
+      userDoc.exists
+        ? userDoc.data().name || userDoc.data().fullName || "Student"
+        : "Student",
     ]));
-    const missingUsernameIds = publicIds.filter((uid) => !usernamesByUid.get(uid));
-    for (let offset = 0; offset < missingUsernameIds.length; offset += 30) {
-      const chunk = missingUsernameIds.slice(offset, offset + 30);
-      if (!chunk.length) continue;
-      const usernameDocs = await db.collection("usernames").where("uid", "in", chunk).get();
-      usernameDocs.docs.forEach((usernameDoc) => {
-        const usernameData = usernameDoc.data();
-        if (typeof usernameData.username === "string" && usernameData.username.trim()) {
-          usernamesByUid.set(usernameData.uid, usernameData.username.trim());
-        }
-      });
-    }
-    const withUsername = (entry) => {
+    const withFullName = (entry) => {
       const publicEntry = { ...entry };
-      delete publicEntry.name;
-      return { ...publicEntry, username: usernamesByUid.get(entry.uid) || "Username unavailable" };
+      delete publicEntry.username;
+      return {
+        ...publicEntry,
+        name: namesByUid.get(entry.uid) || entry.name || "Student",
+      };
     };
     return json(200, {
       data: {
-        top: top.map(withUsername),
-        rankedMembers: rankedMembers.map(withUsername),
+        top: top.map(withFullName),
+        rankedMembers: rankedMembers.map(withFullName),
         weekKey: week.weekKey,
         updatedAt: snapshotData.computedAt?.toMillis?.() || null,
       },

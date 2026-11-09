@@ -119,30 +119,15 @@ async function recordWeeklyChallengeWinners(db, Timestamp, FieldValue, now = new
   const top = results.slice(0, 3);
   const userRefs = top.map((entry) => db.collection("users").doc(entry.uid));
   const userDocs = userRefs.length ? await db.getAll(...userRefs) : [];
-  const profilesById = new Map(userDocs.map((userDoc) => [
+  const names = new Map(userDocs.map((userDoc) => [
     userDoc.id,
-    userDoc.exists ? userDoc.data() : {},
+    userDoc.exists ? userDoc.data().name || "Student" : "Student",
   ]));
-  const missingUsernameIds = top
-    .map((entry) => entry.uid)
-    .filter((uid) => !profilesById.get(uid)?.username);
-  for (let offset = 0; offset < missingUsernameIds.length; offset += 30) {
-    const chunk = missingUsernameIds.slice(offset, offset + 30);
-    const usernameDocs = await db.collection("usernames").where("uid", "in", chunk).get();
-    usernameDocs.docs.forEach((usernameDoc) => {
-      const data = usernameDoc.data();
-      const profile = profilesById.get(data.uid) || {};
-      if (typeof data.username === "string" && data.username.trim()) {
-        profilesById.set(data.uid, { ...profile, username: data.username.trim() });
-      }
-    });
-  }
   const payouts = [1500, 1000, 500];
   const winners = top.map((entry, index) => ({
     ...entry,
     score: Math.round(entry.score * 100) / 100,
-    name: profilesById.get(entry.uid)?.name || "Student",
-    username: profilesById.get(entry.uid)?.username || "",
+    name: names.get(entry.uid) || "Student",
     place: index + 1,
     prizeNaira: payouts[index],
     payoutStatus: "pending",

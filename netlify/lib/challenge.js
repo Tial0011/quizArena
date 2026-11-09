@@ -227,17 +227,12 @@ async function rebuildWeeklyChallengeLeaderboardSnapshot(
     }
   }
 
-  const usernamesById = new Map();
+  const usersById = new Map();
   for (let offset = 0; offset < ranked.length; offset += 100) {
     const chunk = ranked.slice(offset, offset + 100);
     const userDocs = await db.getAll(...chunk.map((entry) => db.collection("users").doc(entry.uid)));
     userDocs.forEach((userDoc) => {
-      usernamesById.set(
-        userDoc.id,
-        userDoc.exists && typeof userDoc.data().username === "string"
-          ? userDoc.data().username.trim()
-          : "",
-      );
+      usersById.set(userDoc.id, userDoc.exists ? userDoc.data().name || "Student" : "Student");
     });
   }
 
@@ -247,7 +242,7 @@ async function rebuildWeeklyChallengeLeaderboardSnapshot(
       ...entry,
       rank: index + 1,
       averagePercentage: entry.score,
-      username: usernamesById.get(entry.uid) || "",
+      name: usersById.get(entry.uid) || "Student",
     };
   });
   await db.collection("weeklyChallengeLeaderboardSnapshots").doc(weekKey).set({
