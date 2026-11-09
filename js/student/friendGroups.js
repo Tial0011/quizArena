@@ -10,6 +10,7 @@ import {
   getGroupLeaderboard,
   getGlobalChallengeLeaderboard,
   findGlobalRank,
+  getUsernameForUser,
 } from "./friendGroupService.js";
 import { callNetlifyFunction } from "../firebase/netlifyFunctions.js";
 
@@ -251,10 +252,14 @@ async function loadPreviousWeekWinners() {
       ? `${new Date(week.weekStart).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short" })} – ${new Date(week.weekEnd).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short" })}`
       : week.weekKey;
     const medals = ["🥇", "🥈", "🥉"];
+    const winners = await Promise.all(week.winners.map(async (winner) => ({
+      ...winner,
+      username: winner.username || (winner.uid ? await getUsernameForUser(winner.uid) : ""),
+    })));
     container.innerHTML = `
       <p class="previous-winners-date">${escapeHtml(dateRange || "")}</p>
       <div class="previous-winners-list">
-        ${week.winners.map((winner, index) => {
+        ${winners.map((winner, index) => {
           const place = Number(winner.place || index + 1);
           const suffix = place === 1 ? "st" : place === 2 ? "nd" : place === 3 ? "rd" : "th";
           return `
@@ -326,7 +331,7 @@ function renderChallengeBanner(topEntry, myEntry, myRank) {
     ? `
       <div class="challenge-banner-half">
         <span class="challenge-banner-label">🥇 Leading</span>
-        <strong>        ${escapeHtml(topEntry.username ? `@${topEntry.username}` : "Username unavailable")}</strong>
+        <strong>${escapeHtml(topEntry.username ? `@${topEntry.username}` : "Username unavailable")}</strong>
         <span class="challenge-banner-meta">${topEntry.score} points · ${topEntry.attemptCount} purchased attempt${topEntry.attemptCount === 1 ? "" : "s"} · ${topEntry.varietyCount} quiz${topEntry.varietyCount === 1 ? "" : "zes"}</span>
       </div>
     `

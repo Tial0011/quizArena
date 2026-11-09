@@ -62,6 +62,7 @@ exports.handler = async (event) => {
         weekStart: week.weekStart?.toMillis?.() || null,
         weekEnd: week.weekEnd?.toMillis?.() || null,
         winners: winners.map((winner) => ({
+          uid: winner.uid,
           place: winner.place,
           username: usernames.get(winner.uid) || "Username unavailable",
           prizeNaira: winner.prizeNaira || 0,

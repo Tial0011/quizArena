@@ -50,7 +50,7 @@ const leaderboardCache = new Map();
 const groupDetailsCache = new Map();
 const myGroupsCache = new Map();
 
-async function getUsernameForUser(uid) {
+export async function getUsernameForUser(uid) {
   const userSnap = await getDoc(doc(db, "users", uid));
   const profileUsername = userSnap.exists() && typeof userSnap.data().username === "string"
     ? userSnap.data().username.trim()
@@ -448,7 +448,29 @@ export async function getGlobalChallengeLeaderboard(limitCount = 15, rankUserIds
   const response = await callNetlifyFunction("leaderboard", {
     limitCount: Math.min(15, limitCount),
   });
-  const value = { ...response.data, weekLabel };
+  const top = Array.isArray(response.data?.top) ? response.data.top : [];
+  const rankedMembers = Array.isArray(response.data?.rankedMembers)
+    ? response.data.rankedMembers
+    : [];
+  const entries = [...top, ...rankedMembers];
+  const missingUsernameIds = [...new Set(entries
+    .filter((entry) => !entry.username || entry.username === "Username unavailable")
+    .map((entry) => entry.uid)
+    .filter((uid) => typeof uid === "string" && uid))];
+  const usernameResults = await Promise.all(
+    missingUsernameIds.map(async (uid) => [uid, await getUsernameForUser(uid)]),
+  );
+  const usernamesByUid = new Map(usernameResults.filter(([, username]) => username));
+  const ensureUsername = (entry) => ({
+    ...entry,
+    username: usernamesByUid.get(entry.uid) || entry.username || "Username unavailable",
+  });
+  const value = {
+    ...response.data,
+    top: top.map(ensureUsername),
+    rankedMembers: rankedMembers.map(ensureUsername),
+    weekLabel,
+  };
   leaderboardCache.set(cacheKey, { value, expiresAt: Date.now() + LEADERBOARD_CACHE_TTL_MS });
   for (const [key, entry] of leaderboardCache) {
     if (entry.expiresAt <= Date.now()) leaderboardCache.delete(key);
