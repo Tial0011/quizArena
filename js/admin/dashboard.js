@@ -306,12 +306,14 @@ async function renderTabContent() {
             <span class="live-dot"></span>
             Live numbers — updates every minute.
           </p>
+          <p>“Signed up, never returned” counts accounts with exactly one recorded sign-in.</p>
 
           <div class="overview-grid">
             ${[
               ["🟢", "statOnline", "Online now", "last 5 min"],
               ["⚡", "statActive24h", "Active users", "last 24 hours"],
               ["📅", "statActive7d", "Active users", "last 7 days"],
+              ["👋", "statNeverReturned", "Signed up, never returned", "one recorded sign-in"],
               ["🔑", "statLoginsToday", "Logins", "today"],
               ["🔐", "statLogins7d", "Logins", "last 7 days"],
               ["🆕", "statNewToday", "New users", "today"],
@@ -896,6 +898,9 @@ async function loadUserActivityStats() {
     statNewToday: count("users", "createdAt", today),
     statNew7d: count("users", "createdAt", ago(7 * DAY)),
     statNew30d: count("users", "createdAt", ago(30 * DAY)),
+    statNeverReturned: getCountFromServer(
+      query(collection(db, "users"), where("loginCount", "==", 1)),
+    ).then((snap) => snap.data().count),
   };
 
   // Each tile settles on its own so one failing query (e.g. a missing
