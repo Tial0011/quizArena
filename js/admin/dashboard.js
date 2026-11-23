@@ -284,10 +284,10 @@ async function renderTabContent() {
         </div>
 
         <div class="admin-card load-in">
-          <h2 id="weeklyRevenueChartTitle">Revenue This Week</h2>
-          <p>Verified Flutterwave revenue by day, Monday to Sunday (Lagos time).</p>
+          <h2>Revenue Per Week</h2>
+          <p>Weekly verified revenue for this week and the previous three weeks (Lagos time).</p>
           <div id="weeklyRevenueChart" class="weekly-revenue-chart" role="status" aria-live="polite">
-            Loading daily revenue…
+            Loading weekly revenue…
           </div>
         </div>
 
@@ -838,6 +838,15 @@ async function loadRevenueStats() {
     ),
     { total: sum("amount") },
   );
+  const sumBetween = (start, end) => getAggregateFromServer(
+    query(
+      transactions,
+      where("processedAt", ">=", Timestamp.fromDate(start)),
+      where("processedAt", "<", Timestamp.fromDate(end)),
+    ),
+    { total: sum("amount") },
+  );
+  let currentWeekTotal = 0;
 
   try {
     const [allTime, weekly, monthly] = await Promise.all([
@@ -847,8 +856,9 @@ async function loadRevenueStats() {
     ]);
     if (activeTab !== "dashboard") return;
     const formatNaira = (value) => `₦${Number(value || 0).toLocaleString()}`;
+    currentWeekTotal = Number(weekly.data().total || 0);
     setStatText("revenueTotal", formatNaira(allTime.data().total));
-    setStatText("weeklyRevenue", formatNaira(weekly.data().total));
+    setStatText("weeklyRevenue", formatNaira(currentWeekTotal));
     setStatText("monthlyRevenue", formatNaira(monthly.data().total));
   } catch (error) {
     console.error("Failed to load verified revenue totals:", error);
@@ -858,42 +868,35 @@ async function loadRevenueStats() {
   }
 
   try {
-    const dayMs = 24 * 60 * 60 * 1000;
-    const days = await Promise.all(
-      Array.from({ length: 7 }, async (_, index) => {
-        const start = new Date(weekStart.getTime() + index * dayMs);
-        const nextDay = new Date(start.getTime() + dayMs);
-        if (start > nowDate) return { start, amount: null };
-
-        const endFilter = nextDay > nowDate
-          ? where("processedAt", "<=", now)
-          : where("processedAt", "<", Timestamp.fromDate(nextDay));
-        const snapshot = await getAggregateFromServer(
-          query(
-            transactions,
-            where("processedAt", ">=", Timestamp.fromDate(start)),
-            endFilter,
-          ),
-          { total: sum("amount") },
-        );
-        return { start, amount: Number(snapshot.data().total || 0) };
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const weekStarts = Array.from(
+      { length: 4 },
+      (_, index) => new Date(weekStart.getTime() + (index - 3) * weekMs),
+    );
+    const weeks = await Promise.all(
+      weekStarts.map(async (start, index) => {
+        if (index === weekStarts.length - 1) {
+          return { start, amount: currentWeekTotal, isCurrent: true };
+        }
+        const snapshot = await sumBetween(start, weekStarts[index + 1]);
+        return { start, amount: Number(snapshot.data().total || 0), isCurrent: false };
       }),
     );
     if (activeTab !== "dashboard") return;
-    renderWeeklyRevenueChart(days);
+    renderWeeklyRevenueChart(weeks);
   } catch (error) {
-    console.error("Failed to load daily verified revenue:", error);
+    console.error("Failed to load weekly verified revenue:", error);
     setWeeklyRevenueChartError();
   }
 }
 
-function renderWeeklyRevenueChart(days) {
+function renderWeeklyRevenueChart(weeks) {
   const container = document.getElementById("weeklyRevenueChart");
   if (!container) return;
 
   const maxAmount = Math.max(
     0,
-    ...days.filter((day) => day.amount !== null).map((day) => day.amount),
+    ...weeks.map((week) => week.amount),
   );
   const scaleAmount = maxAmount || 1;
   const compactNaira = new Intl.NumberFormat("en-NG", {
@@ -901,8 +904,9 @@ function renderWeeklyRevenueChart(days) {
     maximumFractionDigits: 1,
   });
   const formatNaira = (amount) => `₦${Number(amount).toLocaleString("en-NG")}`;
-  const weekday = new Intl.DateTimeFormat("en-NG", {
-    weekday: "short",
+  const weekDate = new Intl.DateTimeFormat("en-NG", {
+    month: "short",
+    day: "numeric",
     timeZone: "Africa/Lagos",
   });
   const graph = document.createElement("div");
@@ -910,7 +914,7 @@ function renderWeeklyRevenueChart(days) {
   graph.setAttribute("role", "img");
   graph.setAttribute(
     "aria-label",
-    `Verified revenue this week: ${days.map((day) => `${weekday.format(day.start)} ${day.amount === null ? "no data yet" : formatNaira(day.amount)}`).join(", ")}`,
+    `Verified revenue per week: ${weeks.map((week) => `${week.isCurrent ? "This week" : `Week of ${weekDate.format(week.start)}`} ${formatNaira(week.amount)}`).join(", ")}`,
   );
 
   const yAxis = document.createElement("div");
@@ -951,16 +955,11 @@ function renderWeeklyRevenueChart(days) {
     }));
   }
 
-  const points = days
-    .map((day, index) => {
-      if (day.amount === null) return null;
-      return {
-        x: (index / (days.length - 1)) * 1000,
-        y: 1000 - (day.amount / scaleAmount) * 1000,
-        ...day,
-      };
-    })
-    .filter(Boolean);
+  const points = weeks.map((week, index) => ({
+    x: (index / (weeks.length - 1)) * 1000,
+    y: 1000 - (week.amount / scaleAmount) * 1000,
+    ...week,
+  }));
 
   if (points.length > 1) {
     const areaPoints = [
@@ -990,15 +989,15 @@ function renderWeeklyRevenueChart(days) {
     marker.className = "weekly-revenue-marker";
     marker.style.left = `${point.x / 10}%`;
     marker.style.top = `${point.y / 10}%`;
-    marker.title = `${weekday.format(point.start)}: ${formatNaira(point.amount)}`;
+    marker.title = `${point.isCurrent ? "This week" : `Week of ${weekDate.format(point.start)}`}: ${formatNaira(point.amount)}`;
     plot.append(marker);
   });
 
   const xAxis = document.createElement("div");
   xAxis.className = "weekly-revenue-x-axis";
-  days.forEach((day) => {
+  weeks.forEach((week) => {
     const label = document.createElement("span");
-    label.textContent = weekday.format(day.start);
+    label.textContent = week.isCurrent ? "This week" : weekDate.format(week.start);
     xAxis.append(label);
   });
 
@@ -1009,7 +1008,7 @@ function renderWeeklyRevenueChart(days) {
 
 function setWeeklyRevenueChartError() {
   const container = document.getElementById("weeklyRevenueChart");
-  if (container) container.textContent = "Could not load daily revenue.";
+  if (container) container.textContent = "Could not load weekly revenue.";
 }
 
 function getLagosWeekStart() {
