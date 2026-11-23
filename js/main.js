@@ -1,5 +1,6 @@
 import { auth } from "./firebase/config.js";
 import { startSessionManager } from "./sessionManager.js";
+import { recordReturnVisit } from "./activityTracker.js";
 
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -90,6 +91,7 @@ onAuthStateChanged(auth, async (user) => {
     markReturningUser();
     closeWelcomeGate({ instant: true });
 
+    recordReturnVisit(user);
     startSessionManager();
     initInstallNudge();
 

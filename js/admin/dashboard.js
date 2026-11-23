@@ -306,14 +306,14 @@ async function renderTabContent() {
             <span class="live-dot"></span>
             Live numbers — updates every minute.
           </p>
-          <p>“Signed up, never returned” counts accounts with exactly one recorded sign-in.</p>
+          <p>Return visits include automatic sign-ins. This metric tracks accounts created after return tracking was added.</p>
 
           <div class="overview-grid">
             ${[
               ["🟢", "statOnline", "Online now", "last 5 min"],
               ["⚡", "statActive24h", "Active users", "last 24 hours"],
               ["📅", "statActive7d", "Active users", "last 7 days"],
-              ["👋", "statNeverReturned", "Signed up, never returned", "one recorded sign-in"],
+              ["👋", "statNeverReturned", "Signed up, never returned", "tracked sign-ups"],
               ["🔑", "statLoginsToday", "Logins", "today"],
               ["🔐", "statLogins7d", "Logins", "last 7 days"],
               ["🆕", "statNewToday", "New users", "today"],
@@ -899,7 +899,7 @@ async function loadUserActivityStats() {
     statNew7d: count("users", "createdAt", ago(7 * DAY)),
     statNew30d: count("users", "createdAt", ago(30 * DAY)),
     statNeverReturned: getCountFromServer(
-      query(collection(db, "users"), where("loginCount", "==", 1)),
+      query(collection(db, "users"), where("hasReturnedSinceSignup", "==", false)),
     ).then((snap) => snap.data().count),
   };
 

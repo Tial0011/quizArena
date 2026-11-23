@@ -5,6 +5,7 @@
 //   users/{uid}.lastActiveAt   heartbeat, refreshed while the app is open & visible
 //   users/{uid}.lastLoginAt    last explicit sign-in
 //   users/{uid}.loginCount     lifetime sign-ins
+//   users/{uid}.hasReturnedSinceSignup  whether the user visited after signup
 //   loginEvents/{auto}         one doc per sign-in { uid, email, at } (for "logins today / 7d")
 //
 // Everything here is best-effort: a failed write must never break
@@ -36,8 +37,8 @@ function isTrackable(user) {
   return !!user && user.email !== ADMIN_EMAIL;
 }
 
-/** Call once per explicit sign-in (email, Google, or fresh registration). */
-export async function recordLogin(user) {
+/** Call once per explicit sign-in; set isSignup for the initial signup session. */
+export async function recordLogin(user, { isSignup = false } = {}) {
   if (!isTrackable(user)) return;
 
   try {
@@ -53,12 +54,28 @@ export async function recordLogin(user) {
           lastLoginAt: serverTimestamp(),
           lastActiveAt: serverTimestamp(),
           loginCount: increment(1),
+          hasReturnedSinceSignup: !isSignup,
         },
         { merge: true },
       ),
     ]);
   } catch (err) {
     console.warn("[activity] recordLogin failed", err);
+  }
+}
+
+/** Marks app startup as a return visit, including Firebase-restored sessions. */
+export async function recordReturnVisit(user) {
+  if (!isTrackable(user)) return;
+
+  try {
+    await setDoc(
+      doc(db, "users", user.uid),
+      { hasReturnedSinceSignup: true },
+      { merge: true },
+    );
+  } catch (err) {
+    console.warn("[activity] recordReturnVisit failed", err);
   }
 }
 
