@@ -224,6 +224,14 @@ async function renderTabContent() {
             </div>
 
             <div class="overview-card load-in">
+              <div class="overview-icon">👥</div>
+              <div class="overview-info">
+                <h3 id="quizBuyerCount">--</h3>
+                <p>Users Who Bought a Quiz</p>
+              </div>
+            </div>
+
+            <div class="overview-card load-in">
               <div class="overview-icon">❓</div>
               <div class="overview-info">
                 <h3 id="questionCount">--</h3>
@@ -741,7 +749,7 @@ async function loadReferralSourceStats() {
 async function loadDashboardStats() {
   const weekStart = getLagosWeekStart();
   const now = Timestamp.fromDate(new Date());
-  const [subjectCountSnap, quizSnap, questionCountSnap, studentCountSnap, weeklyQuizCountSnap, purchasedQuizCountSnap] = await Promise.all([
+  const [subjectCountSnap, quizSnap, questionCountSnap, studentCountSnap, weeklyQuizCountSnap, purchasedQuizCountSnap, paidPurchasesSnap] = await Promise.all([
     getCountFromServer(collection(db, "subjects")),
     getDocs(collection(db, "quizzes")),
     getCountFromServer(collection(db, "questions")),
@@ -752,6 +760,10 @@ async function loadDashboardStats() {
       where("createdAt", "<=", now),
     )),
     getCountFromServer(query(
+      collection(db, "purchases"),
+      where("status", "==", "paid"),
+    )),
+    getDocs(query(
       collection(db, "purchases"),
       where("status", "==", "paid"),
     )),
@@ -768,6 +780,12 @@ async function loadDashboardStats() {
   setStatText("quizCount", weeklyQuizCountSnap.data().count);
   setStatText("totalQuizCount", quizSnap.size);
   setStatText("purchasedQuizCount", purchasedQuizCountSnap.data().count);
+  const quizBuyerIds = new Set(
+    paidPurchasesSnap.docs
+      .map((purchaseSnap) => purchaseSnap.data().userId)
+      .filter(Boolean),
+  );
+  setStatText("quizBuyerCount", quizBuyerIds.size);
   setStatText("questionCount", questionCountSnap.data().count);
   setStatText("studentCount", studentCountSnap.data().count);
 
