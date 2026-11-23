@@ -572,57 +572,96 @@
 }
 
 .admin-wrap .weekly-revenue-chart {
-  min-height: 190px;
-  display: flex;
-  align-items: flex-end;
-  padding: 8px 0 0;
+  min-height: 240px;
+  padding-top: 8px;
 }
 
-.admin-wrap .weekly-revenue-bars {
+.admin-wrap .weekly-revenue-graph {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  align-items: end;
-  gap: 8px;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 10px;
   width: 100%;
+  height: 230px;
 }
 
-.admin-wrap .weekly-revenue-column {
-  display: grid;
-  grid-template-rows: 18px 130px 18px;
-  justify-items: center;
-  align-items: end;
-  gap: 5px;
-  min-width: 0;
+.admin-wrap .weekly-revenue-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  text-align: right;
 }
 
-.admin-wrap .weekly-revenue-value {
+.admin-wrap .weekly-revenue-y-axis span {
   color: var(--color-text-muted);
   font-size: 10px;
-  font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
 }
 
-.admin-wrap .weekly-revenue-track {
-  display: flex;
-  align-items: flex-end;
-  width: min(100%, 42px);
-  height: 100%;
-  overflow: hidden;
-  border-radius: 7px 7px 2px 2px;
-  background: var(--color-surface-2);
+.admin-wrap .weekly-revenue-plot-wrap {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 24px;
+  min-width: 0;
 }
 
-.admin-wrap .weekly-revenue-bar {
+.admin-wrap .weekly-revenue-plot {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.admin-wrap .weekly-revenue-svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  border-radius: 6px 6px 0 0;
-  background: linear-gradient(180deg, var(--color-primary), var(--color-primary-deep));
-  transition: height 0.25s ease;
+  height: 100%;
+  overflow: visible;
 }
 
-.admin-wrap .weekly-revenue-day {
+.admin-wrap .weekly-revenue-gridline {
+  stroke: var(--color-border);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-wrap .weekly-revenue-area {
+  fill: var(--color-primary);
+  opacity: 0.1;
+}
+
+.admin-wrap .weekly-revenue-line {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-wrap .weekly-revenue-marker {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.admin-wrap .weekly-revenue-x-axis {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: center;
+  text-align: center;
+}
+
+.admin-wrap .weekly-revenue-x-axis span {
   color: var(--color-text-muted);
   font-size: 10px;
   font-weight: 700;
+  min-width: 0;
 }
 
 /* =========================

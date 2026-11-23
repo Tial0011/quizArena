@@ -863,7 +863,7 @@ async function loadRevenueStats() {
       Array.from({ length: 7 }, async (_, index) => {
         const start = new Date(weekStart.getTime() + index * dayMs);
         const nextDay = new Date(start.getTime() + dayMs);
-        if (start > nowDate) return { start, amount: 0 };
+        if (start > nowDate) return { start, amount: null };
 
         const endFilter = nextDay > nowDate
           ? where("processedAt", "<=", now)
@@ -891,7 +891,11 @@ function renderWeeklyRevenueChart(days) {
   const container = document.getElementById("weeklyRevenueChart");
   if (!container) return;
 
-  const maxAmount = Math.max(0, ...days.map((day) => day.amount));
+  const maxAmount = Math.max(
+    0,
+    ...days.filter((day) => day.amount !== null).map((day) => day.amount),
+  );
+  const scaleAmount = maxAmount || 1;
   const compactNaira = new Intl.NumberFormat("en-NG", {
     notation: "compact",
     maximumFractionDigits: 1,
@@ -901,42 +905,106 @@ function renderWeeklyRevenueChart(days) {
     weekday: "short",
     timeZone: "Africa/Lagos",
   });
-  const chart = document.createElement("div");
-  chart.className = "weekly-revenue-bars";
-  chart.setAttribute("role", "img");
-  chart.setAttribute(
+  const graph = document.createElement("div");
+  graph.className = "weekly-revenue-graph";
+  graph.setAttribute("role", "img");
+  graph.setAttribute(
     "aria-label",
-    `Verified revenue this week: ${days.map((day) => `${weekday.format(day.start)} ${formatNaira(day.amount)}`).join(", ")}`,
+    `Verified revenue this week: ${days.map((day) => `${weekday.format(day.start)} ${day.amount === null ? "no data yet" : formatNaira(day.amount)}`).join(", ")}`,
   );
 
-  days.forEach(({ start, amount }) => {
-    const column = document.createElement("div");
-    column.className = "weekly-revenue-column";
-    column.title = `${weekday.format(start)}: ${formatNaira(amount)}`;
-
-    const value = document.createElement("span");
-    value.className = "weekly-revenue-value";
-    value.textContent = `₦${compactNaira.format(amount)}`;
-
-    const track = document.createElement("div");
-    track.className = "weekly-revenue-track";
-
-    const bar = document.createElement("div");
-    bar.className = "weekly-revenue-bar";
-    bar.style.height = maxAmount > 0 && amount > 0
-      ? `${Math.max(2, (amount / maxAmount) * 100)}%`
-      : "0%";
-    track.append(bar);
-
+  const yAxis = document.createElement("div");
+  yAxis.className = "weekly-revenue-y-axis";
+  for (let tick = 4; tick >= 0; tick -= 1) {
     const label = document.createElement("span");
-    label.className = "weekly-revenue-day";
-    label.textContent = weekday.format(start);
+    label.textContent = `₦${compactNaira.format((maxAmount * tick) / 4)}`;
+    yAxis.append(label);
+  }
 
-    column.append(value, track, label);
-    chart.append(column);
+  const plotWrap = document.createElement("div");
+  plotWrap.className = "weekly-revenue-plot-wrap";
+  const plot = document.createElement("div");
+  plot.className = "weekly-revenue-plot";
+  const svgNamespace = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNamespace, "svg");
+  svg.classList.add("weekly-revenue-svg");
+  svg.setAttribute("viewBox", "0 0 1000 1000");
+  svg.setAttribute("preserveAspectRatio", "none");
+  svg.setAttribute("aria-hidden", "true");
+
+  const makeSvgElement = (name, attributes) => {
+    const element = document.createElementNS(svgNamespace, name);
+    Object.entries(attributes).forEach(([key, value]) => {
+      element.setAttribute(key, value);
+    });
+    return element;
+  };
+
+  for (let tick = 0; tick <= 4; tick += 1) {
+    const y = (tick / 4) * 1000;
+    svg.append(makeSvgElement("line", {
+      x1: "0",
+      y1: String(y),
+      x2: "1000",
+      y2: String(y),
+      class: "weekly-revenue-gridline",
+    }));
+  }
+
+  const points = days
+    .map((day, index) => {
+      if (day.amount === null) return null;
+      return {
+        x: (index / (days.length - 1)) * 1000,
+        y: 1000 - (day.amount / scaleAmount) * 1000,
+        ...day,
+      };
+    })
+    .filter(Boolean);
+
+  if (points.length > 1) {
+    const areaPoints = [
+      `${points[0].x},1000`,
+      ...points.map((point) => `${point.x},${point.y}`),
+      `${points[points.length - 1].x},1000`,
+    ].join(" ");
+    svg.append(makeSvgElement("polygon", {
+      points: areaPoints,
+      class: "weekly-revenue-area",
+    }));
+  }
+
+  if (points.length > 0) {
+    const path = points
+      .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+      .join(" ");
+    svg.append(makeSvgElement("path", {
+      d: path,
+      class: "weekly-revenue-line",
+    }));
+  }
+
+  plot.append(svg);
+  points.forEach((point) => {
+    const marker = document.createElement("span");
+    marker.className = "weekly-revenue-marker";
+    marker.style.left = `${point.x / 10}%`;
+    marker.style.top = `${point.y / 10}%`;
+    marker.title = `${weekday.format(point.start)}: ${formatNaira(point.amount)}`;
+    plot.append(marker);
   });
 
-  container.replaceChildren(chart);
+  const xAxis = document.createElement("div");
+  xAxis.className = "weekly-revenue-x-axis";
+  days.forEach((day) => {
+    const label = document.createElement("span");
+    label.textContent = weekday.format(day.start);
+    xAxis.append(label);
+  });
+
+  plotWrap.append(plot, xAxis);
+  graph.append(yAxis, plotWrap);
+  container.replaceChildren(graph);
 }
 
 function setWeeklyRevenueChartError() {
