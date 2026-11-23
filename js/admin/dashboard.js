@@ -284,6 +284,14 @@ async function renderTabContent() {
         </div>
 
         <div class="admin-card load-in">
+          <h2 id="weeklyRevenueChartTitle">Revenue This Week</h2>
+          <p>Verified Flutterwave revenue by day, Monday to Sunday (Lagos time).</p>
+          <div id="weeklyRevenueChart" class="weekly-revenue-chart" role="status" aria-live="polite">
+            Loading daily revenue…
+          </div>
+        </div>
+
+        <div class="admin-card load-in">
           <h2>How students found us</h2>
           <p>Referral answers from new email and Google sign-ups.</p>
           <div class="overview-grid" id="referralSourceStats">
@@ -306,14 +314,12 @@ async function renderTabContent() {
             <span class="live-dot"></span>
             Live numbers — updates every minute.
           </p>
-          <p>Return visits include automatic sign-ins. This metric tracks accounts created after return tracking was added.</p>
 
           <div class="overview-grid">
             ${[
               ["🟢", "statOnline", "Online now", "last 5 min"],
               ["⚡", "statActive24h", "Active users", "last 24 hours"],
               ["📅", "statActive7d", "Active users", "last 7 days"],
-              ["👋", "statNeverReturned", "Signed up, never returned", "tracked sign-ups"],
               ["🔑", "statLoginsToday", "Logins", "today"],
               ["🔐", "statLogins7d", "Logins", "last 7 days"],
               ["🆕", "statNewToday", "New users", "today"],
@@ -821,7 +827,8 @@ async function loadRevenueStats() {
   const lagosNow = new Date(Date.now() + hourMs);
   const weekStart = getLagosWeekStart();
   const monthStart = new Date(Date.UTC(lagosNow.getUTCFullYear(), lagosNow.getUTCMonth(), 1) - hourMs);
-  const now = Timestamp.fromDate(new Date());
+  const nowDate = new Date();
+  const now = Timestamp.fromDate(nowDate);
   const transactions = collection(db, "flutterwaveTransactions");
   const sumAmount = (start) => getAggregateFromServer(
     query(
@@ -846,7 +853,95 @@ async function loadRevenueStats() {
   } catch (error) {
     console.error("Failed to load verified revenue totals:", error);
     ["revenueTotal", "weeklyRevenue", "monthlyRevenue"].forEach((id) => setStatText(id, "!"));
+    setWeeklyRevenueChartError();
+    return;
   }
+
+  try {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const days = await Promise.all(
+      Array.from({ length: 7 }, async (_, index) => {
+        const start = new Date(weekStart.getTime() + index * dayMs);
+        const nextDay = new Date(start.getTime() + dayMs);
+        if (start > nowDate) return { start, amount: 0 };
+
+        const endFilter = nextDay > nowDate
+          ? where("processedAt", "<=", now)
+          : where("processedAt", "<", Timestamp.fromDate(nextDay));
+        const snapshot = await getAggregateFromServer(
+          query(
+            transactions,
+            where("processedAt", ">=", Timestamp.fromDate(start)),
+            endFilter,
+          ),
+          { total: sum("amount") },
+        );
+        return { start, amount: Number(snapshot.data().total || 0) };
+      }),
+    );
+    if (activeTab !== "dashboard") return;
+    renderWeeklyRevenueChart(days);
+  } catch (error) {
+    console.error("Failed to load daily verified revenue:", error);
+    setWeeklyRevenueChartError();
+  }
+}
+
+function renderWeeklyRevenueChart(days) {
+  const container = document.getElementById("weeklyRevenueChart");
+  if (!container) return;
+
+  const maxAmount = Math.max(0, ...days.map((day) => day.amount));
+  const compactNaira = new Intl.NumberFormat("en-NG", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+  const formatNaira = (amount) => `₦${Number(amount).toLocaleString("en-NG")}`;
+  const weekday = new Intl.DateTimeFormat("en-NG", {
+    weekday: "short",
+    timeZone: "Africa/Lagos",
+  });
+  const chart = document.createElement("div");
+  chart.className = "weekly-revenue-bars";
+  chart.setAttribute("role", "img");
+  chart.setAttribute(
+    "aria-label",
+    `Verified revenue this week: ${days.map((day) => `${weekday.format(day.start)} ${formatNaira(day.amount)}`).join(", ")}`,
+  );
+
+  days.forEach(({ start, amount }) => {
+    const column = document.createElement("div");
+    column.className = "weekly-revenue-column";
+    column.title = `${weekday.format(start)}: ${formatNaira(amount)}`;
+
+    const value = document.createElement("span");
+    value.className = "weekly-revenue-value";
+    value.textContent = `₦${compactNaira.format(amount)}`;
+
+    const track = document.createElement("div");
+    track.className = "weekly-revenue-track";
+
+    const bar = document.createElement("div");
+    bar.className = "weekly-revenue-bar";
+    bar.style.height = maxAmount > 0 && amount > 0
+      ? `${Math.max(2, (amount / maxAmount) * 100)}%`
+      : "0%";
+    track.append(bar);
+
+    const label = document.createElement("span");
+    label.className = "weekly-revenue-day";
+    label.textContent = weekday.format(start);
+
+    column.append(value, track, label);
+    chart.append(column);
+  });
+
+  container.replaceChildren(chart);
+}
+
+function setWeeklyRevenueChartError() {
+  const container = document.getElementById("weeklyRevenueChart");
+  if (container) container.textContent = "Could not load daily revenue.";
 }
 
 function getLagosWeekStart() {
@@ -898,9 +993,6 @@ async function loadUserActivityStats() {
     statNewToday: count("users", "createdAt", today),
     statNew7d: count("users", "createdAt", ago(7 * DAY)),
     statNew30d: count("users", "createdAt", ago(30 * DAY)),
-    statNeverReturned: getCountFromServer(
-      query(collection(db, "users"), where("hasReturnedSinceSignup", "==", false)),
-    ).then((snap) => snap.data().count),
   };
 
   // Each tile settles on its own so one failing query (e.g. a missing

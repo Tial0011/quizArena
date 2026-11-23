@@ -571,6 +571,60 @@
   text-transform: uppercase;
 }
 
+.admin-wrap .weekly-revenue-chart {
+  min-height: 190px;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px 0 0;
+}
+
+.admin-wrap .weekly-revenue-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  width: 100%;
+}
+
+.admin-wrap .weekly-revenue-column {
+  display: grid;
+  grid-template-rows: 18px 130px 18px;
+  justify-items: center;
+  align-items: end;
+  gap: 5px;
+  min-width: 0;
+}
+
+.admin-wrap .weekly-revenue-value {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-wrap .weekly-revenue-track {
+  display: flex;
+  align-items: flex-end;
+  width: min(100%, 42px);
+  height: 100%;
+  overflow: hidden;
+  border-radius: 7px 7px 2px 2px;
+  background: var(--color-surface-2);
+}
+
+.admin-wrap .weekly-revenue-bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--color-primary), var(--color-primary-deep));
+  transition: height 0.25s ease;
+}
+
+.admin-wrap .weekly-revenue-day {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
 /* =========================
    RECENT ACTIVITY
 ========================= */

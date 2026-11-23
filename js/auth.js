@@ -251,7 +251,6 @@ export async function registerUser(fullName, username, email, password, referral
       welcomeQuizEligible: true,
       welcomeQuizCompleted: false,
       purchasedQuizzes: [],
-      hasReturnedSinceSignup: false,
       createdAt: serverTimestamp(),
     });
 
@@ -259,7 +258,7 @@ export async function registerUser(fullName, username, email, password, referral
 
     // Fire-and-forget: welcome ping
     sendWelcomeNotification(user.uid, cleanFullName || cleanUsername);
-    recordLogin(user, { isSignup: true });
+    recordLogin(user);
 
     let verificationEmailSent = true;
     try {
@@ -297,14 +296,11 @@ export async function loginUser(email, password) {
     const snap = await getDoc(userRef);
 
     let role = "student";
-    const isNewProfile = !snap.exists();
-
-    if (isNewProfile) {
+    if (!snap.exists()) {
       await setDoc(userRef, {
         email: user.email,
         role: "student",
         purchasedQuizzes: [],
-        hasReturnedSinceSignup: false,
         welcomeQuizEligible: true,
         welcomeQuizCompleted: false,
         createdAt: serverTimestamp(),
@@ -315,7 +311,7 @@ export async function loginUser(email, password) {
       role = snap.data().role || "student";
     }
 
-    recordLogin(user, { isSignup: isNewProfile });
+    recordLogin(user);
 
     return { success: true, user, role };
   } catch (error) {
@@ -436,12 +432,11 @@ export async function completeGoogleSignup(user, referralSource) {
       welcomeQuizEligible: true,
       welcomeQuizCompleted: false,
       purchasedQuizzes: [],
-      hasReturnedSinceSignup: false,
       createdAt: serverTimestamp(),
     });
 
     sendWelcomeNotification(user.uid, fullName);
-    recordLogin(user, { isSignup: true });
+    recordLogin(user);
     return { success: true, user, role: "student" };
   } catch (error) {
     console.error(error);
